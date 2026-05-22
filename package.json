@@ -1,0 +1,28 @@
+{
+  "name": "burhan",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
+    "lint": "nuxt lint",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@tiptap/starter-kit": "^3.23.6",
+    "@tiptap/vue-3": "^3.23.6",
+    "nuxt": "^4.0.0",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.0.0",
+    "@nuxtjs/i18n": "^9.5.0",
+    "@nuxtjs/supabase": "^1.5.0",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "typescript": "~5.7.0"
+  }
+}

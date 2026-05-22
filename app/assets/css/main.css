@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-onyx text-gray-100 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  html[lang='ar'] body {
+    font-family: 'Noto Naskh Arabic', 'Tajawal', system-ui, sans-serif;
+  }
+
+  ::selection {
+    @apply bg-gold/30 text-gold-200;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-glass;
+  }
+
+  .glass-hover {
+    @apply hover:bg-white/10 hover:border-gold/30 transition-all duration-300;
+  }
+
+  .gradient-gold {
+    @apply bg-gradient-to-r from-gold-400 to-gold-200 bg-clip-text text-transparent;
+  }
+
+  .gold-border {
+    @apply border border-gold/30;
+  }
+}

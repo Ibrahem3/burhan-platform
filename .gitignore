@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.output/
+.nuxt/
+.cache/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db

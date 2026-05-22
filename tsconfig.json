@@ -1,0 +1,13 @@
+{
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "moduleResolution": "bundler",
+    "types": ["nuxt", "@nuxtjs/supabase", "@nuxtjs/i18n"],
+    "paths": {
+      "~/*": ["./*"],
+      "@/*": ["./app/*"]
+    }
+  }
+}
