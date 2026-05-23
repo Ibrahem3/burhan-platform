@@ -35,46 +35,8 @@ function closeMenu() {
     <!-- Navbar -->
     <header class="sticky top-0 z-50 glass border-b border-white/5">
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <!-- Left: Branding -->
-        <div class="flex items-center gap-3 min-w-0">
-          <NuxtLink
-            to="/"
-            class="text-xl font-bold gradient-gold whitespace-nowrap hover:opacity-80 transition-opacity shrink-0"
-            :aria-label="$t('brand.name')"
-          >
-            بُرهان
-          </NuxtLink>
-
-          <!-- Tenant breadcrumb -->
-          <template v-if="org && isTenant">
-            <svg class="w-4 h-4 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path v-if="currentLocale === 'ar'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-
-            <NuxtLink
-              :to="`/${orgSlug}`"
-              class="flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity"
-              :aria-label="$t('org_header.home_link')"
-            >
-              <img
-                v-if="orgLogoSrc"
-                :src="orgLogoSrc"
-                :alt="displayOrgName"
-                class="h-7 w-auto max-w-[120px] object-contain"
-              />
-              <span
-                v-else
-                class="text-sm font-semibold text-white truncate hover:text-gold transition-colors"
-              >
-                {{ displayOrgName }}
-              </span>
-            </NuxtLink>
-          </template>
-        </div>
-
-        <!-- Right: Desktop nav -->
-        <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <!-- Desktop start-side buttons (always order-1; dir handles RTL/LTR) -->
+        <div class="hidden md:flex items-center gap-2 flex-[3] order-1">
           <NuxtLink
             to="/"
             class="px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
@@ -83,9 +45,8 @@ function closeMenu() {
             {{ $t('nav.home') }}
           </NuxtLink>
 
-          <!-- Language toggle -->
           <button
-            class="px-3 py-2 text-xs font-medium text-gray-400 hover:text-gold transition-colors rounded-lg hover:bg-white/5 tracking-wider"
+            class="px-2 py-1.5 text-xs font-medium text-gray-400 hover:text-gold transition-colors rounded-lg hover:bg-white/5 tracking-wider"
             :aria-label="$t('locale.switch_to_en')"
             :title="$t(currentLocale === 'ar' ? 'locale.switch_to_en' : 'locale.switch_to_ar')"
             @click="toggleLocale()"
@@ -93,56 +54,98 @@ function closeMenu() {
             {{ currentLocale === 'ar' ? 'EN' : 'AR' }}
           </button>
 
-          <!-- Auth -->
           <template v-if="user">
-            <NuxtLink
-              to="/dashboard"
-              class="px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-            >
-              {{ $t('nav.dashboard') }}
+            <NuxtLink to="/dashboard">
+              <Button variant="ghost" size="sm">{{ $t('nav.dashboard') }}</Button>
             </NuxtLink>
-            <Button variant="ghost" size="sm" @click="signOut()">
-              {{ $t('nav.logout') }}
-            </Button>
+            <Button variant="ghost" size="sm" @click="signOut()">{{ $t('nav.logout') }}</Button>
           </template>
           <template v-else>
             <NuxtLink to="/login">
-              <Button variant="ghost" size="sm">
-                {{ $t('nav.login') }}
-              </Button>
+              <Button variant="ghost" size="sm">{{ $t('nav.login') }}</Button>
             </NuxtLink>
             <NuxtLink to="/signup">
-              <Button size="sm">
-                {{ $t('nav.signup') }}
-              </Button>
+              <Button size="sm">{{ $t('nav.signup') }}</Button>
             </NuxtLink>
           </template>
-        </nav>
+        </div>
 
-        <!-- Mobile: hamburger -->
-        <button
-          class="md:hidden p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-          :aria-label="menuOpen ? $t('layout.close_menu') : $t('layout.menu_toggle')"
-          :aria-expanded="menuOpen"
-          @click="menuOpen = !menuOpen"
-        >
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              v-if="!menuOpen"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-            <path
-              v-else
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
+        <!-- Center: Logo -->
+        <div class="order-2 flex-1 md:flex-[4] flex justify-center">
+          <NuxtLink to="/" :aria-label="$t('brand.name')">
+            <img src="/loader.webp" class="h-9 md:h-11 w-auto" alt="برهان" />
+          </NuxtLink>
+        </div>
+
+        <!-- Desktop end-side spacer + Mobile hamburger -->
+        <template v-if="org && isTenant">
+          <div class="flex items-center justify-end md:flex-[3] gap-2 order-3">
+            <div class="hidden md:flex items-center gap-2 truncate">
+              <img
+                v-if="orgLogoSrc"
+                :src="orgLogoSrc"
+                :alt="displayOrgName"
+                class="h-6 w-auto max-w-[100px] object-contain"
+              />
+              <NuxtLink
+                :to="`/${orgSlug}`"
+                class="text-xs text-gray-400 hover:text-white truncate transition-colors"
+              >
+                {{ displayOrgName }}
+              </NuxtLink>
+            </div>
+            <button
+              class="md:hidden p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+              :aria-label="menuOpen ? $t('layout.close_menu') : $t('layout.menu_toggle')"
+              :aria-expanded="menuOpen"
+              @click="menuOpen = !menuOpen"
+            >
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  v-if="!menuOpen"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+                <path
+                  v-else
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </template>
+        <template v-else>
+          <div class="flex items-center justify-end md:flex-[3] order-3">
+            <button
+              class="md:hidden p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+              :aria-label="menuOpen ? $t('layout.close_menu') : $t('layout.menu_toggle')"
+              :aria-expanded="menuOpen"
+              @click="menuOpen = !menuOpen"
+            >
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  v-if="!menuOpen"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+                <path
+                  v-else
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </template>
       </div>
 
       <!-- Mobile: dropdown menu -->
@@ -162,7 +165,8 @@ function closeMenu() {
             </NuxtLink>
 
             <button
-              class="block w-full text-right px-3 py-2.5 text-sm text-gray-400 hover:text-gold rounded-lg hover:bg-white/5 transition-colors"
+              class="block w-full px-3 py-2.5 text-sm text-gray-400 hover:text-gold rounded-lg hover:bg-white/5 transition-colors"
+              :class="currentLocale === 'ar' ? 'text-right' : 'text-left'"
               @click="toggleLocale(); closeMenu()"
             >
               {{ currentLocale === 'ar' ? 'English' : 'العربية' }}
@@ -179,7 +183,8 @@ function closeMenu() {
                 {{ $t('nav.dashboard') }}
               </NuxtLink>
               <button
-                class="block w-full text-right px-3 py-2.5 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                class="block w-full px-3 py-2.5 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                :class="currentLocale === 'ar' ? 'text-right' : 'text-left'"
                 @click="signOut(); closeMenu()"
               >
                 {{ $t('nav.logout') }}
@@ -195,7 +200,7 @@ function closeMenu() {
               </NuxtLink>
               <NuxtLink
                 to="/signup"
-                class="block px-3 py-2.5 text-sm text-gold rounded-lg hover:bg-gold/10 transition-colors"
+                class="block px-3 py-2.5 text-sm text-gold font-semibold rounded-lg hover:bg-gold/10 transition-colors"
                 @click="closeMenu"
               >
                 {{ $t('nav.signup') }}
