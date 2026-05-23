@@ -314,7 +314,7 @@ async function confirmDelete() {
         </p>
       </div>
       <div class="flex items-center gap-2 justify-between w-full sm:w-auto sm:justify-end" :class="locale === 'en' ? 'flex-row-reverse sm:flex-row' : ''">
-        <Button class="text-[11px] sm:text-sm px-2 sm:px-4" @click="openCreateModal">
+        <Button class="text-[11px] sm:text-sm px-2 sm:px-4" @click="navigateToNew">
           + {{ $t('dashboard.add_entity') }}
         </Button>
         <Button variant="outline" class="text-[11px] sm:text-sm px-2 sm:px-4" @click="navigateTo(localePath('/dashboard/series'))">
