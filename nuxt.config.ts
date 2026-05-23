@@ -38,7 +38,8 @@ export default defineNuxtConfig({
       ],
     },
     workbox: {
-      globPatterns: ['**/*.{js,css,html,webp,png,svg,woff2}'],
+      globPatterns: ['**/*.{js,css,webp,png,svg,woff2}'],
+      navigateFallback: null,
     },
   },
 
@@ -79,6 +80,7 @@ export default defineNuxtConfig({
     defaultLocale: 'ar',
     strategy: 'prefix_except_default',
     vueI18n: './app/i18n.config.ts',
+    bundle: { optimizeTranslationDirective: false },
   },
 
   vite: {
