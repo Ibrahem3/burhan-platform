@@ -18,6 +18,7 @@
     "@tiptap/extension-underline": "^3.23.6",
     "@tiptap/starter-kit": "^3.23.6",
     "@tiptap/vue-3": "^3.23.6",
+    "@vite-pwa/nuxt": "^1.1.1",
     "nuxt": "^4.0.0",
     "vue": "latest",
     "vue-router": "latest"

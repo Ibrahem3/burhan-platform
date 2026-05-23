@@ -247,43 +247,57 @@ function scrollToSection(id: string) {
             :to="`/${org.org_slug}`"
             class="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 rounded-2xl"
           >
-            <GlassCard :hover="true">
-              <div class="flex flex-col items-center text-center gap-4">
-                <div class="relative">
-                  <div class="w-20 h-20 rounded-2xl overflow-hidden shrink-0 transition-all duration-300 group-hover:shadow-glow">
+            <div class="glass rounded-2xl p-5 relative overflow-hidden transition-all duration-300 group-hover:shadow-glow group-hover:-translate-y-0.5">
+              <!-- Top gradient accent -->
+              <div class="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-gold/40 via-gold to-gold/40 opacity-60 group-hover:opacity-100 transition-opacity" />
+
+              <!-- Background subtle pattern -->
+              <div class="absolute -top-20 -right-20 w-40 h-40 bg-gold/[0.03] rounded-full blur-2xl transition-all duration-500 group-hover:scale-150" />
+
+              <div class="relative flex items-start gap-4">
+                <!-- Logo -->
+                <div class="shrink-0">
+                  <div class="w-16 h-16 rounded-xl overflow-hidden transition-all duration-300 group-hover:shadow-glow ring-1 ring-white/5">
                     <img
                       v-if="orgLogo(org)"
                       :src="orgLogo(org)!"
                       :alt="localizedName(org)"
-                      class="w-full h-full object-contain bg-white/5 p-2"
+                      class="w-full h-full object-contain bg-white/[0.03] p-2"
                     />
                     <div
                       v-else
                       class="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center"
                     >
-                      <span class="text-3xl font-bold gradient-gold">
+                      <span class="text-2xl font-bold gradient-gold">
                         {{ localizedName(org).charAt(0) || localizedNameEn(org).charAt(0) || '?' }}
                       </span>
                     </div>
                   </div>
-                  <div class="absolute -inset-2 bg-gold/0 group-hover:bg-gold/5 rounded-3xl blur-xl transition-all duration-500 -z-10" />
                 </div>
-                <div class="space-y-1">
-                  <h3 class="text-lg font-semibold text-white group-hover:text-gold transition-colors line-clamp-2">
+
+                <!-- Info -->
+                <div class="min-w-0 flex-1 pt-1">
+                  <h3 class="text-base font-semibold text-white group-hover:text-gold transition-colors line-clamp-2 leading-snug">
                     {{ localizedName(org) }}
                   </h3>
-                  <p v-if="localizedNameEn(org) !== localizedName(org)" class="text-xs text-gray-500 line-clamp-1">
+                  <p v-if="localizedNameEn(org) !== localizedName(org)" class="text-[11px] text-gray-600 mt-0.5 line-clamp-1 leading-relaxed">
                     {{ localizedNameEn(org) }}
                   </p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <span class="text-[11px] font-mono text-gray-600">/{{ org.org_slug }}</span>
+                    <span class="text-[10px] text-gray-700">•</span>
+                    <span class="text-[11px] text-gray-500">{{ $t('hub.orgs_count', { count: org.content_count }) }}</span>
+                  </div>
                 </div>
-                <div class="flex items-center gap-3">
-                  <span class="text-xs text-gray-600 font-mono">/{{ org.org_slug }}</span>
-                  <Badge v-if="org.content_count > 0" variant="info" size="sm">
-                    {{ $t('hub.orgs_count', { count: org.content_count }) }}
-                  </Badge>
+
+                <!-- Arrow icon -->
+                <div class="shrink-0 pt-1 transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-0 group-hover:translate-x-1">
+                  <svg class="w-4 h-4 text-gold/60" :class="locale === 'ar' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
                 </div>
               </div>
-            </GlassCard>
+            </div>
           </NuxtLink>
         </div>
       </section>

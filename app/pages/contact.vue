@@ -32,25 +32,8 @@ const sent = ref(false)
         {{ t('legal.contact.subtitle') }}
       </p>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div class="space-y-6">
-          <div class="p-6 rounded-xl border border-white/5 bg-white/[0.02]">
-            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              {{ t('legal.contact.email_label') }}
-            </h3>
-            <a
-              :href="`mailto:${t('legal.contact.email_value')}`"
-              class="text-gold hover:text-gold/80 transition-colors break-all"
-            >
-              {{ t('legal.contact.email_value') }}
-            </a>
-            <p class="text-xs text-gray-600 mt-2">
-              {{ t('legal.contact.response_time') }}
-            </p>
-          </div>
-        </div>
-
-        <div class="md:col-start-1">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div class="md:col-span-2">
           <h3 class="text-lg font-semibold text-gray-300 mb-4">
             {{ t('legal.contact.form_heading') }}
           </h3>
@@ -94,6 +77,23 @@ const sent = ref(false)
           <div v-else class="p-6 rounded-xl border border-green-500/20 bg-green-500/5 text-center">
             <p class="text-green-400 font-medium text-lg mb-1">✓</p>
             <p class="text-gray-300">{{ locale === 'ar' ? 'تم إرسال رسالتك بنجاح' : 'Your message has been sent successfully' }}</p>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="p-6 rounded-xl border border-white/5 bg-white/[0.02]">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              {{ t('legal.contact.email_label') }}
+            </h3>
+            <a
+              href="mailto:hello@ainux.online"
+              class="text-gold hover:text-gold/80 transition-colors break-all"
+            >
+              hello@ainux.online
+            </a>
+            <p class="text-xs text-gray-600 mt-2">
+              {{ t('legal.contact.response_time') }}
+            </p>
           </div>
         </div>
       </div>

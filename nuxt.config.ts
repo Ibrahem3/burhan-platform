@@ -15,7 +15,32 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxtjs/supabase',
     '@nuxtjs/i18n',
+    '@vite-pwa/nuxt',
   ],
+
+  pwa: {
+    registerType: 'autoUpdate',
+    includeAssets: ['favicon.webp', 'loader.webp'],
+    manifest: {
+      name: 'بُرهان',
+      short_name: 'بُرهان',
+      description: 'منصة الردود الفكرية والحوارات العلمية',
+      theme_color: '#0a0a0a',
+      background_color: '#0a0a0a',
+      display: 'standalone',
+      orientation: 'any',
+      lang: 'ar',
+      dir: 'rtl',
+      icons: [
+        { src: 'pwa/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { src: 'pwa/icon-512.png', sizes: '512x512', type: 'image/png' },
+        { src: 'pwa/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+      ],
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,webp,png,svg,woff2}'],
+    },
+  },
 
   components: [
     { path: '~/components/ui', pathPrefix: false },
