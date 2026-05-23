@@ -55,29 +55,29 @@ const statIcon = (key: string) => {
       <h1 class="text-xl font-bold text-white">{{ $t('dashboard.greeting') }}</h1>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
       <div
         v-for="stat in stats"
         :key="stat.key"
-        class="glass rounded-2xl p-5 lg:p-6 border border-white/5 hover:border-gold/20 transition-all duration-300"
+        class="glass rounded-2xl p-4 sm:p-5 lg:p-6 border border-white/5 hover:border-gold/20 transition-all duration-300"
       >
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center">
-            <svg class="w-5 h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="flex items-start justify-between mb-3 sm:mb-4">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gold/10 flex items-center justify-center">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="statIcon(stat.key)" />
             </svg>
           </div>
           <span
-            class="text-xs font-medium px-2 py-0.5 rounded-full"
+            class="text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full"
             :class="stat.positive ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'"
           >
             {{ stat.change }}
           </span>
         </div>
 
-        <p class="text-2xl font-bold text-white mb-1">{{ stat.value }}</p>
-        <p class="text-xs text-gray-500">{{ $t(`dashboard.${stat.key}`) }}</p>
-        <p class="text-xs text-gray-600 mt-1">{{ $t(`dashboard.${stat.descKey}`) }}</p>
+        <p class="text-xl sm:text-2xl font-bold text-white mb-1">{{ stat.value }}</p>
+        <p class="text-[11px] sm:text-xs text-gray-500">{{ $t(`dashboard.${stat.key}`) }}</p>
+        <p class="text-[11px] sm:text-xs text-gray-600 mt-1">{{ $t(`dashboard.${stat.descKey}`) }}</p>
       </div>
     </div>
   </div>

@@ -56,6 +56,15 @@ export default defineNuxtConfig({
     vueI18n: './app/i18n.config.ts',
   },
 
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+      ],
+    },
+  },
+
   app: {
     pageTransition: {
       name: 'fade',

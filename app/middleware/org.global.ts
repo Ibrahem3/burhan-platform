@@ -17,6 +17,7 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
 
   const { fetchOrg, error } = useOrg()
   const { $i18n } = useNuxtApp()
+  const currentLocale = to.path.startsWith('/en/') ? 'en' : 'ar'
 
   await fetchOrg(orgSlug)
 
@@ -40,8 +41,9 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
 
         if (fallbackOrg) {
           useState('org').value = fallbackOrg
+          const fallbackName = fallbackOrg.name as Record<string, string>
           useHead({
-            title: (fallbackOrg.name as any)?.ar || fallbackOrg.name,
+            title: fallbackName[currentLocale] || fallbackName.ar || fallbackName.en || '',
           })
           return
         }
@@ -58,7 +60,6 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   const org = useState<any>('org').value
   if (org?.name) {
     useHead({
-      title: org.name,
       link: [
         {
           rel: 'canonical',

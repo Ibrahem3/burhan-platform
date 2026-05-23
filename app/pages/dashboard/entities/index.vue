@@ -38,7 +38,7 @@ const success = ref('')
 
 const searchQuery = ref('')
 const filterBranch = useCookie('entities-filter-branch', { default: () => '' })
-const contentTypeFilter = ref<'all' | 'video' | 'article'>('all')
+const contentTypeFilter = ref<'all' | 'video' | 'article' | 'audio'>('all')
 const deletingId = ref<string | null>(null)
 const confirmId = ref<string | null>(null)
 const brokenThumbnails = ref<string[]>([])
@@ -61,6 +61,7 @@ const form = reactive({
   content_type: 'video',
   branch_id: '',
   video_id: '',
+  audio_url: '',
   is_premium: false,
   is_public_to_hub: false,
   price: '',
@@ -89,16 +90,22 @@ const filteredEntities = computed(() => {
     result = result.filter(e => e.branch_id === filterBranch.value)
   }
   if (contentTypeFilter.value !== 'all') {
-    result = result.filter(e => contentTypeFilter.value === 'video'
-      ? (e.video_id !== null && e.video_id !== '')
-      : (e.video_id === null || e.video_id === '')
-    )
+    result = result.filter(e => {
+      const ct = (e as any).content_type
+      if (ct) return ct === contentTypeFilter.value
+      if (e.video_id && e.video_id !== '') return contentTypeFilter.value === 'video'
+      return contentTypeFilter.value === 'article'
+    })
   }
   return result
 })
 
 function isVideo(entity: Entity): boolean {
-  return entity.video_id !== null && entity.video_id !== ''
+  return (entity as any).content_type === 'video' || (entity.video_id !== null && entity.video_id !== '')
+}
+
+function isAudio(entity: Entity): boolean {
+  return (entity as any).content_type === 'audio'
 }
 
 function thumbnailUrl(entity: Entity): string | null {
@@ -167,6 +174,7 @@ function openCreateModal() {
   form.content_type = 'video'
   form.branch_id = branches.value[0]?.id || ''
   form.video_id = ''
+  form.audio_url = ''
   form.is_premium = false
   form.is_public_to_hub = false
   form.price = ''
@@ -181,7 +189,8 @@ function navigateToNew() {
 }
 
 function openEditModal(entity: Entity) {
-  if (!isVideo(entity)) {
+  const ct = (entity as any).content_type
+  if (ct === 'article' || (!ct && !entity.video_id && !isAudio(entity))) {
     navigateTo(localePath(`/dashboard/entities/${entity.id}`))
     return
   }
@@ -193,9 +202,10 @@ function openEditModal(entity: Entity) {
   form.title_en = title?.en || ''
   form.content_ar = content?.ar || ''
   form.content_en = content?.en || ''
-  form.content_type = isVid ? 'video' : 'article'
+  form.content_type = ct || (isVid ? 'video' : 'article')
   form.branch_id = entity.branch_id
   form.video_id = entity.video_id || ''
+  form.audio_url = (entity as any).audio_url || ''
   form.is_premium = entity.is_premium
   form.is_public_to_hub = entity.is_public_to_hub
   form.price = entity.price ? String(entity.price) : ''
@@ -229,8 +239,10 @@ async function submitEntity() {
     content: { ar: form.content_ar, en: form.content_en } as Json,
     is_public_to_hub: form.is_public_to_hub,
     is_premium: form.is_premium,
+    content_type: form.content_type,
     video_id: form.content_type === 'video' ? form.video_id : null,
     primary_source: form.content_type === 'video' ? 'youtube' : '',
+    audio_url: form.content_type === 'audio' ? form.audio_url || null : null,
     price: form.is_premium && form.price ? parseFloat(form.price) : null,
     series_id: form.series_id || null,
     sort_order: form.sort_order,
@@ -293,29 +305,21 @@ async function confirmDelete() {
     </div>
 
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+      <div class="hidden sm:block">
         <h1 class="text-xl font-bold text-white">{{ $t('dashboard.entities_title') }}</h1>
         <p class="text-sm text-gray-500 mt-1">
           {{ $t('dashboard.total_content') }}:
           <span class="text-gold font-semibold">{{ entities.length }}</span>
         </p>
       </div>
-      <div class="flex gap-2">
-        <Button variant="outline" @click="navigateTo(localePath('/dashboard/series'))">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          إدارة السلاسل والكورسات 📚
-        </Button>
-        <Button variant="outline" @click="navigateToNew">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-          </svg>
-          {{ $t('dashboard.type_article') }}
-        </Button>
-        <Button @click="openCreateModal">
+      <div class="flex items-center gap-2 justify-between w-full sm:w-auto sm:justify-end" :class="locale === 'en' ? 'flex-row-reverse sm:flex-row' : ''">
+        <Button class="text-[11px] sm:text-sm px-2 sm:px-4" @click="openCreateModal">
           + {{ $t('dashboard.add_entity') }}
+        </Button>
+        <Button variant="outline" class="text-[11px] sm:text-sm px-2 sm:px-4" @click="navigateTo(localePath('/dashboard/series'))">
+          <span class="sm:hidden">📚 سلاسل</span>
+          <span class="hidden sm:inline">إدارة السلاسل والكورسات 📚</span>
         </Button>
       </div>
     </div>
@@ -333,19 +337,11 @@ async function confirmDelete() {
           :placeholder="$t('common.search')"
         />
       </div>
-      <select
-        v-model="filterBranch"
-        class="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-all duration-200 min-w-[160px]"
-      >
-        <option value="">{{ $t('dashboard.all_branches') }}</option>
-        <option v-for="b in branches" :key="b.id" :value="b.id">
-          {{ localizedValue(b.name, locale) }}
-        </option>
-      </select>
     </div>
 
-    <!-- Pill Tabs -->
-    <div class="flex items-center gap-2 mb-6">
+    <!-- Pill Tabs (scrollable on mobile) -->
+    <div class="overflow-x-auto -mx-4 px-4 mb-6">
+      <div class="flex items-center gap-2 min-w-max">
       <button
         class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
         :class="contentTypeFilter === 'all' ? 'bg-gold/15 text-gold border border-gold/30 shadow-lg shadow-gold/5' : 'bg-white/5 text-gray-400 border border-white/10 hover:text-white hover:bg-white/10'"
@@ -373,6 +369,36 @@ async function confirmDelete() {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
         </svg>
       </button>
+      <button
+        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5"
+        :class="contentTypeFilter === 'audio' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30 shadow-lg shadow-rose-500/5' : 'bg-white/5 text-gray-400 border border-white/10 hover:text-white hover:bg-white/10'"
+        @click="contentTypeFilter = 'audio'"
+      >
+        <span>{{ $t('dashboard.type_audio') }}</span>
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+      </button>
+
+      <div class="w-px h-6 bg-white/10 mx-1 shrink-0" />
+
+      <button
+        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap"
+        :class="filterBranch === '' ? 'bg-gold/15 text-gold border border-gold/30 shadow-lg shadow-gold/5' : 'bg-white/5 text-gray-400 border border-white/10 hover:text-white hover:bg-white/10'"
+        @click="filterBranch = ''"
+      >
+        {{ $t('dashboard.all_branches') }}
+      </button>
+      <button
+        v-for="b in branches"
+        :key="b.id"
+        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap"
+        :class="filterBranch === b.id ? 'bg-gold/15 text-gold border border-gold/30 shadow-lg shadow-gold/5' : 'bg-white/5 text-gray-400 border border-white/10 hover:text-white hover:bg-white/10'"
+        @click="filterBranch = b.id"
+      >
+        {{ localizedValue(b.name, locale) }}
+      </button>
+      </div>
     </div>
 
     <!-- Loading Skeleton -->
@@ -411,13 +437,36 @@ async function confirmDelete() {
         <div class="relative aspect-video overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
           <!-- Thumbnail image -->
           <img
-            v-if="thumbnailUrl(entity) && !isThumbnailBroken(entity.id)"
-            :src="thumbnailUrl(entity)"
+            v-if="(isAudio(entity) && (entity as any).cover_url) || (thumbnailUrl(entity) && !isThumbnailBroken(entity.id) && !isAudio(entity))"
+            :src="isAudio(entity) ? (entity as any).cover_url : thumbnailUrl(entity)"
             :alt="localizedValue(entity.title, locale)"
             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             loading="lazy"
             @error="markThumbnailBroken(entity.id)"
           />
+          <!-- Audio waveform placeholder -->
+          <div
+            v-else-if="isAudio(entity)"
+            class="w-full h-full bg-gradient-to-br from-purple-900/40 via-gray-800 to-indigo-900/40 flex items-center justify-center"
+          >
+            <svg class="w-full h-full max-w-[80%] max-h-[60%] text-purple-400/30" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="30" width="6" height="20" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0s" />
+              <rect x="22" y="20" width="6" height="40" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.1s" />
+              <rect x="34" y="10" width="6" height="60" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.2s" />
+              <rect x="46" y="15" width="6" height="50" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.3s" />
+              <rect x="58" y="25" width="6" height="30" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.15s" />
+              <rect x="70" y="8" width="6" height="64" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.25s" />
+              <rect x="82" y="18" width="6" height="44" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.05s" />
+              <rect x="94" y="28" width="6" height="24" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.35s" />
+              <rect x="106" y="12" width="6" height="56" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.2s" />
+              <rect x="118" y="22" width="6" height="36" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.1s" />
+              <rect x="130" y="8" width="6" height="64" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.3s" />
+              <rect x="142" y="18" width="6" height="44" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.15s" />
+              <rect x="154" y="28" width="6" height="24" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.05s" />
+              <rect x="166" y="14" width="6" height="52" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.25s" />
+              <rect x="178" y="24" width="6" height="32" rx="3" fill="currentColor" class="animate-pulse" style="animation-delay:0.12s" />
+            </svg>
+          </div>
           <!-- Article / fallback -->
           <div
             v-else
@@ -428,9 +477,20 @@ async function confirmDelete() {
             </svg>
           </div>
 
+          <!-- Audio icon overlay -->
+          <div
+            v-if="isAudio(entity)"
+            class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-500"
+          >
+            <div class="w-12 h-12 rounded-full bg-purple-500/20 backdrop-blur border border-purple-500/30 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
+              <svg class="w-5 h-5 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            </div>
+          </div>
           <!-- Play button overlay (video) -->
           <div
-            v-if="isVideo(entity)"
+            v-else-if="isVideo(entity)"
             class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-500"
           >
             <div class="w-12 h-12 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
@@ -444,15 +504,18 @@ async function confirmDelete() {
           <div class="absolute top-3 left-3">
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md backdrop-blur-sm"
-              :class="isVideo(entity) ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'"
+              :class="isAudio(entity) ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : isVideo(entity) ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'"
             >
-              <svg v-if="isVideo(entity)" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg v-if="isAudio(entity)" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <svg v-else-if="isVideo(entity)" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               <svg v-else class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
               </svg>
-              {{ isVideo(entity) ? $t('dashboard.type_video') : $t('dashboard.type_article') }}
+              {{ isAudio(entity) ? '🎙️ صوتيات' : isVideo(entity) ? $t('dashboard.type_video') : $t('dashboard.type_article') }}
             </span>
           </div>
 
@@ -552,7 +615,7 @@ async function confirmDelete() {
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
       >
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showModal = false" />
-        <div class="relative w-full max-w-xl glass rounded-2xl p-6 lg:p-8 border border-white/5 max-h-[90vh] overflow-y-auto">
+        <div class="relative w-full max-w-xl glass rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/5 max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
           <h2 class="text-lg font-bold text-white mb-6">
             {{ isEditing ? $t('dashboard.edit_entity_title') : $t('dashboard.create_entity_title') }}
           </h2>
@@ -592,28 +655,27 @@ async function confirmDelete() {
                   <label class="block text-sm font-medium text-gray-400 mb-1.5">
                     {{ $t('dashboard.content_type') }}
                   </label>
-                  <select
-                    v-model="form.content_type"
-                    class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-all duration-200"
-                    :disabled="submitting"
-                  >
-                    <option value="video">{{ $t('dashboard.type_video') }}</option>
-                    <option value="article">{{ $t('dashboard.type_article') }}</option>
-                  </select>
+                  <AppSelect
+                    :model-value="form.content_type"
+                    :options="[
+                      { value: 'video', label: $t('dashboard.type_video') },
+                      { value: 'article', label: $t('dashboard.type_article') },
+                      { value: 'audio', label: '🎙️ ' + ($t('dashboard.type_audio') || 'صوتيات') },
+                    ]"
+                    placeholder=" "
+                    @update:model-value="form.content_type = $event"
+                  />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-400 mb-1.5">
                     {{ $t('dashboard.target_branch') }}
                   </label>
-                  <select
-                    v-model="form.branch_id"
-                    class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-all duration-200"
-                    :disabled="submitting"
-                  >
-                    <option v-for="b in branches" :key="b.id" :value="b.id">
-                      {{ localizedValue(b.name, locale) }}
-                    </option>
-                  </select>
+                  <AppSelect
+                    :model-value="form.branch_id"
+                    :options="branches.map(b => ({ value: b.id, label: localizedValue(b.name, locale) }))"
+                    placeholder=" "
+                    @update:model-value="form.branch_id = $event"
+                  />
                 </div>
               </div>
 
@@ -628,6 +690,20 @@ async function confirmDelete() {
                   class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 font-mono text-sm focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-all duration-200"
                   :disabled="submitting"
                   :placeholder="$t('dashboard.video_id_placeholder')"
+                />
+              </div>
+
+              <div v-if="form.content_type === 'audio'">
+                <label class="block text-sm font-medium text-gray-400 mb-1.5">
+                  🎙️ رابط البث الخارجي (اختياري)
+                </label>
+                <input
+                  v-model="form.audio_url"
+                  type="text"
+                  dir="ltr"
+                  class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 font-mono text-sm focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-all duration-200"
+                  :disabled="submitting"
+                  placeholder="رابط SoundCloud, Spotify, أو أي embed URL"
                 />
               </div>
 
@@ -688,16 +764,18 @@ async function confirmDelete() {
                   <label class="block text-sm font-medium text-gray-400 mb-1.5">
                     السلسلة / الكورس (اختياري)
                   </label>
-                  <select
-                    v-model="form.series_id"
-                    class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-all duration-200"
-                    :disabled="submitting"
-                  >
-                    <option value="">— بدون سلسلة —</option>
-                    <option v-for="s in filteredFormSeries" :key="s.id" :value="s.id">
-                      {{ s.title?.[locale as keyof typeof s.title] || s.title?.ar || s.title?.en }}
-                    </option>
-                  </select>
+                  <AppSelect
+                    :model-value="form.series_id"
+                    :options="[
+                      { value: '', label: '— بدون سلسلة —' },
+                      ...filteredFormSeries.map(s => ({
+                        value: s.id,
+                        label: s.title?.[locale as keyof typeof s.title] || s.title?.ar || s.title?.en,
+                      })),
+                    ]"
+                    placeholder="— بدون سلسلة —"
+                    @update:model-value="form.series_id = $event"
+                  />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-400 mb-1.5">

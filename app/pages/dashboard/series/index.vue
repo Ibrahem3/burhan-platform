@@ -82,8 +82,8 @@ async function toggleActive(s: Series) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-8">
-      <div>
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-6 sm:mb-8">
+      <div class="min-w-0">
         <NuxtLink
           :to="localePath('/dashboard/entities')"
           class="text-sm text-gray-500 hover:text-gold transition-colors mb-1 inline-block"
@@ -93,7 +93,7 @@ async function toggleActive(s: Series) {
         <h1 class="text-xl font-bold text-white">إدارة السلاسل التعليمية والكورسات</h1>
         <p class="text-sm text-gray-500 mt-1">{{ seriesList.length }} سلسلة تعليمية</p>
       </div>
-      <Button @click="navigateTo(localePath('/dashboard/series/new'))">
+      <Button size="sm" class="sm:text-sm" @click="navigateTo(localePath('/dashboard/series/new'))">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>

@@ -21,7 +21,12 @@
     "no_public_entities": "No public content yet",
     "hero_description": "A multi-organization platform aggregating intellectual refutations, scholarly dialogues, and media archives in one place",
     "cta_browse": "Start Browsing",
-    "cta_learn": "Learn More"
+    "cta_learn": "Learn More",
+    "orgs_title": "Registered Organizations",
+    "orgs_subtitle": "Discover content from all organizations on the platform",
+    "orgs_count": "{count} contents",
+    "loading_orgs": "Loading organizations...",
+    "no_orgs": "No registered organizations yet"
   },
   "brand": {
     "name": "Burhan",
@@ -41,7 +46,19 @@
     "loading_org": "Loading organization data...",
     "org_not_found_title": "Organization Not Found",
     "org_not_found_desc": "Sorry, we couldn't find an organization at this link",
-    "back_to_org": "Back to Organization"
+    "back_to_org": "Back to Organization",
+    "back_to_course": "Back to Course",
+    "welcome": "{name} Academy",
+    "hero_cta": "Start Learning Now 🚀",
+    "index_title": "Lesson Index",
+    "series_title": "Educational Series & Courses",
+    "series_badge": "Series 📚",
+    "series_cta": "Enter Course",
+    "latest_title": "Latest Additions",
+    "org_entities_count": "{count} courses",
+    "nav_home": "Home",
+    "nav_about": "About",
+    "nav_content": "Content"
   },
   "org_header": {
     "home_link": "Organization home page",
@@ -64,7 +81,8 @@
     "private": "Private",
     "by_organization": "By {name}",
     "published_date": "Published {date}",
-    "no_entities_in_branch": "No content in this branch yet"
+    "no_entities_in_branch": "No content in this branch yet",
+    "reading_time": "{minutes} min read"
   },
   "video": {
     "loading": "Loading video...",
@@ -180,6 +198,7 @@
     "content_type": "Content Type",
     "type_video": "Video",
     "type_article": "Article",
+    "type_audio": "Audio",
     "target_branch": "Target Branch",
     "video_id": "Video ID",
     "video_id_placeholder": "YouTube URL or Video ID",
@@ -257,6 +276,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
+    "menu": "Menu",
     "search": "Search",
     "no_results": "No results found",
     "show_more": "Show More",

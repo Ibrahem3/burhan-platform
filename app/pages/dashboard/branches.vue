@@ -249,10 +249,10 @@ async function deleteBranch(id: string) {
       <div
         v-for="branch in branches"
         :key="branch.id"
-        class="glass rounded-2xl p-5 border border-white/5 hover:border-gold/20 transition-all duration-300"
+        class="glass rounded-2xl p-3 sm:p-5 border border-white/5 hover:border-gold/20 transition-all duration-300"
       >
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex items-center gap-4 min-w-0">
+        <div class="flex items-center justify-between gap-2 sm:gap-4">
+          <div class="flex items-center gap-3 sm:gap-4 min-w-0">
             <div class="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0">
               <svg class="w-5 h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -264,16 +264,17 @@ async function deleteBranch(id: string) {
             </div>
           </div>
 
-          <div class="flex items-center gap-3 shrink-0">
+          <div class="flex items-center gap-2 sm:gap-3 shrink-0">
             <span
-              class="hidden sm:inline-block px-2.5 py-0.5 text-xs font-medium rounded-full"
+              class="px-1.5 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-medium rounded-full"
               :class="branch.module_type === 'content' ? 'bg-gold/15 text-gold border border-gold/20' : branch.module_type === 'media' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'"
             >
-              {{ $t(`dashboard.module_${branch.module_type}`) }}
+              <span class="sm:hidden">{{ branch.module_type === 'content' ? '📄' : branch.module_type === 'media' ? '🎬' : '💬' }}</span>
+              <span class="hidden sm:inline">{{ $t(`dashboard.module_${branch.module_type}`) }}</span>
             </span>
 
-            <div class="hidden sm:flex items-center gap-1.5 text-xs text-gray-500">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex items-center gap-1 text-[11px] sm:text-xs text-gray-500">
+              <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
               <span>{{ entityCounts[branch.id] ?? '-' }}</span>
@@ -320,7 +321,7 @@ async function deleteBranch(id: string) {
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
       >
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showModal = false" />
-        <div class="relative w-full max-w-lg glass rounded-2xl p-6 lg:p-8 border border-white/5">
+        <div class="relative w-full max-w-lg glass rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/5 mx-2 sm:mx-0">
           <h2 class="text-lg font-bold text-white mb-6">
             {{ isEditing ? $t('dashboard.edit_branch_title') : $t('dashboard.create_branch_title') }}
           </h2>
@@ -376,15 +377,12 @@ async function deleteBranch(id: string) {
                 <label class="block text-sm font-medium text-gray-400 mb-1.5">
                   {{ $t('dashboard.module_type_selector') }}
                 </label>
-                <select
-                  v-model="form.module_type"
-                  class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-all duration-200"
-                  :disabled="submitting"
-                >
-                  <option v-for="mt in moduleTypes" :key="mt.value" :value="mt.value">
-                    {{ mt.label }}
-                  </option>
-                </select>
+                <AppSelect
+                  :model-value="form.module_type"
+                  :options="moduleTypes.map(mt => ({ value: mt.value, label: mt.label }))"
+                  placeholder=" "
+                  @update:model-value="form.module_type = $event"
+                />
               </div>
 
               <div v-if="error" class="text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">

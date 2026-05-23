@@ -4,7 +4,7 @@
 > **Domain:** `burhan.ainux.online`
 > **Stack:** Nuxt 4 + Tailwind CSS + Supabase (PostgreSQL) + Cloudflare Pages
 > **Languages:** Arabic (primary) / English
-> **Status:** Post-Demo — Full Dashboard, Entity CRUD, Editor, Floating Sidebar
+> **Status:** Hub→Org Grid, Tenant Landing Redesign (FAB Speed Dial, Gold Hero, 8/4 Grid), Audio Content Type
 
 ---
 
@@ -27,6 +27,9 @@
 15. [Caching & Locale Path Strategy](#15-caching--locale-path-strategy)
 16. [i18n Audit — Rule Enforcement](#16-i18n-audit--rule-enforcement)
 17. [Migration History](#17-migration-history)
+18. [Series / Courses Management](#18-series--courses-management)
+19. [FAB + Side Drawer Navigation Pattern](#19-fab--side-drawer-navigation-pattern)
+20. [Supabase Schema Reference](#supabase-schema-reference)
 
 ---
 
@@ -56,7 +59,7 @@ burhan.ainux.online
   └── /:org_slug/branches/:id    → Tenant: isolated branch detail
 ```
 
-- **Hub** queries only entities where `is_public_to_hub = true AND is_premium = false`
+- **Hub** fetches all orgs via `/api/orgs` (with content counts) and renders a glassmorphic grid of organization cards
 - **Tenant routes** are locked to their `org_slug` via global middleware (`org.global.ts`)
 - **RLS** enforces row-level tenant isolation at the database level — every policy is scoped to `organization_id`
 
@@ -71,7 +74,8 @@ burhan.ainux.online
 | `organizations` | Tenant/brand owner | `id UUID PK`, `org_slug TEXT UNIQUE`, `settings JSONB` |
 | `branches` | Modular sub-sections | `id UUID PK`, `organization_id FK`, `name JSONB {ar,en}`, `module_type ENUM` |
 | `profiles` | Extends auth.users | `id UUID PK FK→auth.users`, `organization_id FK`, `role user_role ENUM` |
-| `entities` | Dynamic content engine | `id UUID PK`, `branch_id FK`, `organization_id FK`, `title JSONB {ar,en}`, `content JSONB {ar,en}`, `is_public_to_hub BOOLEAN`, video fields, premium fields |
+| `entities` | Dynamic content engine | `id UUID PK`, `branch_id FK`, `organization_id FK`, `series_id FK→series NULL`, `sort_order INT`, `content_type TEXT CHECK('video','article','audio')`, `title JSONB {ar,en}`, `content JSONB {ar,en}`, `is_public_to_hub BOOLEAN`, video fields, audio fields, premium fields |
+| `series` | Course/series grouping | `id UUID PK`, `organization_id FK`, `branch_id FK`, `title JSONB {ar,en}`, `description JSONB {ar,en}`, `cover_url TEXT`, `is_active BOOLEAN` |
 
 ### 2.2 Critical Entity Fields
 
@@ -82,6 +86,19 @@ primary_source    TEXT DEFAULT 'youtube',  -- 'youtube' | 'cloudflare_stream'
 fallback_source   TEXT,          -- 'cloudflare_stream' | etc.
 fallback_url      TEXT,          -- Generic fallback URL if sources fail
 ```
+
+#### Audio Sources (3rd Core Type 🎙️)
+```sql
+content_type      TEXT DEFAULT 'article',  -- 'video' | 'article' | 'audio'
+audio_url         TEXT,          -- External streaming link for podcast/audio
+audio_file        TEXT,          -- Path to .mp3 in organization_assets bucket
+```
+
+The `content_type` column classifies every entity. When `content_type = 'audio'`:
+- `video_id` and `primary_source` are NULL
+- Either `audio_url` (external streaming) or `audio_file` (self-hosted MP3) must be set
+- The UI renders an audio player with a dark waveform visual + purple/coral badge
+- Storage path convention: `{orgId}/audio/{uuid}.mp3`
 
 #### Premium / Academy
 ```sql
@@ -155,6 +172,9 @@ idx_entities_branch_id              ON entities (branch_id)
 idx_entities_organization_id        ON entities (organization_id)
 idx_entities_public_to_hub          ON entities (is_public_to_hub) WHERE is_public_to_hub = true
 idx_entities_premium                ON entities (is_premium)
+idx_entities_series_id              ON entities (series_id) WHERE series_id IS NOT NULL
+idx_entities_series_sort            ON entities (series_id, sort_order, created_at) WHERE series_id IS NOT NULL
+idx_series_organization_id          ON series (organization_id)
 ```
 
 ---
@@ -171,18 +191,22 @@ burhan/
 │   │   ├── default.vue                ← Ainux navbar + footer + mobile menu
 │   │   └── dashboard.vue              ← Sidebar layout with glassmorphic nav
 │   ├── pages/
-│   │   ├── index.vue                  ← Hub: hero + public entity feed
+│   │   ├── index.vue                  ← Hub: org grid with glassmorphic cards (FAB speed dial, layout: false)
 │   │   ├── login.vue                  ← Email/password sign-in form
 │   │   ├── signup.vue                 ← 2-step: account → org creation
 │   │   ├── dashboard/
 │   │   │   ├── index.vue              ← Stats grid (videos, branches, revenue, subs)
 │   │   │   ├── branches.vue           ← Branch CRUD (419 lines)
-│   │   │   └── entities/
-│   │   │       ├── index.vue          ← Entity list + inline modal CRUD (535 lines)
-│   │   │       ├── [id].vue           ← Article edit page with RichTextEditor (343 lines)
-│   │   │       └── new.vue            ← Article create page (315 lines)
+│   │   │   ├── entities/
+│   │   │   │   ├── index.vue          ← Entity list + inline modal CRUD (820 lines)
+│   │   │   │   ├── [id].vue           ← Article edit page with RichTextEditor (343 lines)
+│   │   │   │   └── new.vue            ← Article create page (315 lines)
+│   │   │   └── series/
+│   │   │       ├── index.vue          ← Grid list of all series with cover cards (184 lines)
+│   │   │       ├── [id].vue           ← Detail workspace: episodes, reorder, add/remove (563 lines)
+│   │   │       └── new.vue            ← Create series with cover upload & bilingual form (315 lines)
 │   │   └── [org_slug]/
-│   │       ├── index.vue              ← Tenant: org header + branch filter + entity grid
+│   │       ├── index.vue              ← Tenant: FAB speed dial, gold-gradient hero, 8/4 asymmetric grid (series+activity)
 │   │       └── branches/[branch_id].vue  ← Branch detail with featured video
 │   ├── middleware/
 │   │   ├── org.global.ts              ← Global: validates org_slug, 404 if missing, fallback to profile org
@@ -216,14 +240,19 @@ burhan/
 │   └── types/database.ts              ← Full Supabase type definitions
 ├── server/
 │   ├── utils/supabase.ts              ← Server client + admin factories
-│   └── api/
-│       ├── auth/register-tenant.post.ts  ← Service-role: creates org + branch + owner profile
-│       ├── orgs/[slug].ts             ← GET org with branches
-│       └── entities/public.ts         ← GET hub feed (public, non-premium)
+│   ├── api/
+│   │   ├── auth/register-tenant.post.ts  ← Service-role: creates org + branch + owner profile
+│   │   ├── orgs/index.ts              ← GET all orgs with content counts (entities, branches, series)
+│   │   ├── orgs/[slug].ts             ← GET org with branches
+│   │   └── entities/public.ts         ← GET hub feed (public, non-premium)
 ├── supabase/migrations/
 │   ├── 00001_initial_schema.sql
 │   ├── 00002_fix_branches_rls.sql
-│   └── 00003_fix_profiles_rls_recursion.sql
+│   ├── 00003_fix_profiles_rls_recursion.sql
+│   ├── 00004_add_branch_slug_is_active.sql
+│   ├── 00005_storage_bucket_policies.sql
+│   ├── 00006_series_and_playlists.sql
+│   └── 00007_add_content_type_audio.sql
 ├── nuxt.config.ts
 ├── tailwind.config.ts
 ├── tsconfig.json
@@ -246,7 +275,7 @@ nuxt.config.ts  →  tailwindcss.configPath: './tailwind.config.ts'
 
 | Path | Page | Guard |
 |------|------|-------|
-| `/` | `app/pages/index.vue` | None (Hub) |
+| `/` | `app/pages/index.vue` | None (Hub — org grid, `layout: false`) |
 | `/login` | `app/pages/login.vue` | None |
 | `/signup` | `app/pages/signup.vue` | None |
 | `/dashboard` | `app/pages/dashboard/index.vue` | `dashboard-auth.ts` |
@@ -254,7 +283,10 @@ nuxt.config.ts  →  tailwindcss.configPath: './tailwind.config.ts'
 | `/dashboard/entities` | `app/pages/dashboard/entities/index.vue` | `dashboard-auth.ts` |
 | `/dashboard/entities/new` | `app/pages/dashboard/entities/new.vue` | `dashboard-auth.ts` |
 | `/dashboard/entities/:id` | `app/pages/dashboard/entities/[id].vue` | `dashboard-auth.ts` |
-| `/:org_slug` | `app/pages/[org_slug]/index.vue` | `org.global.ts` |
+| `/dashboard/series` | `app/pages/dashboard/series/index.vue` | `dashboard-auth.ts` |
+| `/dashboard/series/new` | `app/pages/dashboard/series/new.vue` | `dashboard-auth.ts` |
+| `/dashboard/series/:id` | `app/pages/dashboard/series/[id].vue` | `dashboard-auth.ts` |
+| `/:org_slug` | `app/pages/[org_slug]/index.vue` | `org.global.ts` (FAB speed dial, `layout: false`) |
 | `/:org_slug/branches/:branch_id` | `app/pages/[org_slug]/branches/[branch_id].vue` | `org.global.ts` |
 
 ### 4.2 Global Middleware — `org.global.ts`
@@ -684,10 +716,14 @@ npm run dev
 /dashboard ← dashboard.vue layout + dashboard-auth middleware
     ├── index.vue      → Overview: 4 stat cards (existing)
     ├── branches.vue   → Branch CRUD: list / create / edit / delete (419 lines)
-    └── entities/
-        ├── index.vue  → Entity list: search, filter, inline modal CRUD (535 lines)
-        ├── new.vue    → Article creation: slug gen, RichTextEditor, cover upload (315 lines)
-        └── [id].vue   → Article editing: same layout as new + cover image (343 lines)
+    ├── entities/
+    │   ├── index.vue  → Entity list: search, filter, inline modal CRUD (820 lines)
+    │   ├── new.vue    → Article creation: slug gen, RichTextEditor, cover upload (315 lines)
+    │   └── [id].vue   → Article editing: same layout as new + cover image (343 lines)
+    └── series/
+        ├── index.vue  → Series grid: cover cards, active toggle, "إدارة المحتوى" CTA (184 lines)
+        ├── new.vue    → Series creation: bilingual form, cover upload, branch selector (315 lines)
+        └── [id].vue   → Series detail: metadata inline edit, episodes list, add/remove/reorder (563 lines)
 ```
 
 **Layout** (`app/layouts/dashboard.vue`): Minimal shell that renders `<FloatingSidebar />` + main content slot. The content area dynamically adjusts margin based on pin state and locale:
@@ -794,9 +830,11 @@ type Entity = {
   branch_id: string
   title: { ar: string, en: string }       // JSONB
   content: { ar: string, en: string }      // JSONB (editor HTML)
-  content_type: 'video' | 'article'
+  content_type: 'video' | 'article' | 'audio'  // 🎙️ Audio: 3rd core type
   video_id: string | null
   primary_source: string | null
+  audio_url: string | null                 // External streaming link
+  audio_file: string | null                // Self-hosted .mp3 path
   cover_url: string | null
   slug: string | null                      // URL-safe (articles only)
   is_premium: boolean
@@ -940,9 +978,10 @@ const isActive = (path: string) => route.path === localePath(path)
 | Section | Keys | Status |
 |---------|------|--------|
 | `nav` | 11 | ✅ Documented |
-| `hub` | 12 | ✅ Documented |
+| `hub` | 14 | ✅ Documented (org grid cards, CTA, view all) |
+| `menu` | 8 | ✅ New (about, services, contact, branches, social) |
 | `brand` / `layout` / `footer` | 9 | ✅ Documented |
-| `tenant` / `org_header` | 11 | ✅ Documented |
+| `tenant` / `org_header` | 16 | ✅ Documented (welcome, hero subtitle, about section) |
 | `entities` | 17 | ✅ Documented |
 | `video` | 12 | ✅ Documented |
 | `premium` | 12 | ✅ Documented |
@@ -989,8 +1028,201 @@ Fixed branches RLS to use `auth.uid()` pattern correctly. Added missing policies
 ### `00003_fix_profiles_rls_recursion.sql`
 Fixed infinite recursion in profiles RLS caused by self-referential policies. Used `auth.jwt()` claims instead of querying profiles within profiles policies.
 
-### Supabase Schema Reference
-- `user_role` ENUM: `super_admin`, `owner`, `manager`, `member`
+### `00004_add_branch_slug_is_active.sql`
+Added `branches.slug` and `branches.is_active` columns. Branch slugs enable clean URL resolution per tenant branch. Active toggle allows soft-hiding branches without data loss.
+
+### `00005_storage_bucket_policies.sql`
+Added RLS policies for the `organization_assets` storage bucket: authenticated users can CRUD files scoped to their `organization_id` prefix path. Used by entity cover images and series cover uploads.
+
+### `00006_series_and_playlists.sql`
+Added `series` table (id, organization_id, branch_id, title JSONB, description JSONB, cover_url, is_active, created_at) with RLS and indexes. Added `series_id FK` and `sort_order INT` to `entities` table. Enables course/series grouping with ordered lessons.
+
+### `00007_add_content_type_audio.sql`
+Added `'audio'` to the `valid_content_type` CHECK constraint on `entities.content_type`. Enables the audio/podcast content type alongside video and article. No new columns needed — uses existing `audio_url` and `audio_file` fields.
+
+---
+
+## 18. Series / Courses Management
+
+### 18.1 Pages
+
+| Route | Page | Purpose |
+|-------|------|---------|
+| `/dashboard/series` | `series/index.vue` | Grid list — 16:9 glass cards with cover, branch badge, active toggle, and "إدارة المحتوى" CTA |
+| `/dashboard/series/new` | `series/new.vue` | Create form — bilingual title/description, branch selector, cover upload via Supabase storage |
+| `/dashboard/series/:id` | `series/[id].vue` | Detail workspace — metadata edit, episodes list with sort order, add/remove episodes |
+
+### 18.2 Data Model
+
+```sql
+series (
+  id            UUID PK DEFAULT gen_random_uuid(),
+  organization_id UUID FK → organizations NOT NULL,
+  branch_id       UUID FK → branches NOT NULL,
+  title           JSONB NOT NULL CHECK (title ? 'ar' AND title ? 'en'),
+  description     JSONB DEFAULT '{}',
+  cover_url       TEXT,
+  is_active       BOOLEAN DEFAULT true,
+  created_at      TIMESTAMPTZ DEFAULT now()
+)
+
+-- entities additions (migration 00006):
+ALTER TABLE entities ADD COLUMN series_id  UUID REFERENCES series(id) ON DELETE SET NULL;
+ALTER TABLE entities ADD COLUMN sort_order INT NOT NULL DEFAULT 0;
+```
+
+### 18.3 Series List (`index.vue`)
+
+- Fetches all series for the org, plus branches for name resolution
+- Grid: `1→2→3→4` columns responsive layout
+- Each card: 16:9 cover image → bilingual title → description → `localizedValue` | branch badge overlay → active toggle switch
+- "إدارة المحتوى" button on each card navigates to `/dashboard/series/:id`
+- Active toggle calls `supabase.from('series').update({ is_active })` directly
+
+### 18.4 Series Detail Workspace (`[id].vue`)
+
+**Metadata Header:**
+- Cover thumbnail (click to replace via `useSupabaseStorage` + `compressImage`)
+- Localized title + description, branch badge, episode count, active status badge
+- "تعديل البيانات" button expands inline form: bilingual title/description, branch selector
+
+**Episodes Section:**
+- Fetches `entities` where `series_id = :id`, ordered by `sort_order ASC, created_at ASC`
+- Each row: sort-order badge → content type icon (🎬 فيديو / 🎙️ صوتيات / 📝 مقال) → title → reorder arrows ↕ → delete button
+- Audio episodes show a waveform SVG placeholder when no custom cover is set
+- Reorder: `moveUp`/`moveDown` swaps `sort_order` values atomically via two sequential Supabase updates
+- Delete confirmation popover: "حذف كلي" (DELETE entity) vs "فصل فقط" (SET series_id = NULL)
+
+**Add Episode:**
+- "+ إضافة حلقة / مادة للسلسلة" toggle button reveals inline form
+- Fields: bilingual title, content type selector (📝 مقال | 🎬 فيديو | 🎙️ صوتيات/بودكاست), premium toggle, hub visibility toggle
+- When `audio` selected: shows audio URL input + optional MP3 file upload to `organization_assets` bucket
+- When `video` selected: shows video URL/ID input
+- `sort_order` auto-calculated as `max(episodes.sort_order) + 1`
+- Inserts new entity with `series_id` pre-bound and `content_type` set accordingly
+
+### 18.5 Create Series (`new.vue`)
+
+- Full-page form matching `entities/new.vue` aesthetic
+- Cover upload → `compressImage` → `uploadFile` to `organization_assets` bucket
+- Bilingual title (side-by-side grid) + bilingual description (side-by-side textareas)
+- Branch selector dropdown
+- Sidebar summary card showing active status and cover upload state
+- Save: inserts into `series` table, redirects to `/dashboard/series`
+
+---
+
+## 19. FAB Speed Dial Navigation Pattern
+
+### 19.1 Concept
+
+Replaces the traditional top navbar on **public-facing pages** (Hub + Tenant Landing) with a minimalist floating action button (FAB) and a **speed dial** — when tapped, small glassmorphic pill buttons fan upward from the FAB with staggered animation. No side drawer. Sleek, compact, and immersive.
+
+### 19.2 Pages Using This Pattern
+
+| Page | File | Layout |
+|------|------|--------|
+| Hub (Org Grid) | `app/pages/index.vue` | `layout: false` — self-contained FAB + footer |
+| Tenant Landing | `app/pages/[org_slug]/index.vue` | `layout: false` — self-contained FAB + hero + grid + footer |
+
+Both pages are fully self-contained with `layout: false` — no shared navbar/footer. The speed dial HTML is **inlined** in each page (not extracted to a component).
+
+### 19.3 Interaction Model
+
+```
+┌─────────────────────────────────────┐
+│  Hero / Content / Grid (full view)  │
+│                                     │
+│                    ┌───┐            │
+│                    │ ⊕ │  ← FAB (fixed, bottom-right, z-50)
+│                    └───┘            │
+└─────────────────────────────────────┘
+         ↓ click FAB
+┌─────────────────────────────────────┐
+│  ┌─────────────────────────────┐    │
+│  │ 🏠 الرئيسية                │    │  ← Glass pill buttons rise from
+│  ├─────────────────────────────┤    │     FAB position with staggered
+│  │ 📚 السلسلات                │    │     0.04s delay each (top → bottom)
+│  ├─────────────────────────────┤    │
+│  │ ⚡ أحدث المحتوى            │    │  ← Each: SVG icon + translated label
+│  ├─────────────────────────────┤    │
+│  │ ℹ️ عن المنصة               │    │  ← hover:bg-gold/10, hover:text-gold
+│  ├─────────────────────────────┤    │
+│  │ 🌐 English                 │    │  ← Locale toggle
+│  └─────────────────────────────┘    │
+│                    ┌───┐            │
+│                    │ ✕ │            │
+│                    └───┘            │
+└─────────────────────────────────────┘
+```
+
+Speed dial items are defined as a `computed` array in the script. Items dynamically change based on auth state:
+- **Authenticated:** Shows Dashboard + Logout (red) instead of Login/Signup
+- **Guest:** Shows Login instead of Dashboard/Logout
+
+### 19.4 FAB Button
+
+- **Position:** `fixed bottom-6 z-50` in a flex-col wrapper at `locale === 'ar' ? left-6 : right-6`
+- **Style:** Glassmorphic square (`w-14 h-14 glass rounded-2xl`) with gold SVG icon
+- **Toggle:** ⊕ hamburger (closed) ↔ ✕ close (open), with `rotate-90` transition
+- **Animations:** `hover:shadow-glow`, `transition-all duration-300`
+
+### 19.5 Speed Dial Items
+
+- **Container:** `TransitionGroup` with `flex-col items-center gap-3 mb-4` above the FAB
+- **Each item:** `glass backdrop-blur-2xl rounded-xl border border-white/10 px-4 py-2.5` — pill-shaped with icon + label
+- **Enter/Leave animation:** `opacity 0→1` + `translateY(12px)→0` + `scale(0.95)→1` over 0.25s cubic-bezier
+- **Stagger:** `transitionDelay: (length - 1 - i) * 0.04s` — top button fades in last (reversed index)
+- **Close:** items disappear in reverse order (top leaves first)
+- **Backdrop:** `fixed inset-0 z-40 bg-black/30` — clicking anywhere closes the speed dial
+
+### 19.6 Item Variants
+
+| Variant | Classes | Usage |
+|---------|---------|-------|
+| Default | `text-gray-300 hover:text-gold hover:bg-gold/10 hover:border-gold/30` | Navigation, locale |
+| Danger | `text-red-400 hover:bg-red-500/10 hover:border-red-500/30` | Logout |
+
+### 19.7 Hub Items
+
+| Key | Action |
+|-----|--------|
+| `home` | `scrollToSection('hub-hero')` |
+| `orgs` | `scrollToSection('orgs-grid')` |
+| `dashboard` | `navigateTo('/dashboard')` (auth only) |
+| `locale` | `toggleLocale()` |
+| `login` | `navigateTo('/login')` (guest only) |
+| `logout` | `signOut()` (auth only, red variant) |
+
+### 19.8 Tenant Landing Items
+
+| Key | Action |
+|-----|--------|
+| `home` | `scrollToSection('org-hero')` |
+| `series` | `scrollToSection('org-series')` |
+| `latest` | `scrollToSection('org-latest')` |
+| `about` | `scrollToSection('about')` + sets `showAbout = true` |
+| `locale` | `toggleLocale()` |
+| `dashboard` | `navigateTo('/dashboard')` (auth only) |
+| `login` | `navigateTo('/login')` (guest only) |
+| `logout` | `signOut()` (auth only, red variant) |
+
+### 19.9 Self-Contained Footer
+
+Both Hub and Tenant pages have their own inline footer (not from `default.vue`):
+
+```
+┌──────────────────────────────────────┐
+│  © 2026 Burhan. All rights reserved. │
+│  Built with ❤️ by Ainux              │
+└──────────────────────────────────────┘
+```
+
+No layout dependency — the page is fully portable.
+
+---
+
+## 20. Supabase Schema Reference
 - All tables use `UUID PK` with `created_at TIMESTAMPTZ DEFAULT now()`
-- JSONB fields: `branches.name`, `entities.title`, `entities.content` — always `{ ar, en }`
-- Storage bucket: `covers` for entity cover images (public-read, authenticated-write)
+- JSONB fields: `branches.name`, `series.title`, `series.description`, `entities.title`, `entities.content` — always `{ ar, en }`
+- Storage bucket: `organization_assets` for entity/series cover images (public-read, authenticated-write)

@@ -5,7 +5,7 @@ import { compressImage } from '~/utils/compressImage'
 definePageMeta({
   layout: 'dashboard',
   middleware: 'dashboard-auth',
-  title: 'New Article',
+  title: 'New Content',
 })
 
 const supabase = useSupabaseClient<Database>()
@@ -20,6 +20,8 @@ const orgId = computed(() => profile.value?.organization_id)
 const branches = ref<Branch[]>([])
 const coverUrl = ref('')
 const saving = ref(false)
+
+const { visible: fabVisible } = useScrollAware()
 const error = ref('')
 
 const form = reactive({
@@ -28,7 +30,10 @@ const form = reactive({
   slug: '',
   content_ar: '',
   content_en: '',
+  content_type: 'article',
   branch_id: '',
+  video_id: '',
+  audio_url: '',
   is_premium: false,
   is_public_to_hub: false,
   price: '',
@@ -105,10 +110,12 @@ async function save() {
       branch_id: form.branch_id,
       title: { ar: form.title_ar, en: form.title_en } as Json,
       content: { ar: form.content_ar, en: form.content_en, image_url: coverUrl.value } as Json,
+      content_type: form.content_type,
       is_public_to_hub: form.is_public_to_hub,
       is_premium: form.is_premium,
-      video_id: null,
-      primary_source: '',
+      video_id: form.content_type === 'video' ? form.video_id : null,
+      primary_source: form.content_type === 'video' ? 'youtube' : '',
+      audio_url: form.content_type === 'audio' ? form.audio_url || null : null,
       price: form.is_premium && form.price ? parseFloat(form.price) : null,
     })
 
@@ -142,27 +149,27 @@ async function onFileSelected(event: Event) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-8">
-      <div>
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-6 sm:mb-8">
+      <div class="min-w-0">
         <NuxtLink
           :to="localePath('/dashboard/entities')"
           class="text-sm text-gray-500 hover:text-gold transition-colors mb-1 inline-block"
         >
           ← {{ $t('dashboard.entities') }}
         </NuxtLink>
-        <h1 class="text-xl font-bold text-white">{{ $t('dashboard.create_entity_title') }}</h1>
+        <h1 class="text-xl font-bold text-white truncate">{{ $t('dashboard.create_entity_title') }}</h1>
       </div>
-      <div class="flex gap-2">
-        <Button variant="outline" @click="navigateTo(localePath('/dashboard/entities'))">
+      <div class="hidden md:flex gap-2 shrink-0">
+        <Button variant="outline" size="sm" class="sm:text-sm" @click="navigateTo(localePath('/dashboard/entities'))">
           {{ $t('common.cancel') }}
         </Button>
-        <Button :loading="saving" @click="save">
+        <Button size="sm" class="sm:text-sm" :loading="saving" @click="save">
           {{ $t('common.save') }}
         </Button>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pb-24 md:pb-0">
       <div class="lg:col-span-2 space-y-8">
         <!-- Cover Image -->
         <div class="relative group cursor-pointer" @click="triggerImageUpload">
@@ -214,7 +221,7 @@ async function onFileSelected(event: Event) {
           v-if="currentLang === 'ar'"
           v-model="form.title_ar"
           type="text"
-          class="w-full bg-transparent border-none outline-none text-4xl md:text-5xl font-bold placeholder-gray-600 focus:placeholder-gray-500 transition-colors leading-tight"
+          class="w-full bg-transparent border-none outline-none text-2xl sm:text-4xl md:text-5xl font-bold placeholder-gray-600 focus:placeholder-gray-500 transition-colors leading-tight"
           placeholder="عنوان المقال..."
         />
         <input
@@ -222,7 +229,7 @@ async function onFileSelected(event: Event) {
           v-model="form.title_en"
           type="text"
           dir="ltr"
-          class="w-full bg-transparent border-none outline-none text-4xl md:text-5xl font-bold placeholder-gray-600 focus:placeholder-gray-500 transition-colors leading-tight"
+          class="w-full bg-transparent border-none outline-none text-2xl sm:text-4xl md:text-5xl font-bold placeholder-gray-600 focus:placeholder-gray-500 transition-colors leading-tight"
           placeholder="Article Title..."
           @input="onTitleEnInput(($event.target as HTMLInputElement).value)"
         />
@@ -247,6 +254,7 @@ async function onFileSelected(event: Event) {
         <div v-if="currentLang === 'ar'">
           <RichTextEditor
             v-model="form.content_ar"
+            dir="rtl"
             :placeholder="$t('dashboard.editor.placeholder')"
             @image-upload="handleCoverImage"
           />
@@ -254,6 +262,7 @@ async function onFileSelected(event: Event) {
         <div v-else>
           <RichTextEditor
             v-model="form.content_en"
+            dir="ltr"
             :placeholder="$t('dashboard.editor.placeholder')"
             @image-upload="handleCoverImage"
           />
@@ -274,17 +283,50 @@ async function onFileSelected(event: Event) {
           </label>
         </div>
 
+        <!-- Content Type -->
+        <div class="glass rounded-2xl p-6 border border-white/5 space-y-3">
+          <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider">{{ $t('dashboard.content_type') }}</h3>
+          <AppSelect
+            :model-value="form.content_type"
+            :options="[
+              { value: 'article', label: $t('dashboard.type_article') },
+              { value: 'video', label: $t('dashboard.type_video') },
+              { value: 'audio', label: $t('dashboard.type_audio') },
+            ]"
+            placeholder=" "
+            @update:model-value="form.content_type = $event"
+          />
+          <div v-if="form.content_type === 'video'">
+            <label class="block text-xs text-gray-500 mb-1">{{ $t('dashboard.video_id') }}</label>
+            <input
+              v-model="form.video_id"
+              type="text"
+              dir="ltr"
+              class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-gold/50 outline-none font-mono"
+              :placeholder="$t('dashboard.video_id_placeholder')"
+            />
+          </div>
+          <div v-if="form.content_type === 'audio'">
+            <label class="block text-xs text-gray-500 mb-1">🎙️ {{ $t('dashboard.type_audio') }}</label>
+            <input
+              v-model="form.audio_url"
+              type="text"
+              dir="ltr"
+              class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-gold/50 outline-none font-mono"
+              placeholder="رابط SoundCloud, Spotify, أو أي embed URL"
+            />
+          </div>
+        </div>
+
         <!-- Branch -->
         <div class="glass rounded-2xl p-6 border border-white/5 space-y-3">
           <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider">{{ $t('dashboard.target_branch') }}</h3>
-          <select
-            v-model="form.branch_id"
-            class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-gold/50 outline-none appearance-none cursor-pointer"
-          >
-            <option v-for="b in branches" :key="b.id" :value="b.id">
-              {{ localizedValue(b.name, locale) }}
-            </option>
-          </select>
+          <AppSelect
+            :model-value="form.branch_id"
+            :options="branches.map(b => ({ value: b.id, label: localizedValue(b.name, locale) }))"
+            placeholder=" "
+            @update:model-value="form.branch_id = $event"
+          />
         </div>
 
         <!-- Premium -->
@@ -309,6 +351,21 @@ async function onFileSelected(event: Event) {
             />
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Mobile floating actions -->
+    <div
+      class="fixed bottom-0 inset-x-0 z-50 p-4 md:hidden transition-transform duration-300"
+      :class="fabVisible ? 'translate-y-0' : 'translate-y-full'"
+    >
+      <div class="glass rounded-2xl border border-white/10 px-5 py-3 flex items-center justify-between gap-3 shadow-2xl">
+        <Button variant="outline" size="sm" class="flex-1" @click="navigateTo(localePath('/dashboard/entities'))">
+          {{ $t('common.cancel') }}
+        </Button>
+        <Button size="sm" class="flex-1" :loading="saving" @click="save">
+          {{ $t('common.save') }}
+        </Button>
       </div>
     </div>
   </div>

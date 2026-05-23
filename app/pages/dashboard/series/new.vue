@@ -105,8 +105,8 @@ async function save() {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-8">
-      <div>
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-6 sm:mb-8">
+      <div class="min-w-0">
         <NuxtLink
           :to="localePath('/dashboard/series')"
           class="text-sm text-gray-500 hover:text-gold transition-colors mb-1 inline-block"
@@ -115,11 +115,11 @@ async function save() {
         </NuxtLink>
         <h1 class="text-xl font-bold text-white">إنشاء سلسلة تعليمية جديدة</h1>
       </div>
-      <div class="flex gap-2">
-        <Button variant="outline" @click="navigateTo(localePath('/dashboard/series'))">
+      <div class="flex gap-2 shrink-0">
+        <Button variant="outline" size="sm" class="sm:text-sm" @click="navigateTo(localePath('/dashboard/series'))">
           إلغاء
         </Button>
-        <Button :loading="saving" @click="save">
+        <Button size="sm" class="sm:text-sm" :loading="saving" @click="save">
           حفظ السلسلة
         </Button>
       </div>
@@ -216,14 +216,12 @@ async function save() {
         <!-- Branch -->
         <div class="glass rounded-2xl p-6 border border-white/5 space-y-3">
           <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider">الفرع التابع له</h3>
-          <select
-            v-model="form.branch_id"
-            class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-gold/50 outline-none appearance-none cursor-pointer"
-          >
-            <option v-for="b in branches" :key="b.id" :value="b.id">
-              {{ localizedValue(b.name, locale) }}
-            </option>
-          </select>
+          <AppSelect
+            :model-value="form.branch_id"
+            :options="branches.map(b => ({ value: b.id, label: localizedValue(b.name, locale) }))"
+            placeholder=" "
+            @update:model-value="form.branch_id = $event"
+          />
         </div>
 
         <!-- Summary -->

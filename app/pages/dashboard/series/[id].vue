@@ -37,6 +37,9 @@ interface LinkedEntity {
   sort_order: number
   video_id: string | null
   primary_source: string
+  content_type: string | null
+  audio_url: string | null
+  audio_file: string | null
   is_premium: boolean
   created_at: string
 }
@@ -71,9 +74,11 @@ const episodeSaving = ref(false)
 const episodeForm = reactive({
   title_ar: '',
   title_en: '',
-  content_type: 'article' as 'article' | 'video',
+  content_type: 'article' as 'article' | 'video' | 'audio',
   is_premium: false,
   is_public_to_hub: false,
+  audio_url: '',
+  audio_file_url: '',
 })
 
 function localizedTitle(obj: Json): string {
@@ -130,7 +135,7 @@ async function fetchData() {
 
   const { data: eData } = await supabase
     .from('entities')
-    .select('id, title, content, branch_id, sort_order, video_id, primary_source, is_premium, created_at')
+    .select('id, title, content, branch_id, sort_order, video_id, primary_source, content_type, audio_url, audio_file, is_premium, created_at')
     .eq('series_id', seriesId)
     .eq('organization_id', id)
     .order('sort_order', { ascending: true })
@@ -205,6 +210,82 @@ async function onCoverSelected(event: Event) {
   input.value = ''
 }
 
+// --- Episode Edit ---
+const editingEpisodeId = ref<string | null>(null)
+const episodeEditSaving = ref(false)
+const episodeEditForm = reactive({
+  title_ar: '',
+  title_en: '',
+  content_type: 'article' as 'article' | 'video' | 'audio',
+  is_premium: false,
+  is_public_to_hub: false,
+  audio_url: '',
+  video_id: '',
+})
+
+function openEditEpisode(ep: LinkedEntity) {
+  editingEpisodeId.value = ep.id
+  const t = ep.title as Record<string, string>
+  episodeEditForm.title_ar = t.ar || ''
+  episodeEditForm.title_en = t.en || ''
+  episodeEditForm.content_type = (ep.content_type as any) || 'article'
+  episodeEditForm.is_premium = ep.is_premium
+  episodeEditForm.is_public_to_hub = (ep as any).is_public_to_hub ?? false
+  episodeEditForm.audio_url = ep.audio_url || ''
+  episodeEditForm.video_id = ep.video_id || ''
+  error.value = ''
+}
+
+function cancelEditEpisode() {
+  editingEpisodeId.value = null
+}
+
+async function saveEditEpisode() {
+  const epId = editingEpisodeId.value
+  if (!epId) return
+  if (!episodeEditForm.title_ar || !episodeEditForm.title_en) {
+    error.value = 'العنوان (بالعربية والإنجليزية) مطلوب'
+    return
+  }
+  episodeEditSaving.value = true
+  error.value = ''
+
+  const payload: Record<string, any> = {
+    title: { ar: episodeEditForm.title_ar, en: episodeEditForm.title_en } as Json,
+    content_type: episodeEditForm.content_type,
+    is_premium: episodeEditForm.is_premium,
+    is_public_to_hub: episodeEditForm.is_public_to_hub,
+  }
+
+  if (episodeEditForm.content_type === 'video') {
+    payload.video_id = episodeEditForm.video_id || null
+    payload.primary_source = episodeEditForm.video_id ? 'youtube' : ''
+    payload.audio_url = null
+  } else if (episodeEditForm.content_type === 'audio') {
+    payload.audio_url = episodeEditForm.audio_url || null
+    payload.video_id = null
+    payload.primary_source = ''
+  } else {
+    payload.video_id = null
+    payload.primary_source = ''
+    payload.audio_url = null
+  }
+
+  const { error: uErr } = await supabase
+    .from('entities')
+    .update(payload)
+    .eq('id', epId)
+
+  episodeEditSaving.value = false
+  if (uErr) {
+    error.value = uErr.message
+    return
+  }
+
+  editingEpisodeId.value = null
+  await fetchData()
+}
+
 // --- Episode CRUD ---
 async function addEpisode() {
   error.value = ''
@@ -220,28 +301,27 @@ async function addEpisode() {
   const newSortOrder = maxOrder + 1
 
   const title = { ar: episodeForm.title_ar, en: episodeForm.title_en }
-  let content: Json
-  let primarySource = ''
+  const payload: Record<string, any> = {
+    organization_id: id,
+    branch_id: series.value.branch_id,
+    series_id: seriesId,
+    sort_order: newSortOrder,
+    title: title as Json,
+    content: { ar: '', en: '' } as Json,
+    primary_source: '',
+    is_premium: episodeForm.is_premium,
+    is_public_to_hub: episodeForm.is_public_to_hub,
+    content_type: episodeForm.content_type,
+  }
 
-  if (episodeForm.content_type === 'video') {
-    content = { ar: '', en: '' } as Json
-  } else {
-    content = { ar: '', en: '' } as Json
+  if (episodeForm.content_type === 'audio') {
+    payload.audio_url = episodeForm.audio_url || null
+    payload.audio_file = episodeForm.audio_file_url || null
   }
 
   const { error: insErr } = await supabase
     .from('entities')
-    .insert({
-      organization_id: id,
-      branch_id: series.value.branch_id,
-      series_id: seriesId,
-      sort_order: newSortOrder,
-      title: title as Json,
-      content,
-      primary_source: primarySource,
-      is_premium: episodeForm.is_premium,
-      is_public_to_hub: episodeForm.is_public_to_hub,
-    } as any)
+    .insert(payload as any)
 
   episodeSaving.value = false
   if (insErr) {
@@ -252,6 +332,8 @@ async function addEpisode() {
   episodeForm.title_en = ''
   episodeForm.is_premium = false
   episodeForm.is_public_to_hub = false
+  episodeForm.audio_url = ''
+  episodeForm.audio_file_url = ''
   showAddEpisode.value = false
   await fetchData()
 }
@@ -299,8 +381,9 @@ async function moveDown(entity: LinkedEntity, index: number) {
 }
 
 function episodeType(entity: LinkedEntity): string {
-  if (entity.video_id) return '🎬 فيديو'
-  if (entity.primary_source === 'audio') return '🎙️ بودكاست'
+  const ct = entity.content_type
+  if (ct === 'audio') return '🎙️ صوتيات / بودكاست'
+  if (ct === 'video' || entity.video_id) return '🎬 فيديو'
   return '📝 مقال'
 }
 
@@ -328,8 +411,8 @@ function episodeContentSummary(entity: LinkedEntity): string {
       <!-- ===== Top Row: Series Metadata ===== -->
       <div class="glass rounded-2xl border border-white/5 overflow-hidden">
         <!-- Edit meta header -->
-        <div v-if="!editingMeta" class="flex items-start gap-6 p-6">
-          <div class="relative w-48 shrink-0 aspect-video rounded-xl overflow-hidden bg-white/5 border border-white/5 group cursor-pointer" @click="triggerCoverUpload">
+          <div v-if="!editingMeta" class="flex flex-col md:flex-row items-start gap-4 md:gap-6 p-4 sm:p-6">
+          <div class="relative w-full md:w-48 shrink-0 aspect-video rounded-xl overflow-hidden bg-white/5 border border-white/5 group cursor-pointer" @click="triggerCoverUpload">
             <img v-if="series.cover_url" :src="series.cover_url" class="w-full h-full object-cover transition-transform group-hover:scale-105" />
             <div v-else class="w-full h-full flex items-center justify-center">
               <svg class="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -385,9 +468,12 @@ function episodeContentSummary(entity: LinkedEntity): string {
             <textarea v-model="editForm.description_ar" rows="3" placeholder="الوصف بالعربية" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-gold/50 resize-none" />
             <textarea v-model="editForm.description_en" dir="ltr" rows="3" placeholder="Description (English)" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-gold/50 resize-none" />
           </div>
-          <select v-model="editForm.branch_id" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold/50">
-            <option v-for="b in branches" :key="b.id" :value="b.id">{{ localizedValue(b.name, locale) }}</option>
-          </select>
+          <AppSelect
+            :model-value="editForm.branch_id"
+            :options="branches.map(b => ({ value: b.id, label: localizedValue(b.name, locale) }))"
+            placeholder=" "
+            @update:model-value="editForm.branch_id = $event"
+          />
         </div>
       </div>
 
@@ -415,13 +501,17 @@ function episodeContentSummary(entity: LinkedEntity): string {
                 <input v-model="episodeForm.title_ar" type="text" placeholder="العنوان بالعربية" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-gold/50" />
                 <input v-model="episodeForm.title_en" type="text" dir="ltr" placeholder="Title (English)" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-gold/50" />
               </div>
-              <div class="flex items-center gap-6">
-                <label class="flex items-center gap-2 text-sm text-gray-400">
-                  <select v-model="episodeForm.content_type" class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gold/50">
-                    <option value="article">📝 مقال</option>
-                    <option value="video">🎬 فيديو</option>
-                  </select>
-                </label>
+              <div class="flex items-center gap-6 flex-wrap">
+                <AppSelect
+                  :model-value="episodeForm.content_type"
+                  :options="[
+                    { value: 'article', label: '📝 مقال' },
+                    { value: 'video', label: '🎬 فيديو' },
+                    { value: 'audio', label: '🎙️ صوتيات / بودكاست' },
+                  ]"
+                  placeholder=" "
+                  @update:model-value="episodeForm.content_type = $event"
+                />
                 <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
                   <input v-model="episodeForm.is_premium" type="checkbox" class="accent-gold" />
                   محتوى مدفوع
@@ -430,6 +520,14 @@ function episodeContentSummary(entity: LinkedEntity): string {
                   <input v-model="episodeForm.is_public_to_hub" type="checkbox" class="accent-gold" />
                   منشور في الـ Hub
                 </label>
+              </div>
+              <div v-if="episodeForm.content_type === 'audio'" class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                  <input v-model="episodeForm.audio_url" type="text" dir="ltr" placeholder="رابط البث الخارجي (مثل SoundCloud, Spotify embed URL)" class="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-gold/50" />
+                </div>
               </div>
               <div class="flex gap-2">
                 <Button :loading="episodeSaving" @click="addEpisode">إضافة</Button>
@@ -452,92 +550,152 @@ function episodeContentSummary(entity: LinkedEntity): string {
         </div>
 
         <div v-else class="space-y-2">
-          <div
-            v-for="(ep, i) in episodes"
-            :key="ep.id"
-            class="flex items-center gap-3 glass rounded-xl px-4 py-3 border border-white/5 hover:border-white/10 transition-all group"
-          >
-            <!-- Sort order badge -->
-            <div class="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-              <span class="text-xs font-bold text-gray-400">{{ i + 1 }}</span>
-            </div>
-
-            <!-- Content type icon -->
-            <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="ep.video_id ? 'bg-purple-500/10 text-purple-400' : ep.primary_source === 'audio' ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'">
-              <span class="text-sm">{{ ep.video_id ? '🎬' : ep.primary_source === 'audio' ? '🎙️' : '📝' }}</span>
-            </div>
-
-            <!-- Info -->
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-white truncate">{{ localizedTitle(ep.title) }}</p>
-              <p class="text-[11px] text-gray-500 mt-0.5">{{ episodeType(ep) }}</p>
-            </div>
-
-            <!-- Reorder arrows -->
-            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                class="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20"
-                :disabled="i === 0"
-                @click="moveUp(ep, i)"
-              >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                </svg>
-              </button>
-              <button
-                class="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20"
-                :disabled="i >= episodes.length - 1"
-                @click="moveDown(ep, i)"
-              >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- Remove / Delete -->
-            <div class="relative">
-              <button
-                class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
-                @click="confirmDeleteId = ep.id"
-              >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-
-              <Transition name="fade">
-                <div
-                  v-if="confirmDeleteId === ep.id"
-                  class="absolute left-0 top-0 z-20 bg-black/95 backdrop-blur-xl rounded-xl p-4 border border-white/10 shadow-2xl w-64"
-                >
-                  <p class="text-xs text-gray-300 mb-3 leading-relaxed">
-                    هل تريد <span class="text-red-400">حذف</span> المحتوى بالكامل أم <span class="text-amber-400">فصل</span> السلسلة فقط؟
-                  </p>
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all"
-                      @click="deleteEntity(ep.id)"
-                    >
-                      حذف كلي
-                    </button>
-                    <button
-                      class="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 transition-all"
-                      @click="removeFromSeries(ep.id)"
-                    >
-                      فصل فقط
-                    </button>
-                    <button
-                      class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-gray-400 border border-white/10 hover:bg-white/20 transition-all"
-                      @click="confirmDeleteId = null"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
+          <template v-for="(ep, i) in episodes" :key="ep.id">
+            <!-- Edit form -->
+            <div
+              v-if="editingEpisodeId === ep.id"
+              class="glass rounded-xl p-4 sm:p-5 border border-gold/20 bg-gold/[0.02] space-y-4"
+            >
+              <div class="flex items-center justify-between">
+                <h4 class="text-sm font-bold text-gold">تعديل الحلقة</h4>
+                <div class="flex gap-2">
+                  <Button variant="outline" size="sm" @click="cancelEditEpisode">إلغاء</Button>
+                  <Button size="sm" :loading="episodeEditSaving" @click="saveEditEpisode">حفظ</Button>
                 </div>
-              </Transition>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input v-model="episodeEditForm.title_ar" type="text" placeholder="العنوان بالعربية" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-gold/50" />
+                <input v-model="episodeEditForm.title_en" type="text" dir="ltr" placeholder="Title (English)" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-gold/50" />
+              </div>
+              <div class="flex items-center gap-4 flex-wrap">
+                <AppSelect
+                  :model-value="episodeEditForm.content_type"
+                  :options="[
+                    { value: 'article', label: '📝 مقال' },
+                    { value: 'video', label: '🎬 فيديو' },
+                    { value: 'audio', label: '🎙️ صوتيات / بودكاست' },
+                  ]"
+                  placeholder=" "
+                  @update:model-value="episodeEditForm.content_type = $event"
+                />
+                <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                  <input v-model="episodeEditForm.is_premium" type="checkbox" class="accent-gold" />
+                  محتوى مدفوع
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                  <input v-model="episodeEditForm.is_public_to_hub" type="checkbox" class="accent-gold" />
+                  منشور في الـ Hub
+                </label>
+              </div>
+              <div v-if="episodeEditForm.content_type === 'video'">
+                <input v-model="episodeEditForm.video_id" type="text" dir="ltr" placeholder="معرف الفيديو (YouTube)" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 font-mono focus:outline-none focus:border-gold/50" />
+              </div>
+              <div v-if="episodeEditForm.content_type === 'audio'" class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+                <input v-model="episodeEditForm.audio_url" type="text" dir="ltr" placeholder="رابط البث الخارجي (SoundCloud, Spotify...)" class="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-gold/50" />
+              </div>
             </div>
-          </div>
+
+            <!-- Episode row -->
+            <div
+              v-else
+              class="flex items-center gap-3 glass rounded-xl px-4 py-3 border border-white/5 hover:border-white/10 transition-all group"
+            >
+              <!-- Sort order badge -->
+              <div class="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                <span class="text-xs font-bold text-gray-400">{{ i + 1 }}</span>
+              </div>
+
+              <!-- Content type icon -->
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="ep.content_type === 'audio' ? 'bg-purple-500/10 text-purple-400' : ep.content_type === 'video' || ep.video_id ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'">
+                <span class="text-sm">{{ ep.content_type === 'audio' ? '🎙️' : ep.content_type === 'video' || ep.video_id ? '🎬' : '📝' }}</span>
+              </div>
+
+              <!-- Info -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-white truncate">{{ localizedTitle(ep.title) }}</p>
+                <p class="text-[11px] text-gray-500 mt-0.5">{{ episodeType(ep) }}</p>
+              </div>
+
+              <!-- Reorder arrows -->
+              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  class="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20"
+                  :disabled="i === 0"
+                  @click="moveUp(ep, i)"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                  </svg>
+                </button>
+                <button
+                  class="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20"
+                  :disabled="i >= episodes.length - 1"
+                  @click="moveDown(ep, i)"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Edit -->
+              <button
+                class="p-1.5 rounded-lg text-gray-500 hover:text-gold hover:bg-gold/10 transition-all opacity-0 group-hover:opacity-100"
+                :title="$t('common.edit')"
+                @click="openEditEpisode(ep)"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+
+              <!-- Remove / Delete -->
+              <div class="relative">
+                <button
+                  class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                  @click="confirmDeleteId = ep.id"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+
+                <Transition name="fade">
+                  <div
+                    v-if="confirmDeleteId === ep.id"
+                    class="absolute left-0 top-0 z-20 bg-black/95 backdrop-blur-xl rounded-xl p-4 border border-white/10 shadow-2xl w-64"
+                  >
+                    <p class="text-xs text-gray-300 mb-3 leading-relaxed">
+                      هل تريد <span class="text-red-400">حذف</span> المحتوى بالكامل أم <span class="text-amber-400">فصل</span> السلسلة فقط؟
+                    </p>
+                    <div class="flex items-center gap-2">
+                      <button
+                        class="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all"
+                        @click="deleteEntity(ep.id)"
+                      >
+                        حذف كلي
+                      </button>
+                      <button
+                        class="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 transition-all"
+                        @click="removeFromSeries(ep.id)"
+                      >
+                        فصل فقط
+                      </button>
+                      <button
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-gray-400 border border-white/10 hover:bg-white/20 transition-all"
+                        @click="confirmDeleteId = null"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>

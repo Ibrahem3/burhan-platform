@@ -89,12 +89,17 @@ export interface Database {
           title: Json
           content: Json
           is_public_to_hub: boolean
+          content_type: string
           video_id: string | null
           primary_source: string
           fallback_source: string | null
           fallback_url: string | null
+          audio_url: string | null
+          audio_file: string | null
           is_premium: boolean
           price: number | null
+          series_id: string | null
+          sort_order: number
           created_at: string
         }
         Insert: {
@@ -104,12 +109,17 @@ export interface Database {
           title: Json
           content?: Json
           is_public_to_hub?: boolean
+          content_type?: string
           video_id?: string | null
           primary_source?: string
           fallback_source?: string | null
           fallback_url?: string | null
+          audio_url?: string | null
+          audio_file?: string | null
           is_premium?: boolean
           price?: number | null
+          series_id?: string | null
+          sort_order?: number
           created_at?: string
         }
         Update: {
@@ -119,12 +129,17 @@ export interface Database {
           title?: Json
           content?: Json
           is_public_to_hub?: boolean
+          content_type?: string
           video_id?: string | null
           primary_source?: string
           fallback_source?: string | null
           fallback_url?: string | null
+          audio_url?: string | null
+          audio_file?: string | null
           is_premium?: boolean
           price?: number | null
+          series_id?: string | null
+          sort_order?: number
           created_at?: string
         }
       }

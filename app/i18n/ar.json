@@ -21,7 +21,12 @@
     "no_public_entities": "لا يوجد محتوى عام حتى الآن",
     "hero_description": "منصة متعددة المنظمات تجمع الردود الفكرية، الحوارات العلمية، والأرشيف الإعلامي في مكان واحد",
     "cta_browse": "ابدأ التصفح",
-    "cta_learn": "اعرف المزيد"
+    "cta_learn": "اعرف المزيد",
+    "orgs_title": "المنظمات المسجلة",
+    "orgs_subtitle": "اكتشف المحتوى من جميع المنظمات على المنصة",
+    "orgs_count": "{count} من المواد",
+    "loading_orgs": "جارٍ تحميل المنظمات...",
+    "no_orgs": "لا توجد منظمات مسجلة بعد"
   },
   "brand": {
     "name": "بُرهان",
@@ -41,7 +46,19 @@
     "loading_org": "جارٍ تحميل بيانات المنظمة...",
     "org_not_found_title": "المنظمة غير موجودة",
     "org_not_found_desc": "عذراً، لم نتمكن من العثور على منظمة بهذا الرابط",
-    "back_to_org": "العودة إلى المنظمة"
+    "back_to_org": "العودة إلى المنظمة",
+    "back_to_course": "العودة للكورس",
+    "welcome": "أكاديمية {name}",
+    "hero_cta": "ابدأ التعلم الآن 🚀",
+    "index_title": "فهرس الدروس",
+    "series_title": "السلاسل التعليمية والكورسات",
+    "series_badge": "سلسلة 📚",
+    "series_cta": "ادخل للدورة",
+    "latest_title": "آخر الإضافات",
+    "org_entities_count": "{count} دورة",
+    "nav_home": "الرئيسية",
+    "nav_about": "عن المنظمة",
+    "nav_content": "المحتوى"
   },
   "org_header": {
     "home_link": "الصفحة الرئيسية للمنظمة",
@@ -64,7 +81,8 @@
     "private": "خاص",
     "by_organization": "بواسطة {name}",
     "published_date": "نُشر في {date}",
-    "no_entities_in_branch": "لا توجد محتويات في هذا الفرع بعد"
+    "no_entities_in_branch": "لا توجد محتويات في هذا الفرع بعد",
+    "reading_time": "قراءة {minutes} دقيقة"
   },
   "video": {
     "loading": "جارٍ تحميل الفيديو...",
@@ -180,6 +198,7 @@
     "content_type": "نوع المحتوى",
     "type_video": "فيديو",
     "type_article": "مقال",
+    "type_audio": "صوتيات",
     "target_branch": "الفرع المستهدف",
     "video_id": "معرف الفيديو",
     "video_id_placeholder": "رابط يوتيوب أو معرف الفيديو",
@@ -257,6 +276,7 @@
     "delete": "حذف",
     "edit": "تعديل",
     "create": "إنشاء",
+    "menu": "القائمة",
     "search": "بحث",
     "no_results": "لا توجد نتائج",
     "show_more": "عرض المزيد",
