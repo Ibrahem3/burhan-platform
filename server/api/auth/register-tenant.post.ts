@@ -42,7 +42,8 @@ export default defineEventHandler(async (event) => {
       .single()
 
     if (orgError || !org?.id) {
-      throw createError({ statusCode: 500, statusMessage: 'Failed to create organization' })
+      console.error('[register-tenant] orgError:', orgError)
+      throw createError({ statusCode: 500, statusMessage: `Failed to create organization: ${orgError?.message || 'unknown'}` })
     }
 
     const { data: branch, error: branchError } = await admin
@@ -56,7 +57,9 @@ export default defineEventHandler(async (event) => {
       .single()
 
     if (branchError || !branch?.id) {
-      throw createError({ statusCode: 500, statusMessage: 'Failed to create default branch' })
+      console.error('[register-tenant] branchError:', branchError)
+      console.error('[register-tenant] branch data:', branch)
+      throw createError({ statusCode: 500, statusMessage: `Failed to create default branch: ${branchError?.message || 'branch data missing'}` })
     }
 
     const { error: profileError } = await admin
@@ -68,14 +71,16 @@ export default defineEventHandler(async (event) => {
       .eq('id', user.id)
 
     if (profileError) {
-      throw createError({ statusCode: 500, statusMessage: 'Failed to update profile' })
+      console.error('[register-tenant] profileError:', profileError)
+      throw createError({ statusCode: 500, statusMessage: `Failed to update profile: ${profileError.message}` })
     }
 
     return { org, branch }
   } catch (err: any) {
+    console.error('[register-tenant] Unhandled error:', err)
     throw createError({
       statusCode: err.statusCode || 500,
-      statusMessage: err.statusMessage || 'Internal server error',
+      statusMessage: err.statusMessage || err.message || 'Internal server error',
     })
   }
 })
