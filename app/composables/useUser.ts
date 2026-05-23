@@ -13,17 +13,15 @@ export const useUser = () => {
       return
     }
 
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.value.id)
-        .single()
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.value.id)
+      .maybeSingle()
 
-      if (data) {
-        profile.value = data
-      }
-    } catch {
+    if (data) {
+      profile.value = data
+    } else {
       profile.value = null
     }
   }

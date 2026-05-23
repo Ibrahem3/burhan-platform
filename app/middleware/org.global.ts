@@ -30,14 +30,14 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
         .from('profiles')
         .select('organization_id')
         .eq('id', user.value.id)
-        .single()
+        .maybeSingle()
 
       if (profile?.organization_id) {
         const { data: fallbackOrg } = await supabase
           .from('organizations')
           .select('id, name, org_slug, settings')
           .eq('id', profile.organization_id)
-          .single()
+          .maybeSingle()
 
         if (fallbackOrg) {
           useState('org').value = fallbackOrg
