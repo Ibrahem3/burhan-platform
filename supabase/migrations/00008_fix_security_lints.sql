@@ -15,10 +15,8 @@
 -- ============================================================
 DROP POLICY IF EXISTS "org_assets_select" ON storage.objects;
 
--- Authenticated users can still list (needed by dashboard)
-CREATE POLICY "org_assets_select_authenticated"
-  ON storage.objects FOR SELECT TO authenticated
-  USING (bucket_id = 'organization_assets');
+-- Also drop any authenticated-only variant left from a previous run
+DROP POLICY IF EXISTS "org_assets_select_authenticated" ON storage.objects;
 
 -- 2. Revoke EXECUTE on org-helper functions from anon only
 --    (authenticated users still need them for RLS policies;
@@ -38,11 +36,11 @@ GRANT EXECUTE ON FUNCTION public.get_current_user_role()
 --    (safe: trigger fires with owner privileges, not via RPC)
 -- ============================================================
 REVOKE EXECUTE ON FUNCTION public.handle_new_user()
-  FROM public, anon;
+  FROM public, anon, authenticated;
 
 -- 4. rls_auto_enable is used by Supabase internal event trigger
---    `ensure_rls` — can't drop; just revoke public/anon EXECUTE.
+--    `ensure_rls` — can't drop; just revoke all user roles.
 --    Trigger runs with owner privileges, so no re-grant needed.
 -- ============================================================
 REVOKE EXECUTE ON FUNCTION public.rls_auto_enable()
-  FROM public, anon;
+  FROM public, anon, authenticated;
