@@ -23,6 +23,13 @@ useHead({
     { rel: 'icon', type: 'image/webp', href: '/favicon.webp' },
     { rel: 'apple-touch-icon', href: '/favicon.webp' },
   ],
+  script: [
+    {
+      src: 'https://analytics.ainux.online/script.js',
+      'data-website-id': 'b801cae7-daa7-458d-8225-ba3f54a92cf7',
+      defer: true,
+    },
+  ],
 })
 
 watch(
