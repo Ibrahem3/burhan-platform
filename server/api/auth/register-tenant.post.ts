@@ -51,6 +51,7 @@ export default defineEventHandler(async (event) => {
       .insert({
         organization_id: org.id,
         name: { ar: 'الفرع الرئيسي', en: 'Main Branch' },
+        slug: 'main',
         module_type: 'content',
       })
       .select('id, organization_id')
