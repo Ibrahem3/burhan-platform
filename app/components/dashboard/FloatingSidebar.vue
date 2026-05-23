@@ -11,11 +11,37 @@ const mobileNavOpen = ref(false)
 
 const { visible: fabVisible } = useScrollAware()
 
+if (!org.value && user.value) {
+  supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.value.id)
+    .maybeSingle()
+    .then(({ data: profile }) => {
+      if (profile?.organization_id) {
+        supabase
+          .from('organizations')
+          .select('id, name, org_slug, settings')
+          .eq('id', profile.organization_id)
+          .maybeSingle()
+          .then(({ data: orgData }) => {
+            if (orgData) org.value = orgData
+          })
+      }
+    })
+}
+
 const isActive = (path: string) => route.path === localePath(path)
 
 const orgName = computed(() => {
-  const o = org.value as { name?: string } | null
-  return o?.name || ''
+  const o = org.value as { name?: Record<string,string> | string } | null
+  if (!o?.name) return ''
+  return localizedValue(o.name, locale.value === 'en' ? 'en' : 'ar')
+})
+
+const orgSlug = computed(() => {
+  const o = org.value as { org_slug?: string } | null
+  return o?.org_slug || ''
 })
 
 const userInitials = computed(() => {
@@ -144,7 +170,7 @@ function closeMobileNav() {
           <!-- Hub link -->
           <div class="px-3 py-2 border-t border-white/5">
             <NuxtLink
-              :to="localePath('/')"
+              :to="orgSlug ? localePath(`/${orgSlug}`) : localePath('/')"
               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-gold hover:bg-white/5 transition-all duration-200"
             >
               <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -284,7 +310,7 @@ function closeMobileNav() {
           <hr class="border-white/5 my-4" />
 
           <NuxtLink
-            :to="localePath('/')"
+            :to="orgSlug ? localePath(`/${orgSlug}`) : localePath('/')"
             class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium text-gray-500 hover:text-gold hover:bg-white/5 transition-all duration-200"
             @click="closeMobileNav"
           >
