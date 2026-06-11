@@ -2,6 +2,9 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type ModuleType = 'content' | 'forum' | 'media'
 export type UserRole = 'super_admin' | 'owner' | 'manager' | 'member'
+export type DangerLevel = 'Low' | 'Medium' | 'High'
+export type ThreatStatus = 'pending' | 'under_review' | 'neutralized'
+export type AnalystRole = 'observatory_manager' | 'observatory_analyst'
 
 export interface Database {
   public: {
@@ -140,6 +143,61 @@ export interface Database {
           price?: number | null
           series_id?: string | null
           sort_order?: number
+          created_at?: string
+        }
+      }
+      observatory_threats: {
+        Row: {
+          id: string
+          title: string
+          source_url: string
+          platform: string
+          danger_level: DangerLevel
+          status: ThreatStatus
+          assigned_scholar_id: string | null
+          reported_by: string | null
+          response_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          source_url: string
+          platform?: string
+          danger_level?: DangerLevel
+          status?: ThreatStatus
+          assigned_scholar_id?: string | null
+          reported_by?: string | null
+          response_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          source_url?: string
+          platform?: string
+          danger_level?: DangerLevel
+          status?: ThreatStatus
+          assigned_scholar_id?: string | null
+          reported_by?: string | null
+          response_url?: string | null
+          created_at?: string
+        }
+      }
+      observatory_analysts: {
+        Row: {
+          id: string
+          role_type: AnalystRole
+          created_at: string
+        }
+        Insert: {
+          id: string
+          role_type: AnalystRole
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          role_type?: AnalystRole
           created_at?: string
         }
       }

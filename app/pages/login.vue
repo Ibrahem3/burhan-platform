@@ -26,6 +26,42 @@ async function handleLogin() {
       return
     }
 
+    const user = useSupabaseUser()
+
+    if (user.value) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, organization_id')
+        .eq('id', user.value.id)
+        .maybeSingle()
+
+      if (profile?.role === 'super_admin') {
+        return navigateTo('/admin/dashboard')
+      }
+
+      const { data: analyst } = await supabase
+        .from('observatory_analysts')
+        .select('role_type')
+        .eq('id', user.value.id)
+        .maybeSingle()
+
+      if (analyst) {
+        return navigateTo('/observatory/dashboard')
+      }
+
+      if (profile?.organization_id) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('org_slug')
+          .eq('id', profile.organization_id)
+          .maybeSingle()
+
+        if (org?.org_slug) {
+          return navigateTo(`/${org.org_slug}`)
+        }
+      }
+    }
+
     await navigateTo('/')
   } catch {
     error.value = t('auth.login_error')

@@ -11,6 +11,17 @@ export default defineNuxtConfig({
     preset: 'cloudflare-pages',
   },
 
+  runtimeConfig: {
+    turnstile: {
+      secretKey: '',
+    },
+    public: {
+      turnstile: {
+        siteKey: '',
+      },
+    },
+  },
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/supabase',

@@ -4,6 +4,7 @@ const supabase = useSupabaseClient()
 const { t, locale, setLocale } = useI18n()
 const localePath = useLocalePath()
 const user = useSupabaseUser()
+const { isSuperAdmin } = useUser()
 
 const org = useState('org')
 const isPinned = useCookie('sidebar-pinned', { default: () => false })
@@ -32,6 +33,7 @@ if (!org.value && user.value) {
 }
 
 const isActive = (path: string) => route.path === localePath(path)
+const isObservatoryRoute = computed(() => route.path.startsWith('/observatory'))
 
 const orgName = computed(() => {
   const o = org.value as { name?: Record<string,string> | string } | null
@@ -135,36 +137,72 @@ function closeMobileNav() {
 
           <!-- Navigation -->
           <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-            <NuxtLink
-              :to="localePath('/dashboard')"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-              :class="isActive('/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
-            >
-              <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span>{{ $t('dashboard.overview') }}</span>
-            </NuxtLink>
-            <NuxtLink
-              :to="localePath('/dashboard/branches')"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-              :class="isActive('/dashboard/branches') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
-            >
-              <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-              </svg>
-              <span>{{ $t('dashboard.branches') }}</span>
-            </NuxtLink>
-            <NuxtLink
-              :to="localePath('/dashboard/entities')"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-              :class="isActive('/dashboard/entities') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
-            >
-              <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>{{ $t('dashboard.entities') }}</span>
-            </NuxtLink>
+            <template v-if="isSuperAdmin">
+              <NuxtLink
+                :to="localePath('/admin/dashboard')"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                :class="isActive('/admin/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              >
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Global Overview</span>
+              </NuxtLink>
+              <NuxtLink
+                :to="localePath('/observatory/dashboard')"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                :class="isActive('/observatory/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              >
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>{{ $t('observatory.nav') }}</span>
+              </NuxtLink>
+            </template>
+            <template v-else-if="isObservatoryRoute">
+              <NuxtLink
+                :to="localePath('/observatory/dashboard')"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                :class="isActive('/observatory/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              >
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>{{ $t('dashboard.observatory') }}</span>
+              </NuxtLink>
+            </template>
+            <template v-else>
+              <NuxtLink
+                :to="localePath('/dashboard')"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                :class="isActive('/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              >
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>{{ $t('dashboard.overview') }}</span>
+              </NuxtLink>
+              <NuxtLink
+                :to="localePath('/dashboard/branches')"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                :class="isActive('/dashboard/branches') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              >
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                <span>{{ $t('dashboard.branches') }}</span>
+              </NuxtLink>
+              <NuxtLink
+                :to="localePath('/dashboard/entities')"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                :class="isActive('/dashboard/entities') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              >
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>{{ $t('dashboard.entities') }}</span>
+              </NuxtLink>
+            </template>
           </nav>
 
           <!-- Hub link -->
@@ -273,39 +311,78 @@ function closeMobileNav() {
 
         <!-- Navigation -->
         <nav class="flex-1 space-y-1 overflow-y-auto px-2">
-          <NuxtLink
-            :to="localePath('/dashboard')"
-            class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
-            :class="isActive('/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
-            @click="closeMobileNav"
-          >
-            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            <span>{{ $t('dashboard.overview') }}</span>
-          </NuxtLink>
-          <NuxtLink
-            :to="localePath('/dashboard/branches')"
-            class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
-            :class="isActive('/dashboard/branches') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
-            @click="closeMobileNav"
-          >
-            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-            <span>{{ $t('dashboard.branches') }}</span>
-          </NuxtLink>
-          <NuxtLink
-            :to="localePath('/dashboard/entities')"
-            class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
-            :class="isActive('/dashboard/entities') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
-            @click="closeMobileNav"
-          >
-            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span>{{ $t('dashboard.entities') }}</span>
-          </NuxtLink>
+          <template v-if="isSuperAdmin">
+            <NuxtLink
+              :to="localePath('/admin/dashboard')"
+              class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
+              :class="isActive('/admin/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              @click="closeMobileNav"
+            >
+              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span>Global Overview</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="localePath('/observatory/dashboard')"
+              class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
+              :class="isActive('/observatory/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              @click="closeMobileNav"
+            >
+              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span>{{ $t('observatory.nav') }}</span>
+            </NuxtLink>
+          </template>
+          <template v-else-if="isObservatoryRoute">
+            <NuxtLink
+              :to="localePath('/observatory/dashboard')"
+              class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
+              :class="isActive('/observatory/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              @click="closeMobileNav"
+            >
+              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span>{{ $t('dashboard.observatory') }}</span>
+            </NuxtLink>
+          </template>
+          <template v-else>
+            <NuxtLink
+              :to="localePath('/dashboard')"
+              class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
+              :class="isActive('/dashboard') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              @click="closeMobileNav"
+            >
+              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span>{{ $t('dashboard.overview') }}</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="localePath('/dashboard/branches')"
+              class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
+              :class="isActive('/dashboard/branches') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              @click="closeMobileNav"
+            >
+              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+              <span>{{ $t('dashboard.branches') }}</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="localePath('/dashboard/entities')"
+              class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
+              :class="isActive('/dashboard/entities') ? 'bg-gold/10 text-gold' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+              @click="closeMobileNav"
+            >
+              <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>{{ $t('dashboard.entities') }}</span>
+            </NuxtLink>
+          </template>
 
           <hr class="border-white/5 my-4" />
 

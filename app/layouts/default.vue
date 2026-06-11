@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { org, orgName, orgSlug } = useOrg()
-const { user, signOut } = useUser()
+const { user, signOut, isSuperAdmin } = useUser()
 const { currentLocale, toggleLocale } = useLocale()
 const route = useRoute()
 
@@ -45,6 +45,13 @@ function closeMenu() {
             {{ $t('nav.home') }}
           </NuxtLink>
 
+          <NuxtLink
+            to="/observatory"
+            class="px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+          >
+            {{ $t('observatory.nav') }}
+          </NuxtLink>
+
           <button
             class="px-2 py-1.5 text-xs font-medium text-gray-400 hover:text-gold transition-colors rounded-lg hover:bg-white/5 tracking-wider"
             :aria-label="$t('locale.switch_to_en')"
@@ -55,6 +62,9 @@ function closeMenu() {
           </button>
 
           <template v-if="user">
+            <NuxtLink v-if="isSuperAdmin" to="/admin/dashboard">
+              <Button variant="ghost" size="sm">{{ $t('nav.admin') }}</Button>
+            </NuxtLink>
             <NuxtLink to="/dashboard">
               <Button variant="ghost" size="sm">{{ $t('nav.dashboard') }}</Button>
             </NuxtLink>
@@ -164,6 +174,14 @@ function closeMenu() {
               {{ $t('nav.home') }}
             </NuxtLink>
 
+            <NuxtLink
+              to="/observatory"
+              class="block px-3 py-2.5 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+              @click="closeMenu"
+            >
+              {{ $t('observatory.nav') }}
+            </NuxtLink>
+
             <button
               class="block w-full px-3 py-2.5 text-sm text-gray-400 hover:text-gold rounded-lg hover:bg-white/5 transition-colors"
               :class="currentLocale === 'ar' ? 'text-right' : 'text-left'"
@@ -175,6 +193,14 @@ function closeMenu() {
             <hr class="border-white/5 my-2" />
 
             <template v-if="user">
+              <NuxtLink
+                v-if="isSuperAdmin"
+                to="/admin/dashboard"
+                class="block px-3 py-2.5 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                @click="closeMenu"
+              >
+                {{ $t('nav.admin') }}
+              </NuxtLink>
               <NuxtLink
                 to="/dashboard"
                 class="block px-3 py-2.5 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
