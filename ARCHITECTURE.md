@@ -700,11 +700,14 @@ npm install
 npm run dev
 ```
 
-### Database Migration
+### Database Setup & Migration
 
 ```bash
-# Push to Supabase (via CLI or Supabase dashboard)
-# File: supabase/migrations/00001_initial_schema.sql
+# Run the unified setup script in the Supabase SQL Editor:
+# File: supabase/schema.sql
+
+# Or push migrations using Supabase CLI:
+# supabase db push
 ```
 
 ---
