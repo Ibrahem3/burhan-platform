@@ -13,6 +13,7 @@ Multi-tenant intellectual refutations platform for scholarly dialogues and media
 - **Floating sidebar** — hover-to-expand desktop nav with mobile overlay
 - **Video player** — YouTube + fallback source support
 - **Audio content** — audio content type for podcasts/lectures
+- **Digital Observatory** — cross-tenant threat reporting, Turnstile spam protection, and analyst review command center
 - **PWA** — offline caching, service worker, standalone install
 - **Analytics** — Umami self-hosted analytics
 - **Legal pages** — About, Privacy, Terms, Contact
@@ -106,6 +107,7 @@ burhan/
 | `00006` | Series and playlists tables |
 | `00007` | Add audio content type |
 | `00008` | Security lint fixes — revoke public/anon EXECUTE |
+| `00009` | Observatory module — threats, analysts, triggers, and RLS policies |
 
 ### Roles
 
@@ -154,6 +156,10 @@ npx wrangler pages deploy dist
 | `SUPABASE_URL` | Yes | Supabase project URL |
 | `SUPABASE_KEY` | Yes | Supabase anon/public key |
 | `SUPABASE_SECRET_KEY` | Yes | Service role key (admin operations) |
+| `NUXT_PUBLIC_SITE_URL` | No | Canonical base URL for production (defaults to localhost:3000) |
+| `NUXT_PUBLIC_SITE_NAME` | No | Site name for SEO (defaults to Burhan) |
+| `NUXT_PUBLIC_TURNSTILE_SITE_KEY` | No | Cloudflare Turnstile public site key for Digital Observatory |
+| `NUXT_TURNSTILE_SECRET_KEY` | No | Cloudflare Turnstile secret key for Digital Observatory verification |
 
 ---
 

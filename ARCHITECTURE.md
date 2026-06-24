@@ -30,6 +30,7 @@
 18. [Series / Courses Management](#18-series--courses-management)
 19. [FAB + Side Drawer Navigation Pattern](#19-fab--side-drawer-navigation-pattern)
 20. [Supabase Schema Reference](#supabase-schema-reference)
+21. [Digital Intellectual Observatory](#21-digital-intellectual-observatory)
 
 ---
 
@@ -1226,3 +1227,35 @@ No layout dependency — the page is fully portable.
 - All tables use `UUID PK` with `created_at TIMESTAMPTZ DEFAULT now()`
 - JSONB fields: `branches.name`, `series.title`, `series.description`, `entities.title`, `entities.content` — always `{ ar, en }`
 - Storage bucket: `organization_assets` for entity/series cover images (public-read, authenticated-write)
+
+---
+
+## 21. Digital Intellectual Observatory
+
+The Digital Intellectual Observatory (المرصد الرقمي الفكري) is a global cross-tenant monitoring module integrated into the Burhan Platform. It provides public-facing interfaces for reporting intellectual misconceptions and threats, combined with an isolated administrative workflow for scholarly refutation.
+
+### 21.1 Core Components
+
+```
+/observatory               → Public intake grid & neutralized defenses list
+/observatory/dashboard     → Analyst Command Center (Review queue + Scholar assignment + Response links)
+```
+
+- **Intake Form (`/observatory`):** Built with glowing neon grid aesthetics. Allows users to submit threat URLs (TikTok, YouTube, Facebook, X, etc.) with title, danger classification, type tag, and visually graded spread level.
+- **Defense Feed:** Displays neutralized threats that have a registered counter-measure (response URL), providing immediate access to scientific refutations.
+- **Command Center (`/observatory/dashboard`):** Real-time reactive counters showing total threats, active reviews, and neutralized threats. Allows managers to assign scholars, change status flags, inject counter-measure URLs, and add/remove analysts.
+
+### 21.2 Security & Roles Isolation
+
+To preserve security and ease SaaS monetization, the Observatory operates on an independent role management layer:
+1. **`observatory_manager`:** Full CRUD permissions on threat queues, and management capabilities for the analyst team.
+2. **`observatory_analyst`:** Read access to threats, with limited update rights (status flag, Counter-Measure URLs, assigned scholars).
+3. **`super_admin`:** Bypasses all controls and maintains global override capabilities.
+
+Managed via the `observatory_analysts` table. Users must pass the `observatory-auth.ts` middleware guard to access the dashboard.
+
+### 21.3 Cloudflare Turnstile Protection
+
+The public submission endpoint (`POST /api/observatory/report`) is protected by **Cloudflare Turnstile** to prevent robotic abuse.
+- Validation is performed server-side by checking the Turnstile token against `challenges.cloudflare.com/turnstile/v0/siteverify` using Nitros' fetch wrapper.
+- Controlled by `NUXT_PUBLIC_TURNSTILE_SITE_KEY` and `NUXT_TURNSTILE_SECRET_KEY` environment variables. If these variables are not configured in runtime config, the validation is skipped silently for testing.

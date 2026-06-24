@@ -155,6 +155,39 @@ INDEXES:
   idx_series_branch_id       ON (branch_id)
 ```
 
+### 2f. `observatory_analysts` — Observatory Access Control
+
+```sql
+CREATE TABLE observatory_analysts (
+  id           UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+  role_type    TEXT NOT NULL CHECK (role_type IN ('observatory_manager', 'observatory_analyst')),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+### 2g. `observatory_threats` — Digital Observatory Threats
+
+```sql
+CREATE TABLE observatory_threats (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title                TEXT NOT NULL,
+  source_url           TEXT NOT NULL,
+  platform             TEXT NOT NULL DEFAULT 'unknown',
+  danger_level         TEXT NOT NULL DEFAULT 'Medium' CHECK (danger_level IN ('Low', 'Medium', 'High')),
+  status               TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'under_review', 'neutralized')),
+  assigned_scholar_id  UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  reported_by          UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  response_url         TEXT,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INDEXES:
+  idx_threats_status        ON observatory_threats (status)
+  idx_threats_platform      ON observatory_threats (platform)
+  idx_threats_created_at    ON observatory_threats (created_at DESC)
+  idx_threats_neutralized   ON observatory_threats (status) WHERE status = 'neutralized'
+```
+
 ---
 
 ## 3. Triggers
@@ -187,6 +220,35 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION handle_new_user();
 ```
 
+### `auto_detect_platform()` — Auto-detect Threat Platform
+
+```sql
+CREATE OR REPLACE FUNCTION auto_detect_platform()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.platform := CASE
+    WHEN NEW.source_url ~* 'tiktok\.com'     THEN 'tiktok'
+    WHEN NEW.source_url ~* 'youtube\.com'    THEN 'youtube'
+    WHEN NEW.source_url ~* 'youtu\.be'       THEN 'youtube'
+    WHEN NEW.source_url ~* 'facebook\.com'   THEN 'facebook'
+    WHEN NEW.source_url ~* 'x\.com'          THEN 'x'
+    WHEN NEW.source_url ~* 'twitter\.com'    THEN 'x'
+    WHEN NEW.source_url ~* 'instagram\.com'  THEN 'instagram'
+    WHEN NEW.source_url ~* 'telegram\.(me|org)' THEN 'telegram'
+    ELSE 'other'
+  END;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_auto_detect_platform
+  BEFORE INSERT ON observatory_threats
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_detect_platform();
+```
+
 **Behavior:**
 - Fires on every `auth.users` INSERT (signup, admin create)
 - Creates a `profiles` row with `role = 'member'` and `organization_id = NULL`
@@ -196,7 +258,7 @@ CREATE TRIGGER on_auth_user_created
 
 ## 4. Helper Functions
 
-Both are `SECURITY DEFINER` (bypass RLS) to avoid recursion in profiles policies.
+All helper functions are `SECURITY DEFINER` (bypass RLS) to avoid recursion in RLS policies.
 
 ```sql
 -- Get current user's role (default: 'member')
@@ -217,9 +279,31 @@ LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public
 AS $$
   SELECT organization_id FROM profiles WHERE id = auth.uid() LIMIT 1;
 $$;
+
+-- Check if current user is an Observatory Manager
+CREATE FUNCTION public.is_observatory_manager()
+RETURNS BOOLEAN
+LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM observatory_analysts
+    WHERE id = auth.uid() AND role_type = 'observatory_manager'
+  );
+$$;
+
+-- Check if current user is a System Super Admin
+CREATE FUNCTION public.is_super_admin()
+RETURNS BOOLEAN
+LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid() AND role = 'super_admin'
+  );
+$$;
 ```
 
-**Permissions:** Revoked from `public`/`anon`, granted to `authenticated` only.
+**Permissions:** Helper function permissions are revoked from `public` and `anon`, and explicitly granted to `authenticated` users only (or restricted to triggers internally).
 
 ---
 
@@ -275,6 +359,30 @@ $$;
 | `series_insert_org` | INSERT | owner/manager (same org) + super_admin |
 | `series_update_org` | UPDATE | owner/manager (same org) + super_admin |
 | `series_delete_org` | DELETE | owner (same org) + super_admin |
+
+### 5f. `observatory_analysts`
+
+| Policy | Operation | Scope |
+|---|---|---|
+| `analysts_select_own` | SELECT | Own row only (`id = auth.uid()`) |
+| `analysts_select_all_manager_or_super_admin` | SELECT | Observatory Manager or System Super Admin |
+| `analysts_insert_manager_only` | INSERT | Observatory Manager or System Super Admin |
+| `analysts_delete_manager_only` | DELETE | Observatory Manager or System Super Admin |
+
+### 5g. `observatory_threats`
+
+| Policy | Operation | Scope |
+|---|---|---|
+| `threats_insert_public` | INSERT | Everyone (`anon` or `authenticated`) |
+| `threats_select_super_admin` | SELECT | Super Admin only |
+| `threats_update_super_admin` | UPDATE | Super Admin only |
+| `threats_delete_super_admin` | DELETE | Super Admin only |
+| `threats_select_manager` | SELECT | Observatory Manager only |
+| `threats_update_manager` | UPDATE | Observatory Manager only |
+| `threats_delete_manager` | DELETE | Observatory Manager only |
+| `threats_select_analyst` | SELECT | Observatory Analyst only |
+| `threats_update_analyst` | UPDATE | Observatory Analyst only |
+| `threats_select_neutralized_public` | SELECT | Everyone (`anon`/`auth`) for neutralized threats only (`status = 'neutralized'`) |
 
 ---
 
@@ -407,6 +515,32 @@ Returns the 50 latest public non-premium entities for the hub feed. Includes nes
 ]
 ```
 
+### `POST /api/observatory/report`
+
+Public reporting endpoint for registering intellectual threats. Bypasses RLS to submit a threat and automatically uses Turnstile verification if keys are provided in runtime config.
+
+**Request body:**
+```json
+{
+  "title": "string (Threat title/description)",
+  "sourceUrl": "string (External platform URL)",
+  "turnstileToken": "string (Cloudflare Turnstile client verification token)"
+}
+```
+
+### `POST /api/observatory/analysts`
+
+Admin endpoint for adding new observatory analysts. Restricted to Observatory Managers or Super Admins.
+
+**Request body:**
+```json
+{
+  "email": "string (Target user's email)",
+  "roleType": "string ('observatory_manager' | 'observatory_analyst')",
+  "accessToken": "string (Caller's session access token)"
+}
+```
+
 ### Server Utilities
 
 **`server/utils/supabase.ts`:**
@@ -435,14 +569,22 @@ The admin client has `autoRefreshToken: false` and `persistSession: false` since
    supabase/migrations/00006_series_and_playlists.sql
    supabase/migrations/00007_add_content_type_audio.sql
    supabase/migrations/00008_fix_security_lints.sql
+   supabase/migrations/00009_observatory_module.sql
    ```
 
 ### Environment Variables
 
+Copy `.env.example` to `.env` and fill in the values:
+```bash
+cp .env.example .env
+```
+Key variables required:
 ```
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your-anon-key
 SUPABASE_SECRET_KEY=your-service-role-key
+NUXT_PUBLIC_TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
+NUXT_TURNSTILE_SECRET_KEY=your-cloudflare-turnstile-secret-key
 ```
 
 ### Using Supabase CLI (Alternative)
@@ -454,6 +596,7 @@ supabase db push
 
 ### Verify Setup
 
-1. Sign up a user → profile auto-created by trigger
-2. POST to `/api/auth/register-tenant` → org + main branch + profile updated
-3. Check RLS: anon can SELECT organizations; auth can SELECT own profile
+1. Sign up a user → profile auto-created by trigger.
+2. POST to `/api/auth/register-tenant` → org + main branch + profile updated.
+3. Add a user as an observatory analyst using the database or `/api/observatory/analysts` endpoint.
+4. Verify RLS: unauthenticated users should only be able to query neutralized threats.
