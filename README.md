@@ -128,17 +128,24 @@ burhan/
 
 ### Local Development
 
-```bash
-# Install dependencies
-npm install
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-# Environment variables
-cp .env.example .env
-# Fill in SUPABASE_URL, SUPABASE_KEY, SUPABASE_SECRET_KEY
+2. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   Open the generated `.env` file and fill in `SUPABASE_URL`, `SUPABASE_KEY`, and `SUPABASE_SECRET_KEY`. Optionally add Turnstile site keys for the Observatory module.
 
-# Start dev server
-npm run dev
-```
+3. **Initialize the database:**
+   Go to the **SQL Editor** in your Supabase project dashboard, copy the entire contents of the unified setup script [`supabase/schema.sql`](file:///mnt/Data/burhan/supabase/schema.sql), paste it, and click **Run**. This will build the tables, enums, triggers, and RLS policies.
+
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
 
 ### Deploy to Cloudflare Pages
 
