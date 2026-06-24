@@ -557,20 +557,10 @@ The admin client has `autoRefreshToken: false` and `persistSession: false` since
 
 ### Create a New Supabase Project
 
-1. Go to [supabase.com](https://supabase.com) and create a project
-2. Go to **SQL Editor**
-3. Run each migration file in order:
-   ```
-   supabase/migrations/00001_initial_schema.sql
-   supabase/migrations/00002_fix_branches_rls.sql
-   supabase/migrations/00003_fix_profiles_rls_recursion.sql
-   supabase/migrations/00004_add_branch_slug_is_active.sql
-   supabase/migrations/00005_storage_bucket_policies.sql
-   supabase/migrations/00006_series_and_playlists.sql
-   supabase/migrations/00007_add_content_type_audio.sql
-   supabase/migrations/00008_fix_security_lints.sql
-   supabase/migrations/00009_observatory_module.sql
-   ```
+1. Go to [supabase.com](https://supabase.com) and create a project.
+2. Go to **SQL Editor** in the Supabase Dashboard.
+3. Open the unified setup script [`supabase/schema.sql`](file:///mnt/Data/burhan/supabase/schema.sql), copy its entire contents, paste it into the SQL Editor, and click **Run**. This will build all tables, custom enums, trigger functions, RLS policies, indexes, and storage bucket settings at once.
+
 
 ### Environment Variables
 
