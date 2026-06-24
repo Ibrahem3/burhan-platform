@@ -64,7 +64,8 @@ burhan/
 │   │   └── orgs/[slug].ts
 │   └── utils/                    # supabase.ts (admin client)
 ├── supabase/
-│   └── migrations/               # 00001 – 00008
+│   ├── migrations/               # 00001 – 00009
+│   └── schema.sql                # Unified database setup script
 ├── public/                       # Static assets (favicon, loader, PWA icons)
 ├── nuxt.config.ts
 ├── tailwind.config.ts
