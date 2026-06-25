@@ -7,7 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - [`tsconfig.json`](file:///mnt/Data/burhan/tsconfig.json): Removed redundant manual path/types overrides that conflicted with Nuxt 4 auto-generated TS configurations.
 - [`server/utils/supabase.ts`](file:///mnt/Data/burhan/server/utils/supabase.ts): Corrected server database type import path using relative notation to align with Nuxt 4 server boundary resolution.
-- [`app/pages/observatory/index.vue`](file:///mnt/Data/burhan/app/pages/observatory/index.vue): Resolved index-access strict typecheck errors by introducing optional chaining and fallback empty strings for visual spread labels.
+- [`app/pages/observatory/index.vue`](file:///mnt/Data/burhan/app/pages/observatory/index.vue): Resolved index-access strict typecheck errors by introducing optional chaining and fallback empty strings for visual spread labels. Added safety check for `turnstileSiteKey` existence and wrapped token retrieval in a `try-catch` block to prevent Turnstile runtime errors when unconfigured.
+- [`app/i18n/ar.json`](file:///mnt/Data/burhan/app/i18n/ar.json) & [`app/i18n/en.json`](file:///mnt/Data/burhan/app/i18n/en.json): Escaped literal `@` symbol in `form_url_placeholder` using `{'@'}` to avoid vue-i18n compiler failures.
 
 ### Changed
 - [`app/pages/observatory/index.vue`](file:///mnt/Data/burhan/app/pages/observatory/index.vue): Localized all remaining hardcoded Arabic texts from templates, utilizing i18n keys for priority level selectors, threat tags, and visual spread slider.
