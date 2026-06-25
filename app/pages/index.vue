@@ -191,7 +191,7 @@ function scrollToSection(id: string) {
       </section>
 
       <!-- Organizations Grid -->
-      <section id="orgs-grid" class="max-w-7xl mx-auto px-4 pb-24">
+      <section id="orgs-grid" class="max-w-7xl mx-auto px-4 pt-16 md:pt-24 pb-24">
         <div class="mb-10 text-center">
           <h2 class="text-3xl md:text-4xl font-bold text-white mb-2">
             {{ $t('hub.orgs_title') }}
