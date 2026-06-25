@@ -233,7 +233,7 @@ function scrollToSection(id: string) {
         </div>
 
         <!-- Empty -->
-        <div v-else-if="organizations.length === 0" class="text-center py-16">
+        <div v-else-if="!organizations || organizations.length === 0" class="text-center py-16">
           <GlassCard class="max-w-md mx-auto">
             <div class="py-8">
               <svg class="w-12 h-12 text-gray-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -252,26 +252,29 @@ function scrollToSection(id: string) {
             :to="`/${org.org_slug}`"
             class="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 rounded-2xl"
           >
-            <div class="glass rounded-2xl p-5 relative overflow-hidden transition-all duration-300 group-hover:shadow-glow group-hover:-translate-y-0.5">
-              <!-- Top gradient accent -->
-              <div class="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-gold/40 via-gold to-gold/40 opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div
+              class="relative rounded-2xl p-5 border border-white/[0.05] overflow-hidden transition-all duration-500 group-hover:border-gold/35 group-hover:shadow-glow group-hover:-translate-y-1"
+              style="background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);"
+            >
+              <!-- Top border glow gradient -->
+              <div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-gold/0 via-gold/40 to-gold/0 opacity-60 group-hover:opacity-100 transition-opacity" />
 
-              <!-- Background subtle pattern -->
-              <div class="absolute -top-20 -right-20 w-40 h-40 bg-gold/[0.03] rounded-full blur-2xl transition-all duration-500 group-hover:scale-150" />
+              <!-- Hover background glow -->
+              <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-gold/[0.01] group-hover:bg-gold/[0.04] rounded-full blur-3xl transition-all duration-700 group-hover:scale-150 pointer-events-none" />
 
               <div class="relative flex items-start gap-4">
-                <!-- Logo -->
+                <!-- Logo Frame -->
                 <div class="shrink-0">
-                  <div class="w-16 h-16 rounded-xl overflow-hidden transition-all duration-300 group-hover:shadow-glow ring-1 ring-white/5">
+                  <div class="w-16 h-16 rounded-xl overflow-hidden border border-white/5 bg-white/[0.02] transition-all duration-500 group-hover:border-gold/20 group-hover:shadow-glow-sm">
                     <img
                       v-if="orgLogo(org)"
                       :src="orgLogo(org)!"
                       :alt="localizedName(org)"
-                      class="w-full h-full object-contain bg-white/[0.03] p-2"
+                      class="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
                     />
                     <div
                       v-else
-                      class="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center"
+                      class="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center transition-transform duration-500 group-hover:scale-105"
                     >
                       <span class="text-2xl font-bold gradient-gold">
                         {{ localizedName(org).charAt(0) || localizedNameEn(org).charAt(0) || '?' }}
@@ -280,25 +283,40 @@ function scrollToSection(id: string) {
                   </div>
                 </div>
 
-                <!-- Info -->
-                <div class="min-w-0 flex-1 pt-1">
-                  <h3 class="text-base font-semibold text-white group-hover:text-gold transition-colors line-clamp-2 leading-snug">
+                <!-- Info Block -->
+                <div class="min-w-0 flex-1 pt-0.5">
+                  <h3 class="text-base font-bold text-white group-hover:text-gold transition-colors duration-300 line-clamp-2 leading-snug">
                     {{ localizedName(org) }}
                   </h3>
-                  <p v-if="localizedNameEn(org) !== localizedName(org)" class="text-[11px] text-gray-600 mt-0.5 line-clamp-1 leading-relaxed">
+                  <p v-if="localizedNameEn(org) !== localizedName(org)" class="text-[11px] text-gray-500 mt-0.5 line-clamp-1 leading-relaxed">
                     {{ localizedNameEn(org) }}
                   </p>
-                  <div class="flex items-center gap-2 mt-2">
-                    <span class="text-[11px] font-mono text-gray-600">/{{ org.org_slug }}</span>
+                  
+                  <div class="flex flex-wrap items-center gap-2 mt-3">
+                    <!-- Monospace slug badge -->
+                    <span class="inline-block px-2 py-0.5 text-[10px] font-mono rounded bg-white/[0.04] text-gray-400 group-hover:bg-gold/10 group-hover:text-gold/90 border border-white/5 group-hover:border-gold/25 transition-all duration-300">
+                      /{{ org.org_slug }}
+                    </span>
                     <span class="text-[10px] text-gray-700">•</span>
-                    <span class="text-[11px] text-gray-500">{{ $t('hub.orgs_count', { count: org.content_count }) }}</span>
+                    <!-- Materials counter -->
+                    <span class="inline-flex items-center gap-1 text-[11px] text-gray-500 group-hover:text-gray-400 transition-colors">
+                      <svg class="w-3.5 h-3.5 text-gold/40 group-hover:text-gold/60 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      {{ $t('hub.orgs_count', { count: org.content_count }) }}
+                    </span>
                   </div>
                 </div>
 
-                <!-- Arrow icon -->
-                <div class="shrink-0 pt-1 transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-0 group-hover:translate-x-1">
-                  <svg class="w-4 h-4 text-gold/60" :class="locale === 'ar' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                <!-- Navigation Arrow -->
+                <div 
+                  class="shrink-0 pt-1 opacity-25 group-hover:opacity-100 transition-all duration-300"
+                  :class="[
+                    locale === 'ar' ? 'translate-x-1 group-hover:-translate-x-0.5' : '-translate-x-1 group-hover:translate-x-0.5'
+                  ]"
+                >
+                  <svg class="w-4 h-4 text-gold" :class="locale === 'ar' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
               </div>

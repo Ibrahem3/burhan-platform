@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-06-25] - About Page & Organization Card Redesign (Premium Makeover)
+
+### Fixed
+- [`app/pages/index.vue`](file:///mnt/Data/burhan/app/pages/index.vue): Resolved template compilation warning by introducing safe type check `!organizations || organizations.length === 0` to prevent runtime/compile errors.
+
+### Changed
+- [`app/pages/about.vue`](file:///mnt/Data/burhan/app/pages/about.vue): Redesigned the page completely. Implemented glassmorphism split cards for Mission and Vision, and an interactive grid of core values with unique SVG icons. Created a dynamic string helper `getValueParts` to split localizations at colon, enabling clean visual separation of titles and descriptions.
+- [`app/pages/index.vue`](file:///mnt/Data/burhan/app/pages/index.vue): Upgraded the inline Organization Cards in the grid with a premium glassmorphism base, hover bounding border glows, custom monospace badges for organization slugs, count icons, and sliding navigation arrows.
+
+### Rationale
+- Elevated the visual aesthetics of the landing about page and organization directory card to present the platform as a state-of-the-art وقف تقني, leveraging modern grid systems, glassmorphism design tokens, and smooth hover interactions.
+
 ## [2026-06-25] - Digital Observatory Localization & TypeScript Polish
 
 ### Fixed
