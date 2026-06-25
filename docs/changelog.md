@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [2026-06-25] - Repository Freeze Notice
 
-### Added
-- [`README.md`](file:///mnt/Data/burhan/README.md): Appended Strategic Notice (June 2026) under the top header banner to notify users of development freeze, open-source decoupling, and core focus pivot to the unified Go-based Super-App.
+### Changed
+- [`README.md`](file:///mnt/Data/burhan/README.md): Updated the Strategic Notice to a more visionary and founder-focused wording, explaining the transition to a Technical Waqf (نشر بذور النور في الأرض) and encouraging community UI/UX improvements, independent self-hosting, and educational usage.
 
 ### Rationale
-- Clearly communicate the development status and architectural transition of this technical asset to developers and the open-source community.
+- Provide a more positive and mission-driven context for open-sourcing the enterprise architecture, aligning with the platform's ethical and sovereign goals.
 
 ## [2026-06-25] - About Page & Organization Card Redesign (Premium Makeover)
 

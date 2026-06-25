@@ -10,7 +10,14 @@
 ---
 
 > [!IMPORTANT]
-> **Strategic Notice (June 2026):** Development on this standalone repository has been frozen and open-sourced for two definitive reasons: First, due to temporary financial constraints preventing further independent cloud funding for this version. Second, to ruthlessly channel 100% of my energy, time, and focus into architecture and rebuilding the core data engine from scratch inside the unified Go-based Super-App. This decoupled code is now a public technical asset (وقف تقني). Live registration is permanently closed to preserve infrastructure limits, but the repository is open for community UI/UX enhancements.
+> **⚠️ Strategic & Visionary Notice (June 2026)**
+> Development on this standalone repository is officially frozen and transitioned into a Technical Waqf (وقف تقني) as a public, source-available asset.
+>
+> As a Solo Founder, time and energy are the most critical resources. Therefore, I have made the strategic decision to ruthlessly channel 100% of my focus and engineering effort into building the centralized core engine inside my unified Go-based Super-App.
+>
+> Instead of letting this enterprise architecture sit unused, it has been completely open-sourced to achieve a higher purpose: To plant seeds of light across the digital landscape (نشر بذور النور في الأرض).
+>
+> By exposing this production-ready code, the goal is to empower indie developers, support our community's digital sovereignty against central monopolies, and provide a solid foundation that saves months of development. Live registration is permanently closed, but the repository remains entirely open for community UI/UX enhancements, learning, and independent ethical self-hosting.
 
 ## 1. The Manifesto: Tech Sovereignty in the Age of Censorship
 
