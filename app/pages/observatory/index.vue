@@ -10,6 +10,12 @@ const supabase = useSupabaseClient<Database>()
 const config = useRuntimeConfig()
 const turnstileSiteKey = config.public.turnstile?.siteKey || ''
 
+useHead({
+  script: [
+    { src: 'https://challenges.cloudflare.com/turnstile/v0/api.js', async: true, defer: true }
+  ]
+})
+
 const title = ref('')
 const sourceUrl = ref('')
 const submitting = ref(false)
@@ -87,13 +93,25 @@ async function handleSubmit() {
   submitting.value = true
   submitError.value = ''
 
+  let token = ''
+  if (process.client) {
+    const turnstile = (window as any).turnstile
+    if (turnstile) {
+      token = turnstile.getResponse() || ''
+    }
+    if (!token) {
+      const input = document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement
+      if (input) token = input.value
+    }
+  }
+
   try {
     const result = await $fetch<{ success: boolean; threat: any }>('/api/observatory/report', {
       method: 'POST',
       body: {
         title: title.value,
         sourceUrl: sourceUrl.value,
-        turnstileToken: '',
+        turnstileToken: token,
       },
     })
 

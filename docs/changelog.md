@@ -2,10 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026-06-25] - README Rebrand as a Sovereign Technical Asset
+## [2026-06-25] - README Rebrand & Observatory Turnstile Integration
+
+### Fixed
+- [`app/pages/observatory/index.vue`](file:///mnt/Data/burhan/app/pages/observatory/index.vue): Resolved a critical bug in the threat monitoring intake form. Injected the Cloudflare Turnstile API script and implemented token retrieval logic so that submissions correctly pass spam protection validation.
 
 ### Changed
 - [`README.md`](file:///mnt/Data/burhan/README.md): Completely rewritten and rebranded as a decentralized, ethical, and sovereign media distribution engine (وقف تقني). Documented the manifesto against censorship (الاغتيال الرقمي), detailed database RLS policies, Cloudflare Turnstile integration, the custom Tiptap RTL layout, and introduced the community call for frontend UI/UX contributions.
+
 
 ### Rationale
 Established the repository's identity as a sovereign technical asset rather than a generic boilerplate. Added explicit ethical constraints and clear calls-to-action for open-source UI contributors.
