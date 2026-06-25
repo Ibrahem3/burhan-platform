@@ -94,10 +94,14 @@ async function handleSubmit() {
   submitError.value = ''
 
   let token = ''
-  if (import.meta.client) {
+  if (import.meta.client && turnstileSiteKey) {
     const turnstile = (window as any).turnstile
     if (turnstile) {
-      token = turnstile.getResponse() || ''
+      try {
+        token = turnstile.getResponse() || ''
+      } catch (err) {
+        console.warn('[observatory] Turnstile error:', err)
+      }
     }
     if (!token) {
       const input = document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement

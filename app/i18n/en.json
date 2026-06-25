@@ -335,7 +335,7 @@
     "report_title": "Report a Threat",
     "report_desc": "Help monitor harmful content and publish scholarly responses",
     "form_url": "Source URL (TikTok, YouTube, Facebook, X...)",
-    "form_url_placeholder": "https://www.tiktok.com/@...",
+    "form_url_placeholder": "https://www.tiktok.com/{'@'}...",
     "form_title": "Threat Description",
     "form_title_placeholder": "e.g. A video claiming the Quran is corrupted",
     "form_submit": "Report",

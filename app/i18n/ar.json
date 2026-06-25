@@ -335,7 +335,7 @@
     "report_title": "أبلغ عن شبهة",
     "report_desc": "ساهم في رصد المحتوى المخالف ونشر الردود العلمية",
     "form_url": "رابط المصدر (تيك توك، يوتيوب، فيسبوك، إكس...)",
-    "form_url_placeholder": "https://www.tiktok.com/@...",
+    "form_url_placeholder": "https://www.tiktok.com/{'@'}...",
     "form_title": "وصف الشبهة",
     "form_title_placeholder": "مثال: فيديو يزعم أن القرآن محرّف",
     "form_submit": "إبلاغ",
