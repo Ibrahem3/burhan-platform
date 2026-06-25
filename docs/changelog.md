@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-06-25] - Repository Freeze Notice
+
+### Added
+- [`README.md`](file:///mnt/Data/burhan/README.md): Appended Strategic Notice (June 2026) under the top header banner to notify users of development freeze, open-source decoupling, and core focus pivot to the unified Go-based Super-App.
+
+### Rationale
+- Clearly communicate the development status and architectural transition of this technical asset to developers and the open-source community.
+
 ## [2026-06-25] - About Page & Organization Card Redesign (Premium Makeover)
 
 ### Fixed

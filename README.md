@@ -9,6 +9,9 @@
 
 ---
 
+> [!IMPORTANT]
+> **Strategic Notice (June 2026):** Development on this standalone repository has been frozen and open-sourced for two definitive reasons: First, due to temporary financial constraints preventing further independent cloud funding for this version. Second, to ruthlessly channel 100% of my energy, time, and focus into architecture and rebuilding the core data engine from scratch inside the unified Go-based Super-App. This decoupled code is now a public technical asset (وقف تقني). Live registration is permanently closed to preserve infrastructure limits, but the repository is open for community UI/UX enhancements.
+
 ## 1. The Manifesto: Tech Sovereignty in the Age of Censorship
 
 In an era of centralized digital monopolies and algorithmic silencing, independent thinkers and scholarly institutions face a new form of silencing: **Digital Censorship (الاغتيال الرقمي)**. When platforms arbitrary ban channels and purge archives, relying on third-party infrastructure becomes an existential vulnerability.
