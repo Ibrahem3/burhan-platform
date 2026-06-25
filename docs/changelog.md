@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-06-25] - Digital Observatory Localization & TypeScript Polish
+
+### Fixed
+- [`tsconfig.json`](file:///mnt/Data/burhan/tsconfig.json): Removed redundant manual path/types overrides that conflicted with Nuxt 4 auto-generated TS configurations.
+- [`server/utils/supabase.ts`](file:///mnt/Data/burhan/server/utils/supabase.ts): Corrected server database type import path using relative notation to align with Nuxt 4 server boundary resolution.
+- [`app/pages/observatory/index.vue`](file:///mnt/Data/burhan/app/pages/observatory/index.vue): Resolved index-access strict typecheck errors by introducing optional chaining and fallback empty strings for visual spread labels.
+
+### Changed
+- [`app/pages/observatory/index.vue`](file:///mnt/Data/burhan/app/pages/observatory/index.vue): Localized all remaining hardcoded Arabic texts from templates, utilizing i18n keys for priority level selectors, threat tags, and visual spread slider.
+- [`app/pages/observatory/dashboard.vue`](file:///mnt/Data/burhan/app/pages/observatory/dashboard.vue): Localized active analyst role badges, war room status titles, search filters, and tag translators (`tagSource`, `tagStatus`, `tagTarget`). Added TypeScript `any` cast to the Supabase client initialization to resolve external generic schema types.
+- [`app/i18n/ar.json`](file:///mnt/Data/burhan/app/i18n/ar.json) & [`app/i18n/en.json`](file:///mnt/Data/burhan/app/i18n/en.json): Added missing observatory translation keys including `level_indicator` to support dynamic spread range slider indicator text.
+
+### Rationale
+- Eliminated hardcoded locale elements to support dual-language (Arabic/English) interface in the digital observatory modules, and stabilized TypeScript workspace compilation with correct dependency pathing.
+
 ## [2026-06-25] - README Rebrand & Observatory Turnstile Integration
 
 ### Fixed

@@ -28,20 +28,20 @@ const dangerLevel = ref<'Low' | 'Medium' | 'High'>('Medium')
 const threatType = ref('')
 const spreadLevel = ref(3)
 
-const spreadLabels = [
-  { value: 1, label: 'شفتها بالصدفة', en: 'Stumbled upon it' },
-  { value: 2, label: 'قليلة', en: 'Rarely seen' },
-  { value: 3, label: 'متوسطة', en: 'Moderate spread' },
-  { value: 4, label: 'منتشرة', en: 'Widespread' },
-  { value: 5, label: 'تريند - الكل بيتكلم عنها', en: 'Trending — everywhere' },
-]
+const spreadLabels = computed(() => [
+  { value: 1, key: 'observatory.spread_1' },
+  { value: 2, key: 'observatory.spread_2' },
+  { value: 3, key: 'observatory.spread_3' },
+  { value: 4, key: 'observatory.spread_4' },
+  { value: 5, key: 'observatory.spread_5' },
+])
 
-const threatTypes = [
-  { id: 'تشكيك في الثوابت', en: 'Doubting fundamentals', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z' },
-  { id: 'طعن في السنة', en: 'Attack on Sunnah', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { id: 'تحريف معاني', en: 'Distortion of meanings', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01' },
-  { id: 'حملة مموهة', en: 'Covert campaign', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-]
+const threatTypes = computed(() => [
+  { id: 'تشكيك في الثوابت', key: 'observatory.type_doubting', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z' },
+  { id: 'طعن في السنة', key: 'observatory.type_attack_sunnah', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { id: 'تحريف معاني', key: 'observatory.type_distortion', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01' },
+  { id: 'حملة مموهة', key: 'observatory.type_covert_campaign', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+])
 
 const platformIcon = computed(() => {
   if (!sourceUrl.value) return ''
@@ -94,7 +94,7 @@ async function handleSubmit() {
   submitError.value = ''
 
   let token = ''
-  if (process.client) {
+  if (import.meta.client) {
     const turnstile = (window as any).turnstile
     if (turnstile) {
       token = turnstile.getResponse() || ''
@@ -207,14 +207,14 @@ const platformBadgeClass = (platform: string) => {
       <div class="text-center mb-10">
         <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-4 border border-gold/20 rounded-full bg-gold/5 text-xs text-gold/70 font-mono tracking-widest uppercase">
           <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-          {{ $t('observatory.classification') || 'FIELD REPORT — PRIORITY INTAKE' }}
+          {{ $t('observatory.classification') }}
         </div>
         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">
-          <span class="text-gold">منظومة رصد الشبهات</span><br />
-          <span class="text-sm sm:text-base lg:text-lg text-gray-400 font-normal tracking-wider">والتهديدات الفكرية</span>
+          <span class="text-gold">{{ $t('observatory.title_main') }}</span><br />
+          <span class="text-sm sm:text-base lg:text-lg text-gray-400 font-normal tracking-wider">{{ $t('observatory.subtitle_main') }}</span>
         </h1>
         <p class="text-sm sm:text-base text-gray-500 max-w-xl mx-auto leading-relaxed">
-          ارفع بلاغك الميداني فوراً لغرفة العمليات المركزية. ساهم في سد الثغر.
+          {{ $t('observatory.desc_main') }}
         </p>
       </div>
 
@@ -228,7 +228,7 @@ const platformBadgeClass = (platform: string) => {
             <!-- Section label -->
             <div class="flex items-center gap-2 mb-6 pb-4 border-b border-white/5">
               <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span class="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em]">Digital Intake Grid — نموذج البلاغ</span>
+              <span class="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em]">{{ $t('observatory.form_header') }}</span>
             </div>
 
             <form v-if="!submitted" novalidate @submit.prevent="handleSubmit" class="space-y-6">
@@ -242,7 +242,7 @@ const platformBadgeClass = (platform: string) => {
                   <input
                     v-model="sourceUrl"
                     type="url"
-                    placeholder="https://www.tiktok.com/@..."
+                    :placeholder="$t('observatory.form_url_placeholder')"
                     class="w-full px-4 py-3 bg-black/40 border rounded-xl text-white placeholder-gray-700 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-all duration-200 font-mono text-sm tracking-wide"
                     :class="isTikTok ? 'border-red-500/40 ring-1 ring-red-500/20' : 'border-white/10'"
                     :disabled="submitting"
@@ -263,7 +263,7 @@ const platformBadgeClass = (platform: string) => {
                       <path :d="platformIcon" />
                     </svg>
                     {{ platformName }}
-                    <span v-if="isTikTok" class="text-[9px] text-red-400 font-bold tracking-wider">HIGH ALERT</span>
+                    <span v-if="isTikTok" class="text-[9px] text-red-400 font-bold tracking-wider">{{ $t('observatory.form_high_alert') }}</span>
                   </div>
                 </div>
               </div>
@@ -271,7 +271,7 @@ const platformBadgeClass = (platform: string) => {
               <!-- === Threat Classification (Danger Level) === -->
               <div>
                 <label class="block text-xs font-mono text-gray-500 uppercase tracking-wider mb-2">
-                  تصنيف التهديد الفكري <span class="text-red-400">*</span>
+                  {{ $t('observatory.form_threat_classification') }} <span class="text-red-400">*</span>
                 </label>
                 <div class="flex gap-2">
                   <button
@@ -286,9 +286,9 @@ const platformBadgeClass = (platform: string) => {
                       : 'bg-black/40 text-gray-600 border-white/5 hover:border-white/20 hover:text-gray-400'"
                     @click="dangerLevel = level"
                   >
-                    <span v-if="level === 'Low'">● LOW</span>
-                    <span v-else-if="level === 'Medium'">●● MEDIUM</span>
-                    <span v-else>●●● HIGH</span>
+                    <span v-if="level === 'Low'">● {{ $t('observatory.danger_low') }}</span>
+                    <span v-else-if="level === 'Medium'">●● {{ $t('observatory.danger_medium') }}</span>
+                    <span v-else>●●● {{ $t('observatory.danger_high') }}</span>
                   </button>
                 </div>
               </div>
@@ -296,7 +296,7 @@ const platformBadgeClass = (platform: string) => {
               <!-- === Threat Type Tags === -->
               <div>
                 <label class="block text-xs font-mono text-gray-500 uppercase tracking-wider mb-2">
-                  نوع التهديد <span class="text-red-400">*</span>
+                  {{ $t('observatory.form_threat_type') }} <span class="text-red-400">*</span>
                 </label>
                 <div class="grid grid-cols-2 gap-2">
                   <button
@@ -312,7 +312,7 @@ const platformBadgeClass = (platform: string) => {
                     <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path :d="type.icon" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="leading-tight">{{ type.id }}</span>
+                    <span class="leading-tight">{{ $t(type.key) }}</span>
                   </button>
                 </div>
               </div>
@@ -335,7 +335,7 @@ const platformBadgeClass = (platform: string) => {
               <!-- === Spread Range Slider (NEW) === -->
               <div>
                 <label class="block text-xs font-mono text-gray-500 uppercase tracking-wider mb-3">
-                  مدى انتشار الشبهة بصرياً
+                  {{ $t('observatory.form_spread_level') }}
                 </label>
                 <div class="px-1">
                   <input
@@ -351,15 +351,15 @@ const platformBadgeClass = (platform: string) => {
                     }"
                   />
                   <div class="flex justify-between mt-2">
-                    <span class="text-[10px] font-mono text-gray-600">1 — {{ locale === 'ar' ? spreadLabels[0].label : spreadLabels[0].en }}</span>
-                    <span class="text-[10px] font-mono text-gray-600">5 — {{ locale === 'ar' ? spreadLabels[4].label : spreadLabels[4].en }}</span>
+                    <span class="text-[10px] font-mono text-gray-600">1 — {{ $t(spreadLabels[0]?.key || '') }}</span>
+                    <span class="text-[10px] font-mono text-gray-600">5 — {{ $t(spreadLabels[4]?.key || '') }}</span>
                   </div>
                   <div class="mt-3 text-center">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold"
                       :class="spreadLevel <= 2 ? 'bg-green-500/10 text-green-400' : spreadLevel <= 3 ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/15 text-red-400'"
                     >
                       <span class="w-1.5 h-1.5 rounded-full" :class="spreadLevel <= 2 ? 'bg-green-500' : spreadLevel <= 3 ? 'bg-amber-500' : 'bg-red-500'" />
-                      المستوى {{ spreadLevel }} — {{ (locale === 'ar' ? spreadLabels[spreadLevel - 1].label : spreadLabels[spreadLevel - 1].en) }}
+                      {{ $t('observatory.level_indicator', { level: spreadLevel, label: $t(spreadLabels[spreadLevel - 1]?.key || '') }) }}
                     </span>
                   </div>
                 </div>
@@ -397,7 +397,7 @@ const platformBadgeClass = (platform: string) => {
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
-                    إرسال لغرفة العمليات الفكرية — Submit Field Report
+                    {{ $t('observatory.form_submit_button') }}
                   </span>
                 </button>
               </div>
@@ -410,16 +410,16 @@ const platformBadgeClass = (platform: string) => {
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p class="text-green-400 font-bold text-lg mb-1 font-mono">تم استلام البلاغ الميداني</p>
+              <p class="text-green-400 font-bold text-lg mb-1 font-mono">{{ $t('observatory.form_success_received') }}</p>
               <p class="text-gray-500 text-sm font-mono">
-                تمت إحالته إلى غرفة العمليات — رقم العملية: <span class="text-gray-400">#OB-{{ Date.now().toString(36).toUpperCase() }}</span>
+                {{ $t('observatory.form_success_redirected') }} <span class="text-gray-400">#OB-{{ Date.now().toString(36).toUpperCase() }}</span>
               </p>
               <button
                 type="button"
                 class="mt-6 px-6 py-2 rounded-xl text-xs font-mono font-bold border border-white/10 text-gray-400 hover:text-white hover:border-white/30 transition-all duration-200 bg-black/40"
                 @click="submitted = false"
               >
-                ↑ {{ $t('observatory.form_submit_another') || 'إرسال بلاغ آخر' }}
+                ↑ {{ $t('observatory.form_submit_another') }}
               </button>
             </div>
           </div>

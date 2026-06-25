@@ -8,7 +8,7 @@ definePageMeta({
 })
 
 const { t, locale } = useI18n()
-const supabase = useSupabaseClient<Database>()
+const supabase = useSupabaseClient<any>()
 const user = useSupabaseUser()
 
 const threats = ref<any[]>([])
@@ -175,33 +175,25 @@ const platformBadgeClass = (platform: string) => {
 }
 
 const tagSource = (platform: string) => {
-  const map: Record<string, string> = {
-    tiktok: 'تيك توك',
-    youtube: 'يوتيوب',
-    facebook: 'فيسبوك',
-    x: 'إكس',
-    instagram: 'إنستغرام',
-    telegram: 'تيليجرام',
-  }
-  return map[platform] || 'غير معروف'
+  return t(`observatory.platform_${platform}`, t('observatory.platform_other'))
 }
 
 const tagStatus = (status: string) => {
   const map: Record<string, string> = {
-    pending: 'استقبال أولي',
-    under_review: 'اختراق فكري نشط',
-    neutralized: 'تم السحق',
+    pending: t('observatory.status_queue_pending'),
+    under_review: t('observatory.status_queue_review'),
+    neutralized: t('observatory.status_queue_neutralized'),
   }
   return map[status] || status
 }
 
 const tagTarget = (dangerLevel: string) => {
   const map: Record<string, string> = {
-    Low: 'الشباب',
-    Medium: 'عموم المثقفين',
-    High: 'فئة خاصة',
+    Low: t('observatory.target_youth'),
+    Medium: t('observatory.target_intellectuals'),
+    High: t('observatory.target_special'),
   }
-  return map[dangerLevel] || 'عام'
+  return map[dangerLevel] || t('observatory.target_general')
 }
 
 const isUpdating = (id: string) => updating.value === id
@@ -244,7 +236,7 @@ onMounted(loadData)
             {{ $t('observatory.nav') }}
           </NuxtLink>
           <span class="text-[10px] font-mono text-gray-700">|</span>
-          <span class="text-[10px] font-mono text-gray-600 uppercase tracking-wider">غرفة العمليات — War Room</span>
+          <span class="text-[10px] font-mono text-gray-600 uppercase tracking-wider">{{ $t('observatory.war_room') }}</span>
         </div>
         <div class="flex items-center gap-3">
           <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
@@ -302,7 +294,7 @@ onMounted(loadData)
         <div class="lg:col-span-3">
           <!-- Filter tabs -->
           <div class="flex items-center gap-2 mb-6">
-            <span class="text-[10px] font-mono text-gray-600 uppercase tracking-wider">تصفية:</span>
+            <span class="text-[10px] font-mono text-gray-600 uppercase tracking-wider">{{ $t('observatory.filter_label') }}</span>
             <button
               v-for="f in ['all', 'pending', 'under_review']"
               :key="f"
@@ -356,14 +348,14 @@ onMounted(loadData)
                   >
                     {{ $t(`observatory.status_${threat.status}`) }}
                   </span>
-                  <span v-if="threat.status === 'neutralized'" class="text-[9px] font-mono text-green-500/60 mr-auto">[تم السحق بنجاح — Target Neutralized]</span>
+                  <span v-if="threat.status === 'neutralized'" class="text-[9px] font-mono text-green-500/60 mr-auto">[{{ $t('observatory.status_queue_neutralized') }}]</span>
                 </div>
 
                 <!-- Intelligence Tags -->
                 <div class="flex flex-wrap gap-1.5 mb-3">
-                  <span class="px-2 py-0.5 text-[9px] font-mono font-bold rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">[المستهدف: {{ tagTarget(threat.danger_level) }}]</span>
-                  <span class="px-2 py-0.5 text-[9px] font-mono font-bold rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">[المصدر: {{ tagSource(threat.platform) }}]</span>
-                  <span class="px-2 py-0.5 text-[9px] font-mono font-bold rounded-md bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">[الحالة: {{ tagStatus(threat.status) }}]</span>
+                  <span class="px-2 py-0.5 text-[9px] font-mono font-bold rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">[{{ $t('observatory.target_label') }} {{ tagTarget(threat.danger_level) }}]</span>
+                  <span class="px-2 py-0.5 text-[9px] font-mono font-bold rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">[{{ $t('observatory.platform_label') }} {{ tagSource(threat.platform) }}]</span>
+                  <span class="px-2 py-0.5 text-[9px] font-mono font-bold rounded-md bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">[{{ $t('observatory.status_label') }} {{ tagStatus(threat.status) }}]</span>
                 </div>
 
                 <!-- Platform + Danger badges -->
@@ -407,12 +399,12 @@ onMounted(loadData)
 
                     <!-- Response URL inject -->
                     <div>
-                      <label class="block text-[9px] font-mono text-gray-600 uppercase tracking-wider mb-1.5">[تلقيم السلاح الفكري — Inject Counter-Measure]</label>
+                      <label class="block text-[9px] font-mono text-gray-600 uppercase tracking-wider mb-1.5">[{{ $t('observatory.inject_countermeasure') }}]</label>
                       <div class="flex gap-2">
                         <input
                           v-model="threat.response_url"
                           type="url"
-                          placeholder="https://..."
+                          :placeholder="$t('observatory.response_url_placeholder')"
                           class="flex-1 min-w-0 px-3 py-2 text-[11px] font-mono bg-black/60 border border-slate-700 rounded-lg text-white placeholder-gray-700 focus:outline-none focus:border-green-500/50 transition-colors"
                           @keyup.enter="threat.response_url && updateThreat(threat.id, { status: 'neutralized', response_url: threat.response_url })"
                         />
@@ -500,7 +492,7 @@ onMounted(loadData)
 
             <form novalidate @submit.prevent="addAnalyst" class="space-y-2 mb-4">
               <div>
-                <label class="block text-[9px] font-mono text-gray-600 uppercase tracking-wider mb-1.5">[إضافة عميل — Add Analyst]</label>
+                <label class="block text-[9px] font-mono text-gray-600 uppercase tracking-wider mb-1.5">[{{ $t('observatory.add_analyst_label') }}]</label>
                 <input
                   v-model="addAnalystEmail"
                   type="text"
@@ -509,7 +501,7 @@ onMounted(loadData)
                 />
               </div>
               <div>
-                <label class="block text-[9px] font-mono text-gray-600 uppercase tracking-wider mb-1.5">[الرتبة — Role]</label>
+                <label class="block text-[9px] font-mono text-gray-600 uppercase tracking-wider mb-1.5">[{{ $t('observatory.add_analyst_role') }}]</label>
                 <div class="flex gap-2">
                   <button
                     type="button"
@@ -519,7 +511,7 @@ onMounted(loadData)
                       : 'bg-black/40 text-gray-600 border-slate-800 hover:border-slate-700'"
                     @click="addAnalystRole = 'observatory_analyst'"
                   >
-                    وكيل
+                    {{ $t('observatory.role_analyst_text') }}
                   </button>
                   <button
                     type="button"
@@ -529,7 +521,7 @@ onMounted(loadData)
                       : 'bg-black/40 text-gray-600 border-slate-800 hover:border-slate-700'"
                     @click="addAnalystRole = 'observatory_manager'"
                   >
-                    مدير
+                    {{ $t('observatory.role_manager_text') }}
                   </button>
                 </div>
               </div>
