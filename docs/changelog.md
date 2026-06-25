@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-06-25] - README Rebrand as a Sovereign Technical Asset
+
+### Changed
+- [`README.md`](file:///mnt/Data/burhan/README.md): Completely rewritten and rebranded as a decentralized, ethical, and sovereign media distribution engine (وقف تقني). Documented the manifesto against censorship (الاغتيال الرقمي), detailed database RLS policies, Cloudflare Turnstile integration, the custom Tiptap RTL layout, and introduced the community call for frontend UI/UX contributions.
+
+### Rationale
+Established the repository's identity as a sovereign technical asset rather than a generic boilerplate. Added explicit ethical constraints and clear calls-to-action for open-source UI contributors.
+
 ## [2026-06-24] - Repository Cleanup & Documentation Audit
+
 
 ### Added
 - [`.env.example`](file:///mnt/Data/burhan/.env.example): Created environment variables template file mapping necessary Supabase settings and Turnstile keys to prevent configuration friction for new developers.
