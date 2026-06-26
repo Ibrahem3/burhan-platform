@@ -653,9 +653,9 @@ export function getSupabaseClient() {
 
 ```bash
 # CORRECT — these are the current Supabase key names (2025+)
-SUPABASE_URL=https://mxygtztjsypemrhbtsoc.supabase.co
-SUPABASE_KEY=sb_publishable_qHk092QZHmKbPfTbg2zoGg_8zTwf8-s
-SUPABASE_SECRET_KEY=sb_secret_3mKMuB4QqHTzzqy1Utk_ww_wkKVmOKg
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key
+SUPABASE_SECRET_KEY=your-service-role-key
 
 # DO NOT use — these are deprecated/renamed:
 # SUPABASE_SERVICE_KEY=xxx  ← old name for secret key

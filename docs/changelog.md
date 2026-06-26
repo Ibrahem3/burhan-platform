@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-06-26] - Security Cleanup
+
+### Fixed
+- [`ARCHITECTURE.md`](file:///mnt/Data/burhan/ARCHITECTURE.md): Replaced exposed Supabase API credentials (URL, publishable key, and secret key) in the documentation examples with generic placeholders to remediate security leaks.
+
+### Rationale
+- Prevent credential exposure and secure the repository from automated secret scanning alerts.
+
 ## [2026-06-25] - Repository Freeze Notice
 
 ### Changed
