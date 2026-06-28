@@ -158,3 +158,5 @@ However, the Frontend UI is currently in a functional state. We explicitly invit
 4.  Submit a Pull Request with a clear explanation of your visual improvements.
 
 Let's build a sovereign and resilient infrastructure together!
+
+💬 **Join our Discord Community:** [Join Ainux on Discord](https://discord.gg/mD9eQ7TX8S)
