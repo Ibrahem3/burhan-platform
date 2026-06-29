@@ -1,21 +1,28 @@
-MIT License
+# BURHAN SOVEREIGN TECHNICAL LICENSE v1.0 (Ethical Waqf)
 
-Copyright (c) 2026 Ibrahim Samir
+Copyright (c) 2026 Ibrahim Samir (Ainux)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## 1. Purpose & Preamble
+This software is provided not as a standard commercial or fully permissive open-source product, but as a "Technical Waqf" (وقف تقني)—a sovereign, ethical, and source-available digital asset dedicated to the intellectual defense, public utility, and digital sovereignty of the community.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+## 2. Permitted Uses & Grants
+Subject to the strict ethical restrictions in Section 4, anyone is permitted to:
+* Review, clone, and fork the source code.
+* Modify and enhance the software for learning, UI/UX polishing, or feature development.
+* Self-host and deploy independent instances of the software for legitimate, ethical, and lawful entities.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+## 3. Commercialization & Redistribution
+* You may redistribute modifications of this software, provided that any derivative work remains under this exact same license (Burhan Sovereign Technical License v1.0).
+* Commercial hosting or selling this software as a managed service is permitted ONLY if the operating entity strictly adheres to the Ethical Policy in Section 4.
+
+## 4. Absolute Ethical Restrictions (سياسة الاستخدام الأخلاقي)
+By cloning, copying, modifying, deploying, or utilizing this software in any capacity, you explicitly agree to the following legally and morally binding restrictions. You SHALL NOT use or deploy this software for:
+1.  Any platform, organization, or entity that promotes atheism, actively undermines Islamic values, or attacks scholarly religious institutions.
+2.  Hostile military/intelligence entities, or entities that promote sectarian hatred, violence, or unlawful discrimination.
+3.  The distribution, streaming, or hosting of unethical, immoral, or explicit media/content.
+
+## 5. Termination
+Any use, deployment, or redistribution of this software that violates the Ethical Restrictions listed in Section 4 automatically and immediately voids this license. Upon termination, your right to use, host, or distribute the codebase is permanently revoked, and any active deployments must be dismantled.
+
+## 6. Disclaimer of Warranty
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
