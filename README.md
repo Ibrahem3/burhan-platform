@@ -1,6 +1,26 @@
 # بُرهان — Burhan Platform
 
-> **Decentralized, Sovereign Media-CMS & Digital Intellectual Observatory Engine**
+<table align="left" style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px; max-width: 500px; background: #ffffff;">
+  <tr>
+    <td>
+      <img alt="GitHub" src="https://ph-files.imgix.net/dae462f6-9602-4dba-a3b6-4f7f89a78ab3.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=80&w=80" width="64" height="64" style="border-radius: 8px;">
+    </td>
+    <td style="padding-left: 12px; vertical-align: top;">
+      <strong style="font-size: 18px; color: #1a1a1a;">GitHub</strong><br>
+      <span style="font-size: 14px; color: #666666; line-height: 1.4;">Production-ready SaaS boilerplate to ship in hours.</span>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" style="padding-top: 12px;">
+      <a href="https://www.producthunt.com/products/github-442?embed=true&utm_source=embed&utm_medium=post_embed" target="_blank" rel="noopener">
+        <img src="https://img.shields.io/badge/Check%20it%20out%20on-Product%20Hunt-FF6154?style=for-the-badge&logo=producthunt&logoColor=white" alt="Product Hunt">
+      </a>
+    </td>
+  </tr>
+</table>
+<br clear="left" />
+
+
 
 ![Sovereignty](https://img.shields.io/badge/Sovereignty-Ethical_Asset-blueviolet?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge)
