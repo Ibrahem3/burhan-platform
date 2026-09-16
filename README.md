@@ -30,21 +30,23 @@
 ---
 
 > [!IMPORTANT]
-> **⚠️ Strategic & Visionary Notice (June 2026)**
-> Development on this standalone repository is officially frozen and transitioned into a Technical Waqf (وقف تقني) as a public, source-available asset.
->
-> As a Solo Founder, time and energy are the most critical resources. Therefore, I have made the strategic decision to ruthlessly channel 100% of my focus and engineering effort into building the centralized core engine inside my unified Go-based Super-App.
->
-> Instead of letting this enterprise architecture sit unused, it has been completely open-sourced to achieve a higher purpose: To plant seeds of light across the digital landscape (نشر بذور النور في الأرض).
->
-> By exposing this production-ready code, the goal is to empower indie developers, support our community's digital sovereignty against central monopolies, and provide a solid foundation that saves months of development. Live registration is permanently closed, but the repository remains entirely open for community UI/UX enhancements, learning, and independent ethical self-hosting.
+> ### 🛡️ Strategic & Ethical Architecture: A Sovereign Technical Waqf (وقف تقني)
+> Burhan is engineered and dedicated as an **Ethical Technical Asset (وقف تقني)**—a production-grade, source-available platform built to advance digital sovereignty, resist centralized data monopolies, and plant enduring seeds of light across the open web (نشر بذور النور في الأرض).
+> 
+> By exposing this sovereign architecture, the objective is to empower independent thinkers, developers, and scholarly organizations with battle-tested infrastructure that eliminates months of development. Burhan is built for autonomous self-hosting, community-driven enhancements, and total intellectual resilience.
+> 
+> ⚡ **Current Phase — Decentralized AI Architecture:**
+> We are actively extending Burhan's sovereign chassis to integrate decentralized, permissionless GPU inference. By shifting intelligence to open compute networks, Burhan eliminates reliance on centralized, surveillance-driven AI gatekeepers, bringing censorship-resistant, private writing pipelines directly to content creators.
 
-## 1. The Manifesto: Tech Sovereignty in the Age of Censorship
+---
 
-In an era of centralized digital monopolies and algorithmic silencing, independent thinkers and scholarly institutions face a new form of silencing: **Digital Censorship (الاغتيال الرقمي)**. When platforms arbitrary ban channels and purge archives, relying on third-party infrastructure becomes an existential vulnerability.
+### 1. The Manifesto: Tech Sovereignty in the Age of Censorship
 
-**Burhan** is established as an **Ethical & Sovereign Technical Asset (وقف تقني)**. It provides a secure, decentralized, and self-hosted alternative for media distribution, intellectual defense (الثغور الفكرية), and scholarly dialogue. By giving organizations absolute control over their databases, media channels, and user networks, Burhan ensures that truth remains uncensored and accessible.
+In an era of centralized digital monopolies, arbitrary deplatforming, and opaque algorithmic filtering, independent thinkers and scholarly institutions face a systemic threat: **Digital Censorship (الاغتيال الرقمي)**. When platforms gatekeep reach and purge archives at will, depending on proprietary, centralized infrastructure is an existential risk.
 
+Burhan is architected as an **Ethical & Sovereign Technical Asset (وقف تقني)**. It serves as an uncompromising, decentralized, and self-hosted alternative for media distribution, intellectual defense (الثغور الفكرية), and rigorous scholarly discourse. 
+
+By guaranteeing organizations and creators absolute sovereign ownership over their databases, content delivery networks, and AI inference pipelines, Burhan ensures that truth remains uncensored, preserved, and universally accessible.
 ---
 
 ## 2. Core Architectural Features
