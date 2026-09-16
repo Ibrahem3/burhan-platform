@@ -9,6 +9,8 @@
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
     "lint": "nuxt lint",
+    "test": "node --test tests/ai/",
+    "test:ai": "node --test tests/ai/",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
