@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Frontend Quota & Read-Only Integration
+
+### Changed
+- [`app/pages/dashboard/branches.vue`](../app/pages/dashboard/branches.vue): Integrated `useSubscription` quota and read-only checks:
+  - Consumed `canCreateBranch`, `isReadOnly`, and `limits` directly from subscription contract.
+  - Preserved unlimited `-1` branch semantics displaying `∞` badge.
+  - Added action-level protection on `openCreateModal`, `openEditModal`, `submitBranch`, and `toggleBranchStatus`.
+  - Added explicit database error handling matching `branch_limit_exceeded` error message and details from PostgreSQL Migration 00016.
+- [`app/pages/dashboard/entities/new.vue`](../app/pages/dashboard/entities/new.vue): Integrated `isReadOnly` state from `useSubscription`:
+  - Enforced guard at function entry in `save()` action for non-super_admin users.
+  - Disabled desktop and mobile save buttons with contextual visual feedback when read-only.
+  - Preserved `RichTextEditor`, Tiptap editor state, and Supabase storage upload pipelines completely untouched.
+- [`app/pages/dashboard/entities/[id].vue`](../app/pages/dashboard/entities/[id].vue): Integrated `isReadOnly` state from `useSubscription`:
+  - Enforced guard at function entry in `save()` action for non-super_admin users.
+  - Disabled desktop and mobile save/update buttons with contextual visual feedback when read-only.
+  - Preserved `RichTextEditor`, Tiptap editor state, and Supabase storage upload pipelines completely untouched.
+- [`app/pages/dashboard/entities/index.vue`](../app/pages/dashboard/entities/index.vue): Applied mutation guards across entity list management:
+  - Guarded `openCreateModal`, `navigateToNew`, `openEditModal`, and `submitEntity` against read-only state.
+  - Disabled "New Entity" triggers, header buttons, and inline quick-edit card actions when subscription is expired/cancelled.
+  - Preserved filtering, search, pagination, and multi-tenant scoping.
+
+### Rationale
+- Completes Step 1 of frontend integration by enforcing backend quota limits and read-only subscription restrictions at the UI and interaction layers, respecting frozen backend contracts while preserving existing editing engines and UX workflows without regressions.
+
+
 ## [2026-09-17] - Frontend Foundation: Auth, Tenant Bootstrap, Subscription State & App Shell
 
 ### Added

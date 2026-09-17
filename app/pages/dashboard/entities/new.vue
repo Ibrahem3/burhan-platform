@@ -11,7 +11,8 @@ definePageMeta({
 const supabase = useSupabaseClient<Database>()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
-const { profile } = useUser()
+const { profile, isSuperAdmin } = useUser()
+const { isReadOnly } = useSubscription()
 const { uploadFile, uploading: isUploading } = useSupabaseStorage()
 
 type Branch = Database['public']['Tables']['branches']['Row']
@@ -90,6 +91,12 @@ async function handleCoverImage(file: File) {
 
 async function save() {
   error.value = ''
+
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'لا يمكن إنشاء محتوى جديد: اشتراك المنظمة في وضع القراءة فقط.'
+    return
+  }
+
   if (!form.title_ar || !form.title_en || !form.branch_id || !form.slug) {
     error.value = t('dashboard.validation.title_branch_slug_required')
     return
@@ -163,7 +170,14 @@ async function onFileSelected(event: Event) {
         <Button variant="outline" size="sm" class="sm:text-sm" @click="navigateTo(localePath('/dashboard/entities'))">
           {{ $t('common.cancel') }}
         </Button>
-        <Button size="sm" class="sm:text-sm" :loading="saving" @click="save">
+        <Button
+          size="sm"
+          class="sm:text-sm"
+          :loading="saving"
+          :disabled="saving || (isReadOnly && !isSuperAdmin)"
+          :title="isReadOnly && !isSuperAdmin ? 'وضع القراءة فقط' : ''"
+          @click="save"
+        >
           {{ $t('common.save') }}
         </Button>
       </div>
@@ -363,7 +377,14 @@ async function onFileSelected(event: Event) {
         <Button variant="outline" size="sm" class="flex-1" @click="navigateTo(localePath('/dashboard/entities'))">
           {{ $t('common.cancel') }}
         </Button>
-        <Button size="sm" class="flex-1" :loading="saving" @click="save">
+        <Button
+          size="sm"
+          class="flex-1"
+          :loading="saving"
+          :disabled="saving || (isReadOnly && !isSuperAdmin)"
+          :title="isReadOnly && !isSuperAdmin ? 'وضع القراءة فقط' : ''"
+          @click="save"
+        >
           {{ $t('common.save') }}
         </Button>
       </div>

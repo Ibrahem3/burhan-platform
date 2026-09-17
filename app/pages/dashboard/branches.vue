@@ -9,7 +9,8 @@ definePageMeta({
 
 const supabase = useSupabaseClient<Database>()
 const { t, locale } = useI18n()
-const { profile } = useUser()
+const { profile, isSuperAdmin } = useUser()
+const { canCreateBranch, isReadOnly, fetchSubscription, usage, limits } = useSubscription()
 
 type Branch = Database['public']['Tables']['branches']['Row']
 
@@ -94,6 +95,14 @@ watch(orgId, (id) => {
 }, { immediate: true })
 
 function openCreateModal() {
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'لا يمكن إنشاء فروع جديدة: اشتراك المنظمة غير نشط أو في وضع القراءة فقط.'
+    return
+  }
+  if (!canCreateBranch.value && !isSuperAdmin.value) {
+    error.value = 'تم الوصول إلى الحد الأقصى للفروع المسموح بها في خطتك الحالية.'
+    return
+  }
   editingId.value = null
   form.name_ar = ''
   form.name_en = ''
@@ -105,6 +114,10 @@ function openCreateModal() {
 }
 
 function openEditModal(branch: Branch) {
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'لا يمكن تعديل الفروع: اشتراك المنظمة في وضع القراءة فقط.'
+    return
+  }
   editingId.value = branch.id
   const name = branch.name as { ar?: string; en?: string }
   form.name_ar = name?.ar || ''
@@ -119,6 +132,16 @@ function openEditModal(branch: Branch) {
 async function submitBranch() {
   error.value = ''
   success.value = ''
+
+  if (!isEditing.value && !canCreateBranch.value && !isSuperAdmin.value) {
+    error.value = 'تم الوصول إلى الحد الأقصى للفروع المسموح بها في خطتك الحالية.'
+    return
+  }
+
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'العملية مرفوضة: المنظمة في وضع القراءة فقط.'
+    return
+  }
 
   if (!form.name_ar || !form.name_en || !form.slug) {
     error.value = t('dashboard.validation.required_fields')
@@ -173,12 +196,20 @@ async function submitBranch() {
     submitting.value = false
 
     if (insertError) {
-      error.value = t('dashboard.create_error')
+      if (insertError.message?.includes('branch_limit_exceeded') || insertError.details?.includes('branch_limit_exceeded')) {
+        error.value = 'تم الوصول إلى الحد الأقصى للفروع في خطتك الحالية (branch_limit_exceeded).'
+      } else if (insertError.message?.includes('branch_subscription_invalid')) {
+        error.value = 'لا يوجد اشتراك نشط يسمح بإنشاء فروع جديدة.'
+      } else {
+        error.value = t('dashboard.create_error')
+      }
       return
     }
 
     showModal.value = false
     success.value = t('dashboard.branch_created')
+    // Refresh subscription usage state to reflect newly created branch
+    await fetchSubscription(true)
   }
 
   await fetchBranches()
@@ -221,11 +252,28 @@ async function deleteBranch(id: string) {
       {{ success }}
     </div>
 
-    <div class="flex items-center justify-between mb-8">
-      <h1 class="text-xl font-bold text-white">{{ $t('dashboard.branches_title') }}</h1>
-      <Button @click="openCreateModal">
-        + {{ $t('dashboard.add_branch') }}
-      </Button>
+    <div v-if="error" class="mb-6 text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+      {{ error }}
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-xl font-bold text-white">{{ $t('dashboard.branches_title') }}</h1>
+        <p v-if="limits.max_branches !== undefined" class="text-xs text-gray-500 mt-1">
+          الفروع المستخدمة: <span class="text-gold font-semibold">{{ usage.branchesCount ?? 0 }}</span> / 
+          <span class="font-semibold">{{ limits.max_branches === -1 ? '∞' : limits.max_branches }}</span>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Button
+          :disabled="(!canCreateBranch && !isSuperAdmin) || (isReadOnly && !isSuperAdmin)"
+          :title="isReadOnly ? 'وضع القراءة فقط' : (!canCreateBranch ? 'تم بلوغ الحد الأقصى للفروع' : '')"
+          @click="openCreateModal"
+        >
+          + {{ $t('dashboard.add_branch') }}
+        </Button>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -282,8 +330,9 @@ async function deleteBranch(id: string) {
 
             <button
               class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none"
-              :class="branch.is_active ? 'bg-green-500' : 'bg-white/10'"
-              :disabled="togglingId === branch.id"
+              :class="[branch.is_active ? 'bg-green-500' : 'bg-white/10', isReadOnly && !isSuperAdmin ? 'opacity-50 cursor-not-allowed' : '']"
+              :disabled="togglingId === branch.id || (isReadOnly && !isSuperAdmin)"
+              :title="isReadOnly ? 'وضع القراءة فقط' : ''"
               @click="toggleStatus(branch)"
             >
               <span
@@ -294,7 +343,9 @@ async function deleteBranch(id: string) {
 
             <button
               class="p-2 text-gray-500 hover:text-gold rounded-lg hover:bg-white/5 transition-all duration-200"
-              :title="$t('common.edit')"
+              :class="isReadOnly && !isSuperAdmin ? 'opacity-50 cursor-not-allowed' : ''"
+              :disabled="isReadOnly && !isSuperAdmin"
+              :title="isReadOnly ? 'وضع القراءة فقط' : $t('common.edit')"
               @click="openEditModal(branch)"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -302,6 +353,7 @@ async function deleteBranch(id: string) {
               </svg>
             </button>
             <button
+              v-if="branch.slug !== 'main'"
               class="p-2 text-gray-500 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-all duration-200"
               :title="$t('common.delete')"
               @click="deleteBranch(branch.id)"
