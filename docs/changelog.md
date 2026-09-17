@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-17] - Frontend Foundation: Auth, Tenant Bootstrap, Subscription State & App Shell
+
+### Added
+- [`app/types/subscription.ts`](../app/types/subscription.ts): TypeScript interface contracts for subscription states (`active`, `expired`, `cancelled`, `none`), plan metadata, quotas, limits, usage, and bootstrap lifecycle states.
+- [`app/composables/useSubscription.ts`](../app/composables/useSubscription.ts): Reactive composable managing tenant subscription state from `GET /api/org/subscription`. Features in-flight deduplication, caching, read-only state computation, and branch creation permission checking without inventing new entitlement semantics.
+- [`app/composables/useTenantBootstrap.ts`](../app/composables/useTenantBootstrap.ts): Coordinated bootstrap composable managing the lifecycle `Auth -> User Profile -> Organization Record -> Subscription Hydration -> Authenticated Content Shell`.
+- [`app/components/dashboard/SubscriptionBanner.vue`](../app/components/dashboard/SubscriptionBanner.vue): Non-intrusive dashboard alert banner displaying read-only status when subscription is expired, cancelled, or missing, guaranteeing user understanding that data is safe and operations are read-only.
+
+### Changed
+- [`app/layouts/dashboard.vue`](../app/layouts/dashboard.vue): Integrated `useTenantBootstrap` with dedicated loading spinner, graceful recoverable error display with retry/logout actions, and subscription banner injection above application slots.
+- [`app/components/dashboard/FloatingSidebar.vue`](../app/components/dashboard/FloatingSidebar.vue): Integrated shared tenant organization state and dynamic plan/read-only badge display next to organization title, eliminating redundant Supabase client queries.
+- [`app/pages/dashboard/index.vue`](../app/pages/dashboard/index.vue): Bound active branch count and plan quota limits dynamically to the overview dashboard metric cards.
+
+### Rationale
+- Establishes a rock-solid, zero-debt frontend foundation respecting the frozen backend contracts. Ensures that organization context and subscription state hydrate deterministically before rendering dashboard content, with clear separation between UX presentation and authoritative backend enforcement.
+
 ## [2026-09-17] - Tenant AI Credentials & BYOK Subsystem (Migration 00018)
 
 ### Added

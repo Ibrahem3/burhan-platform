@@ -6,31 +6,14 @@ const localePath = useLocalePath()
 const user = useSupabaseUser()
 const { isSuperAdmin } = useUser()
 
-const org = useState('org')
+const { currentOrg } = useTenantBootstrap()
+const { plan, isReadOnly, isExpired } = useSubscription()
 const isPinned = useCookie('sidebar-pinned', { default: () => false })
 const mobileNavOpen = ref(false)
 
 const { visible: fabVisible } = useScrollAware()
 
-if (!org.value && user.value) {
-  supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', user.value.id)
-    .maybeSingle()
-    .then(({ data: profile }) => {
-      if (profile?.organization_id) {
-        supabase
-          .from('organizations')
-          .select('id, name, org_slug, settings')
-          .eq('id', profile.organization_id)
-          .maybeSingle()
-          .then(({ data: orgData }) => {
-            if (orgData) org.value = orgData
-          })
-      }
-    })
-}
+const org = computed(() => currentOrg.value || useState('org').value)
 
 const isActive = (path: string) => route.path === localePath(path)
 const isObservatoryRoute = computed(() => route.path.startsWith('/observatory'))
@@ -114,7 +97,16 @@ function closeMobileNav() {
                 </svg>
               </div>
               <div class="min-w-0">
-                <p class="text-sm font-bold text-white truncate">{{ orgName || $t('dashboard.title') }}</p>
+                <div class="flex items-center gap-1.5">
+                  <p class="text-sm font-bold text-white truncate">{{ orgName || $t('dashboard.title') }}</p>
+                  <span
+                    v-if="plan?.slug"
+                    class="text-[9px] uppercase px-1.5 py-0.5 rounded font-mono font-semibold"
+                    :class="isReadOnly ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-gold/15 text-gold border border-gold/30'"
+                  >
+                    {{ plan.slug }}
+                  </span>
+                </div>
                 <p class="text-[10px] text-gray-500 font-medium">{{ $t('dashboard.hub_label') }}</p>
               </div>
             </div>
