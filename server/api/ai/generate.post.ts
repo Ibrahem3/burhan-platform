@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '../../utils/supabase'
 import { resolveCaller } from '../../utils/auth'
 import { runInference } from '../../utils/nosana'
+import { getActiveSubscription } from '../../utils/entitlements'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -35,12 +36,30 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'User does not belong to an organization' })
   }
 
-  const requestLimit = Number(config.public.ai?.requestLimit ?? 100)
-  const tokenLimit = Number(config.public.ai?.tokenLimit ?? 1000000)
+  const orgId = profile.organization_id
+
+  // Resolve organization active subscription & entitlements
+  const sub = await getActiveSubscription(orgId)
+  if (!sub) {
+    throw createError({ statusCode: 402, statusMessage: 'Active subscription required' })
+  }
+
+  if (sub.features.ai_generate !== true) {
+    throw createError({ statusCode: 403, statusMessage: 'AI generation is not enabled for this subscription plan' })
+  }
+
+  // M1 boundary adapter:
+  // -1 (canonical unlimited) -> 2147483647 (Postgres 32-bit signed int max)
+  // Finite limits (>= 0) passed directly.
+  const reqLimitRaw = sub.limits.monthly_ai_requests ?? 0
+  const tokLimitRaw = sub.limits.monthly_ai_tokens ?? 0
+
+  const requestLimit = reqLimitRaw === -1 ? 2147483647 : Math.max(0, Number(reqLimitRaw))
+  const tokenLimit = tokLimitRaw === -1 ? 2147483647 : Math.max(0, Number(tokLimitRaw))
 
   const { data, error } = await admin.rpc('create_ai_job', {
     p_user_id: caller.userId,
-    p_org_id: profile.organization_id,
+    p_org_id: orgId,
     p_branch_id: branchId || null,
     p_prompt: trimmed,
     p_system_prompt: systemPrompt || null,

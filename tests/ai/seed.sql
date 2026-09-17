@@ -5,6 +5,13 @@ INSERT INTO organizations (id, name, org_slug, settings) VALUES
   ('11111111-1111-1111-1111-111111111111', '{"ar":"Org A"}', 'org-a', '{}'),
   ('22222222-2222-2222-2222-222222222222', '{"ar":"Org B"}', 'org-b', '{}');
 
+-- Seed active community subscriptions for test organizations (required before branch creation)
+INSERT INTO subscriptions (organization_id, plan_id, status, billing_period, starts_at, expires_at)
+SELECT o.id, p.id, 'active', 'yearly', now(), NULL
+FROM organizations o
+CROSS JOIN (SELECT id FROM plans WHERE slug = 'community' LIMIT 1) p
+ON CONFLICT DO NOTHING;
+
 -- The on_auth_user_created trigger auto-creates profiles for these users.
 INSERT INTO auth.users (id) VALUES
   ('aaaaaaaa-0000-0000-0000-000000000001'),  -- userA  -> Org A member

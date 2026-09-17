@@ -111,6 +111,8 @@ export async function seedOrg(prefix = 't') {
 
   await r(
     `INSERT INTO organizations (id, name, org_slug, settings) VALUES ('${orgId}', '{"ar":"${uid}"}', '${uid}', '{}');
+     INSERT INTO subscriptions (organization_id, plan_id, status)
+       SELECT '${orgId}', id, 'active' FROM plans WHERE slug = 'community' LIMIT 1;
      INSERT INTO auth.users (id) VALUES ('${memberId}');
      UPDATE profiles SET organization_id = '${orgId}', role = 'member' WHERE id = '${memberId}';
      INSERT INTO branches (id, organization_id, name, slug, module_type)

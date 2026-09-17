@@ -12,6 +12,14 @@ GRANT SELECT ON public.observatory_threats        TO anon, authenticated;
 GRANT SELECT ON public.observatory_analysts       TO anon, authenticated;
 GRANT SELECT ON public.ai_jobs                    TO authenticated;
 GRANT SELECT ON public.ai_usage                   TO authenticated;
+GRANT SELECT ON public.plans                      TO anon, authenticated;
+GRANT SELECT ON public.subscriptions              TO authenticated;
+
+-- Mimic Supabase client privileges for authenticated role on domain tables
+GRANT ALL PRIVILEGES ON public.entities           TO authenticated;
+GRANT ALL PRIVILEGES ON public.branches           TO authenticated;
+GRANT ALL PRIVILEGES ON public.series             TO authenticated;
+GRANT ALL PRIVILEGES ON public.profiles           TO authenticated;
 
 -- Supabase default privileges grant ALL to client roles on public tables; RLS
 -- is what gates rows. The observatory reporters path needs the INSERT grant

@@ -1710,3 +1710,661 @@ CREATE POLICY "threats_select_analyst"
       WHERE id = auth.uid() AND role_type = 'observatory_analyst'
     )
   );
+
+-- ============================================================
+-- BURHAN PLATFORM — Migration 00012
+-- Storage Tenant Isolation (organization_assets)
+--
+-- M1.6 regression gate confirmed a cross-tenant Storage mutation
+-- gap: the 00005 policies only checked `bucket_id`, so any
+-- authenticated user could INSERT/UPDATE/DELETE objects under
+-- another organization's prefix.
+--
+-- Contract: "{organizationId}/entities/{uuid}.{ext}"
+-- An authenticated user may mutate a Storage object only when the
+-- first path segment equals their own profile.organization_id.
+--
+-- Scope (additive, policy-only):
+--   - recreate org_assets_insert / org_assets_update / org_assets_delete
+--   - strict tenant isolation: no super_admin cross-org exception
+--     (super_admin has organization_id = NULL and no storage workflow)
+--   - org_assets_select is intentionally NOT recreated: it was
+--     dropped by 00008; the bucket is public, so URL access works
+--     without listing.
+--   - service_role continues to bypass RLS for server/admin cleanup.
+-- ============================================================
+
+-- 1. INSERT: tenant-scoped WITH CHECK
+-- ============================================================
+DROP POLICY IF EXISTS "org_assets_insert" ON storage.objects;
+
+CREATE POLICY "org_assets_insert"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'organization_assets'
+    AND (storage.foldername(name))[1] = public.get_current_user_org_id()::text
+  );
+
+-- 2. UPDATE: tenant-scoped USING + WITH CHECK
+-- ============================================================
+DROP POLICY IF EXISTS "org_assets_update" ON storage.objects;
+
+CREATE POLICY "org_assets_update"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'organization_assets'
+    AND (storage.foldername(name))[1] = public.get_current_user_org_id()::text
+  )
+  WITH CHECK (
+    bucket_id = 'organization_assets'
+    AND (storage.foldername(name))[1] = public.get_current_user_org_id()::text
+  );
+
+-- 3. DELETE: tenant-scoped USING
+-- ============================================================
+DROP POLICY IF EXISTS "org_assets_delete" ON storage.objects;
+
+CREATE POLICY "org_assets_delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'organization_assets'
+    AND (storage.foldername(name))[1] = public.get_current_user_org_id()::text
+  );
+
+-- ============================================================
+-- BURHAN PLATFORM — Migration 00013
+-- Align organization_assets bucket config with the app contract
+--
+-- Established contract (00005 + SUPABASE.md):
+--   * max file size : 5 MB (5242880 bytes)
+--   * allowed MIME  : image/jpeg, image/png, image/webp
+--
+-- GIF note: 00005 / SUPABASE.md list image/gif, but the application
+-- never uploads a GIF. app/utils/compressImage.ts always transcodes
+-- the selected file to image/webp before upload (all four callers in
+-- app/pages/dashboard/{entities,series}/), so GIF never reaches the
+-- bucket. This repair does not add a format the application cannot
+-- produce; the effective contract excludes GIF.
+--
+-- Live drift corrected here:
+--   * file_size_limit was 2097152 (2 MB) instead of 5242880 (5 MB)
+--   * allowed_mime_types already matched the effective set (no GIF)
+--
+-- Additive + idempotent. Does not touch any other storage setting.
+-- ============================================================
+
+UPDATE storage.buckets
+SET file_size_limit    = 5242880,
+    allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp']
+WHERE id = 'organization_assets';
+
+-- ============================================================
+-- BURHAN PLATFORM — Migration 00014
+-- Restore entities.content_type CHECK constraint
+--
+-- 00007 declared:
+--   CHECK (content_type IN ('video', 'article', 'audio'))
+-- but the live database does not enforce it (invalid values such as
+-- 'bogus' were accepted during M1.6). This restores the exact
+-- repository contract without redesigning the content model.
+--
+-- Additive + idempotent. No valid values are changed.
+-- ============================================================
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.entities'::regclass
+      AND conname  = 'entities_content_type_check'
+  ) THEN
+    ALTER TABLE public.entities
+      ADD CONSTRAINT entities_content_type_check
+      CHECK (content_type IN ('video', 'article', 'audio'));
+  END IF;
+END $$;-- ============================================================
+-- BURHAN PLATFORM — Migration 00015
+-- Subscription Foundation & Commercial Entitlement Layer
+--
+-- Architecture:
+--   Organization -> Subscription -> Plan -> Entitlements/Limits
+--
+-- Principles:
+--   1. Unified self-hosted & SaaS model (perpetual community plan)
+--   2. Database RLS validates subscription validity only (is_org_subscription_active)
+--   3. Content preservation: expired orgs retain public reads and DELETE sovereignty
+--   4. M1 DeAI backend contract remains 100% locked & untouched
+-- ============================================================
+
+-- 1. PLANS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS plans (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug           TEXT UNIQUE NOT NULL,
+  name           JSONB NOT NULL,
+  description    JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_active      BOOLEAN NOT NULL DEFAULT true,
+  price_monthly  NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+  price_yearly   NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+  currency       TEXT NOT NULL DEFAULT 'USD',
+  features       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  limits         JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE  plans IS 'Commercial & community service tiers. Limits canonical -1 = unlimited.';
+CREATE INDEX IF NOT EXISTS idx_plans_slug ON plans (slug);
+
+-- 2. SUBSCRIPTIONS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id  UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  plan_id          UUID NOT NULL REFERENCES plans(id) ON DELETE RESTRICT,
+  status           TEXT NOT NULL DEFAULT 'active'
+                   CHECK (status IN ('active', 'expired', 'cancelled')),
+  billing_period   TEXT NOT NULL DEFAULT 'monthly'
+                   CHECK (billing_period IN ('monthly', 'yearly')),
+  starts_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at       TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE  subscriptions IS 'Organization subscription records. Exactly one active subscription per organization.';
+CREATE INDEX IF NOT EXISTS idx_subscriptions_org_id ON subscriptions (organization_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_plan_id ON subscriptions (plan_id);
+
+-- Enforce exactly one active subscription per organization
+CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_one_active_per_org
+  ON subscriptions (organization_id)
+  WHERE status = 'active';
+
+-- 3. HELPER FUNCTION: is_org_subscription_active
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.is_org_subscription_active(p_org_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM subscriptions
+    WHERE organization_id = p_org_id
+      AND status = 'active'
+      AND (expires_at IS NULL OR expires_at > now())
+  );
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.is_org_subscription_active(UUID) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.is_org_subscription_active(UUID) TO authenticated, service_role;
+
+-- 4. RLS ON PLANS & SUBSCRIPTIONS
+-- ============================================================
+ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Plans: readable by authenticated users (and anon sees active plans)
+DROP POLICY IF EXISTS "plans_select_authenticated" ON plans;
+CREATE POLICY "plans_select_authenticated"
+  ON plans FOR SELECT TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "plans_select_anon" ON plans;
+CREATE POLICY "plans_select_anon"
+  ON plans FOR SELECT TO anon
+  USING (is_active = true);
+
+-- Subscriptions: members read own org subscription; super_admin reads all
+DROP POLICY IF EXISTS "subscriptions_select_org_members" ON subscriptions;
+CREATE POLICY "subscriptions_select_org_members"
+  ON subscriptions FOR SELECT TO authenticated
+  USING (
+    organization_id = public.get_current_user_org_id()
+    OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+  );
+
+-- 5. RLS MUTATION GATES (ENTITIES, BRANCHES, SERIES, STORAGE)
+-- ============================================================
+
+-- 5a. entities INSERT
+DROP POLICY IF EXISTS "entities_insert_org_staff" ON entities;
+CREATE POLICY "entities_insert_org_staff"
+  ON entities FOR INSERT TO authenticated
+  WITH CHECK (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = entities.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(entities.organization_id)
+  );
+
+-- 5b. entities UPDATE
+DROP POLICY IF EXISTS "entities_update_org_staff" ON entities;
+CREATE POLICY "entities_update_org_staff"
+  ON entities FOR UPDATE TO authenticated
+  USING (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = entities.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(entities.organization_id)
+  )
+  WITH CHECK (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = entities.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(entities.organization_id)
+  );
+
+-- 5c. branches INSERT
+DROP POLICY IF EXISTS "branches_insert_org_owner_or_manager" ON branches;
+CREATE POLICY "branches_insert_org_owner_or_manager"
+  ON branches FOR INSERT TO authenticated
+  WITH CHECK (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = branches.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(branches.organization_id)
+  );
+
+-- 5d. branches UPDATE
+DROP POLICY IF EXISTS "branches_update_org_owner_or_manager" ON branches;
+CREATE POLICY "branches_update_org_owner_or_manager"
+  ON branches FOR UPDATE TO authenticated
+  USING (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = branches.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(branches.organization_id)
+  )
+  WITH CHECK (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = branches.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(branches.organization_id)
+  );
+
+-- 5e. series INSERT
+DROP POLICY IF EXISTS "series_insert_org" ON series;
+CREATE POLICY "series_insert_org"
+  ON series FOR INSERT TO authenticated
+  WITH CHECK (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = series.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(series.organization_id)
+  );
+
+-- 5f. series UPDATE
+DROP POLICY IF EXISTS "series_update_org" ON series;
+CREATE POLICY "series_update_org"
+  ON series FOR UPDATE TO authenticated
+  USING (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = series.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(series.organization_id)
+  )
+  WITH CHECK (
+    (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+          AND organization_id = series.organization_id
+          AND role IN ('owner', 'manager')
+      )
+      OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+    )
+    AND public.is_org_subscription_active(series.organization_id)
+  );
+
+-- 5g. storage.objects INSERT (Organization Assets)
+DROP POLICY IF EXISTS "org_assets_insert" ON storage.objects;
+CREATE POLICY "org_assets_insert"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'organization_assets'
+    AND (storage.foldername(name))[1] = public.get_current_user_org_id()::text
+    AND public.is_org_subscription_active(public.get_current_user_org_id())
+  );
+
+-- 6. DEFAULT PLANS SEED DATA
+-- ============================================================
+INSERT INTO plans (slug, name, description, is_active, price_monthly, price_yearly, currency, features, limits)
+VALUES
+  (
+    'community',
+    '{"ar": "مجتمعية (مفتوحة)", "en": "Community (Open)"}'::jsonb,
+    '{"ar": "خطة الاستضافة الذاتية المفتوحة الدائمة", "en": "Perpetual self-hosted open-source plan"}'::jsonb,
+    true,
+    0.00,
+    0.00,
+    'USD',
+    '{"ai_generate": true, "premium_content": true, "custom_branding": true, "audio_podcasts": true}'::jsonb,
+    '{"monthly_ai_requests": -1, "monthly_ai_tokens": -1, "max_branches": -1}'::jsonb
+  ),
+  (
+    'pro',
+    '{"ar": "احترافية", "en": "Professional"}'::jsonb,
+    '{"ar": "خطة العمل السحابية الاحترافية", "en": "Professional commercial SaaS plan"}'::jsonb,
+    true,
+    29.00,
+    290.00,
+    'USD',
+    '{"ai_generate": true, "premium_content": true, "custom_branding": true, "audio_podcasts": true}'::jsonb,
+    '{"monthly_ai_requests": 250, "monthly_ai_tokens": 2000000, "max_branches": 5}'::jsonb
+  )
+ON CONFLICT (slug) DO NOTHING;
+
+-- 7. BACKFILL EXISTING ORGANIZATIONS WITH PERPETUAL COMMUNITY SUBSCRIPTION
+-- ============================================================
+INSERT INTO subscriptions (organization_id, plan_id, status, billing_period, starts_at, expires_at)
+SELECT
+  o.id,
+  p.id,
+  'active',
+  'yearly',
+  now(),
+  NULL
+FROM organizations o
+CROSS JOIN (SELECT id FROM plans WHERE slug = 'community' LIMIT 1) p
+WHERE NOT EXISTS (
+  SELECT 1 FROM subscriptions s
+  WHERE s.organization_id = o.id
+    AND s.status = 'active'
+)
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- BURHAN PLATFORM — Migration 00016
+-- Atomic Enforcement for max_branches Quota
+-- ============================================================
+
+-- 1. Create the enforcement function
+CREATE OR REPLACE FUNCTION public.check_branch_limit()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_raw_limit text;
+  v_limit     integer;
+  v_count     bigint;
+BEGIN
+  PERFORM 1
+  FROM public.organizations
+  WHERE id = NEW.organization_id
+  FOR NO KEY UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'branch_organization_invalid: organization does not exist'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  SELECT p.limits->>'max_branches'
+  INTO v_raw_limit
+  FROM public.subscriptions s
+  JOIN public.plans p ON p.id = s.plan_id
+  WHERE s.organization_id = NEW.organization_id
+    AND s.status = 'active'
+    AND (s.expires_at IS NULL OR s.expires_at > now())
+  LIMIT 1;
+
+  IF v_raw_limit IS NULL AND NOT EXISTS (
+    SELECT 1
+    FROM public.subscriptions s
+    WHERE s.organization_id = NEW.organization_id
+      AND s.status = 'active'
+      AND (s.expires_at IS NULL OR s.expires_at > now())
+  ) THEN
+    RAISE EXCEPTION 'branch_subscription_invalid: no active subscription found for organization'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_raw_limit IS NULL THEN
+    RAISE EXCEPTION 'branch_limit_invalid: plan limits missing max_branches value'
+      USING ERRCODE = 'check_violation';
+  ELSIF v_raw_limit = '-1' THEN
+    v_limit := -1;
+  ELSIF v_raw_limit ~ '^[0-9]{1,10}$' AND v_raw_limit::bigint <= 2147483647 THEN
+    v_limit := v_raw_limit::integer;
+  ELSE
+    RAISE EXCEPTION 'branch_limit_invalid: plan max_branches must be -1 or an integer between 0 and 2147483647'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_limit = -1 THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT count(*)
+  INTO v_count
+  FROM public.branches
+  WHERE organization_id = NEW.organization_id;
+
+  IF v_count >= v_limit THEN
+    RAISE EXCEPTION 'branch_limit_exceeded: organization has reached its branch limit of %', v_limit
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+-- 2. Privileges Configuration
+REVOKE ALL ON FUNCTION public.check_branch_limit() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.check_branch_limit() FROM authenticated;
+REVOKE ALL ON FUNCTION public.check_branch_limit() FROM service_role;
+REVOKE ALL ON FUNCTION public.check_branch_limit() FROM anon;
+
+-- 3. Attach BEFORE INSERT Trigger
+DROP TRIGGER IF EXISTS trg_enforce_branch_limit ON public.branches;
+
+CREATE TRIGGER trg_enforce_branch_limit
+  BEFORE INSERT ON public.branches
+  FOR EACH ROW
+  EXECUTE FUNCTION public.check_branch_limit();
+
+COMMENT ON FUNCTION public.check_branch_limit() IS
+  'Enforces atomic max_branches quota on branch creation via parent organization row locking.';
+
+
+-- ============================================================
+-- BURHAN PLATFORM — Migration 00017
+-- Membership Security, Self-Assignment Prevention, and Destination Subscription Gate
+-- ============================================================
+
+-- 1. Tighten RLS Policies on profiles
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
+
+CREATE POLICY "profiles_update_own"
+  ON public.profiles FOR UPDATE TO authenticated
+  USING (id = auth.uid())
+  WITH CHECK (
+    id = auth.uid()
+    AND (
+      public.get_current_user_role() = 'super_admin'
+      OR (
+        role = public.get_current_user_role()
+        AND organization_id IS NOT DISTINCT FROM public.get_current_user_org_id()
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "profiles_update_org_staff" ON public.profiles;
+
+CREATE POLICY "profiles_update_org_staff"
+  ON public.profiles FOR UPDATE TO authenticated
+  USING (
+    (
+      public.get_current_user_role() = 'owner'
+      AND organization_id = public.get_current_user_org_id()
+    )
+    OR public.get_current_user_role() = 'super_admin'
+  )
+  WITH CHECK (
+    public.get_current_user_role() = 'super_admin'
+    OR (
+      public.get_current_user_role() = 'owner'
+      AND organization_id = public.get_current_user_org_id()
+      AND role IN ('owner', 'manager', 'member')
+    )
+  );
+
+-- 2. Enforcement Function: enforce_profile_security
+CREATE OR REPLACE FUNCTION public.enforce_profile_security()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_is_service_role boolean;
+  v_caller_role     public.user_role;
+  v_caller_org_id   uuid;
+  v_caller_id       uuid;
+BEGIN
+  v_is_service_role := (
+    current_user IN ('service_role', 'postgres', 'supabase_admin')
+    OR session_user IN ('postgres', 'burhan')
+    OR COALESCE(
+         nullif(current_setting('request.jwt.claim.role', true), ''),
+         (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+       ) = 'service_role'
+  );
+
+  IF NEW.organization_id IS NOT NULL 
+     AND (OLD.organization_id IS NULL OR OLD.organization_id IS DISTINCT FROM NEW.organization_id) THEN
+    IF NOT public.is_org_subscription_active(NEW.organization_id) THEN
+      RAISE EXCEPTION 'member_subscription_invalid: destination organization has no active subscription'
+        USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
+  IF v_is_service_role THEN
+    RETURN NEW;
+  END IF;
+
+  v_caller_id     := auth.uid();
+  v_caller_role   := public.get_current_user_role();
+  v_caller_org_id := public.get_current_user_org_id();
+
+  IF v_caller_role = 'super_admin' THEN
+    RETURN NEW;
+  END IF;
+
+  IF v_caller_id IS NOT NULL AND v_caller_id = NEW.id THEN
+    IF NEW.organization_id IS DISTINCT FROM OLD.organization_id THEN
+      RAISE EXCEPTION 'profile_org_immutable: users cannot modify their own organization'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      RAISE EXCEPTION 'profile_role_immutable: users cannot modify their own role'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  IF v_caller_role = 'owner' THEN
+    IF NEW.organization_id IS DISTINCT FROM OLD.organization_id THEN
+      RAISE EXCEPTION 'member_org_immutable: owners cannot reassign organization membership'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF OLD.organization_id IS DISTINCT FROM v_caller_org_id THEN
+      RAISE EXCEPTION 'member_unauthorized: owner can only manage staff of their own organization'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF NEW.role = 'super_admin' AND OLD.role IS DISTINCT FROM 'super_admin' THEN
+      RAISE EXCEPTION 'member_role_invalid: owners cannot grant super_admin role'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  RAISE EXCEPTION 'profile_unauthorized: unauthorized profile modification'
+    USING ERRCODE = 'check_violation';
+
+END;
+$$;
+
+-- 3. Privileges Configuration
+REVOKE ALL ON FUNCTION public.enforce_profile_security() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.enforce_profile_security() FROM authenticated;
+REVOKE ALL ON FUNCTION public.enforce_profile_security() FROM service_role;
+REVOKE ALL ON FUNCTION public.enforce_profile_security() FROM anon;
+
+-- 4. Attach BEFORE UPDATE Trigger
+DROP TRIGGER IF EXISTS trg_enforce_profile_security ON public.profiles;
+
+CREATE TRIGGER trg_enforce_profile_security
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_profile_security();
+
+COMMENT ON FUNCTION public.enforce_profile_security() IS
+  'Enforces membership integrity, self-escalation prevention, and destination subscription validity.';

@@ -2,7 +2,7 @@ import { getSupabaseAdmin } from '../../utils/supabase'
 
 export default defineEventHandler(async (event) => {
   try {
-    const admin = getSupabaseAdmin()
+    const admin = getSupabaseAdmin() as any
     const { accessToken, orgName, orgSlug } = await readBody(event)
 
     if (!accessToken || !orgName || !orgSlug) {
@@ -46,6 +46,36 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, statusMessage: `Failed to create organization: ${orgError?.message || 'unknown'}` })
     }
 
+    // 1. Resolve community plan
+    const { data: defaultPlan, error: planError } = await admin
+      .from('plans')
+      .select('id')
+      .eq('slug', 'community')
+      .maybeSingle()
+
+    if (planError || !defaultPlan?.id) {
+      console.error('[register-tenant] failed to find default community plan:', planError)
+      throw createError({ statusCode: 500, statusMessage: 'Default community plan not found in database' })
+    }
+
+    // 2. Bootstrap perpetual community subscription for fresh tenant (required before branch creation)
+    const { error: subError } = await admin
+      .from('subscriptions')
+      .insert({
+        organization_id: org.id,
+        plan_id: defaultPlan.id,
+        status: 'active',
+        billing_period: 'yearly',
+        starts_at: new Date().toISOString(),
+        expires_at: null,
+      })
+
+    if (subError) {
+      console.error('[register-tenant] subscriptionError:', subError)
+      throw createError({ statusCode: 500, statusMessage: `Failed to create initial subscription: ${subError.message}` })
+    }
+
+    // 3. Create initial main branch (evaluated against active subscription quota)
     const { data: branch, error: branchError } = await admin
       .from('branches')
       .insert({
@@ -63,6 +93,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, statusMessage: `Failed to create default branch: ${branchError?.message || 'branch data missing'}` })
     }
 
+    // 4. Update authenticated user's profile to owner of the organization
     const { error: profileError } = await admin
       .from('profiles')
       .update({

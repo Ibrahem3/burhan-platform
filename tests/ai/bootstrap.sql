@@ -22,6 +22,16 @@ STABLE
 AS $$
   SELECT NULLIF(current_setting('request.jwt.claim.sub', TRUE), '')::UUID
 $$;
+CREATE OR REPLACE FUNCTION auth.role()
+RETURNS text
+LANGUAGE SQL
+STABLE
+AS $$
+  SELECT COALESCE(
+    NULLIF(current_setting('request.jwt.claim.role', true), ''),
+    (NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+  )::text
+$$;
 GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
 
 CREATE SCHEMA storage;
@@ -34,8 +44,16 @@ CREATE TABLE storage.buckets (
 );
 CREATE TABLE storage.objects (
   id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  bucket_id TEXT
+  bucket_id TEXT,
+  name      TEXT
 );
+CREATE OR REPLACE FUNCTION storage.foldername(name TEXT)
+RETURNS TEXT[]
+LANGUAGE SQL
+IMMUTABLE
+AS $$
+  SELECT string_to_array(name, '/');
+$$;
 GRANT USAGE ON SCHEMA storage TO anon, authenticated, service_role;
 
 -- Supabase creates this internally (used by its ensure_rls event trigger and
