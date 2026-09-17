@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-17] - Tenant AI Credentials & BYOK Subsystem (Migration 00018)
+
+### Added
+- [`supabase/migrations/00018_tenant_ai_credentials.sql`](../supabase/migrations/00018_tenant_ai_credentials.sql): Dedicated encrypted storage for tenant-owned AI provider credentials (BYOK). Features:
+  - Table `tenant_ai_credentials` storing AES-256-GCM ciphertext, unique 12-byte IV, 16-byte auth tag, key version, and masked suffix.
+  - Hardened PostgREST access: unconditionally revoked from `PUBLIC`, `anon`, and `authenticated`. Managed strictly through service-role by Nitro server endpoints.
+  - Per-tenant uniqueness constraint `UNIQUE(organization_id, provider)`.
+- [`server/utils/crypto.ts`](../server/utils/crypto.ts): Node.js `node:crypto` AES-256-GCM encryption/decryption module. Fails closed on missing or malformed `BYOK_ENCRYPTION_KEY` (must be exact 64 hex characters). Generates unique cryptographically random IV per encryption.
+- [`server/utils/ssrf.ts`](../server/utils/ssrf.ts): Comprehensive Server-Side Request Forgery (SSRF) defense module. Features:
+  - Provider endpoint policy (`validateProviderEndpointPolicy`) enforcing deployment allowlist: OpenAI locked to `https://api.openai.com`, OpenRouter locked to `https://openrouter.ai/api`, Nosana locked to platform cluster, and `custom` endpoints disabled by default in V1 (enabled only via `BYOK_ALLOW_CUSTOM_ENDPOINTS=true` and explicit `BYOK_ALLOWED_CUSTOM_HOSTS` allowlist).
+  - Multi-address DNS resolution and IP literal filtering blocking IPv4/IPv6 loopback, RFC1918 private, link-local, multicast, cloud metadata (`169.254.169.254`), non-HTTP/HTTPS schemes, and embedded user credentials.
+  - Safe HTTP runtime wrapper `safeProviderFetch` enforcing `redirect: 'manual'` and fail-closed handling on all 3xx redirects to eliminate redirect-based SSRF bypasses.
+- [`server/api/org/ai-credentials.get.ts`](../server/api/org/ai-credentials.get.ts): Owner-authorized endpoint returning masked credential metadata (`key_suffix`, `provider`, `is_active`, `base_url`, `custom_model`). Plaintext and ciphertext are never emitted.
+- [`server/api/org/ai-credentials.post.ts`](../server/api/org/ai-credentials.post.ts): Owner-authorized endpoint enforcing provider endpoint policy, SSRF validation, and AES-256-GCM encryption before database upsert.
+- [`server/api/org/ai-credentials.delete.ts`](../server/api/org/ai-credentials.delete.ts): Owner-authorized endpoint deleting tenant credentials.
+
+### Changed
+- [`server/utils/nosana.ts`](../server/utils/nosana.ts): Extended inference runner with dynamic provider resolution and SSRF runtime defense:
+  - Validates provider endpoint policy at runtime before dispatching inference requests.
+  - Dispatches inference requests using `safeProviderFetch` with `redirect: 'manual'`, strictly terminating execution if a provider issues any 3xx redirect.
+  - Decrypts tenant BYOK transiently in server memory during HTTP request window (plain-text lifetime invariant), with automatic fallback to platform Nosana provider when no BYOK is active. Sanitizes all upstream provider error messages to prevent credential or redirect reflection.
+- [`server/api/ai/generate.post.ts`](../server/api/ai/generate.post.ts): Added BYOK detection at admission boundary: applies canonical M1 unlimited token adapter (`2147483647`) for tenant-paid tokens while strictly maintaining `monthly_ai_requests` quota to protect platform infrastructure against abuse.
+- [`supabase/schema.sql`](../supabase/schema.sql): Appended Migration 00018 to maintain canonical synchronized database schema.
+- [`tests/byok.test.mjs`](../tests/byok.test.mjs): Added test suites covering AES-256-GCM cryptography, SSRF IP range filtering, RLS revocation, plaintext non-persistence, quota reservation, and runtime SSRF hardening (302/301/307/308 redirect blocking to metadata/localhost/private destinations, and provider endpoint policy enforcement).
+
+### Rationale
+- Empowers organizations with digital sovereignty and direct provider billing through Bring Your Own Key (BYOK) while preserving M1 AI backend locks, zero secret leakage to database/client/logs, and completely closing SSRF attack vectors (DNS rebinding and HTTP redirects) at both registration and runtime boundaries.
+
 ## [2026-09-17] - Membership Security & Destination Subscription Gate (Migration 00017)
 
 ### Added

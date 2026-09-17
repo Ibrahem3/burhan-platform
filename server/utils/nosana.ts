@@ -1,8 +1,11 @@
 import { getSupabaseAdmin } from './supabase'
+import { decryptSecret } from './crypto'
+import { validateProviderEndpointPolicy, safeProviderFetch } from './ssrf'
 
 export interface RunInferenceInput {
   jobId: string
   userId: string
+  orgId?: string
   prompt: string
   systemPrompt?: string | null
   language?: string
@@ -44,20 +47,45 @@ function parseSseEvent(lines: string): ChatDelta | null {
 }
 
 /**
- * Runs one inference job against a Nosana (OpenAI-compatible) chat endpoint.
+ * Sanitize error messages from upstream providers to strictly prevent
+ * any leaking of Authorization headers, API keys, or raw tokens.
+ */
+function sanitizeProviderError(status: number, rawDetail: string): string {
+  if (status >= 300 && status < 400) {
+    return 'AI provider returned an unsupported redirect; automatic redirects are disabled for security'
+  }
+  if (status === 401 || status === 403) {
+    return 'AI provider authentication failed: invalid or revoked credential'
+  }
+  if (status === 429) {
+    return 'AI provider rate limit or quota exceeded'
+  }
+  if (status >= 500) {
+    return 'AI provider temporary server error'
+  }
+  // Strip any potential bearer/token strings from detail
+  const cleaned = (rawDetail || '')
+    .replace(/bearer\s+[a-zA-Z0-9_\-\.]+/gi, 'Bearer [REDACTED]')
+    .replace(/sk-[a-zA-Z0-9]+/gi, '[REDACTED]')
+    .slice(0, 200)
+  return `AI provider request failed (${status}): ${cleaned}`
+}
+
+/**
+ * Runs one inference job against a chosen provider (Tenant BYOK or Platform Nosana).
  *
  * Responsibilities:
  *  - Claims the job (pending -> processing) with the atomic RPC
+ *  - Resolves active tenant BYOK credential or falls back to platform Nosana
  *  - Streams the SSE response, buffering `output_buffer`
  *  - Heartbeat debounced to ~3s so `last_heartbeat_at` reflects liveness
  *  - Terminates atomically (complete/fail) which ALSO reconciles quota
  *
- * All lifecycle transitions go through the SECURITY DEFINER RPCs
- * (granted to the service role only).
+ * Plaintext Lifetime Invariant:
+ *  Decrypted API keys live strictly in local function variables during the fetch call
+ *  and are never logged, persisted, or returned to clients.
  */
 export async function runInference(input: RunInferenceInput): Promise<void> {
-  // The repo's Database-generic typed client resolves every RPC to `never`
-  // (pre-existing, repo-wide). Service RPCs are intentionally untyped here.
   const admin = getSupabaseAdmin() as any
 
   const claim = await admin.rpc('start_ai_job', {
@@ -70,18 +98,92 @@ export async function runInference(input: RunInferenceInput): Promise<void> {
     return
   }
 
-  const cfg = getNosanaConfig()
-  const endpoint = cfg.apiEndpoint.replace(/\/+$/, '')
-  if (!endpoint || !cfg.clusterKey) {
-    await admin.rpc('fail_ai_job', {
-      p_job_id: input.jobId,
-      p_user_id: input.userId,
-      p_error: 'Nosana inference is not configured',
-    })
-    return
+  // 1. Resolve Provider Credentials (BYOK vs Platform)
+  let endpoint = ''
+  let apiKey = ''
+  let resolvedModel = input.model || ''
+  let providerType = 'platform_nosana'
+
+  // Attempt to load active tenant BYOK if organization ID is known
+  let targetOrgId = input.orgId
+  if (!targetOrgId) {
+    const { data: jobRow } = await admin
+      .from('ai_jobs')
+      .select('organization_id')
+      .eq('id', input.jobId)
+      .maybeSingle()
+    targetOrgId = jobRow?.organization_id
   }
 
-  const model = input.model || cfg.defaultModel
+  if (targetOrgId) {
+    const { data: byok, error: byokError } = await admin
+      .from('tenant_ai_credentials')
+      .select('provider, encrypted_key, key_iv, key_tag, key_version, base_url, custom_model')
+      .eq('organization_id', targetOrgId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (!byokError && byok) {
+      try {
+        // Enforce runtime deployment & provider endpoint policy
+        const policy = await validateProviderEndpointPolicy(byok.provider, byok.base_url)
+        if (!policy.allowed) {
+          console.error(`[runInference] Runtime BYOK policy rejection for provider '${byok.provider}': ${policy.error}`)
+          await admin.rpc('fail_ai_job', {
+            p_job_id: input.jobId,
+            p_user_id: input.userId,
+            p_error: 'Tenant AI provider configuration is invalid or disallowed by platform policy',
+          })
+          return
+        }
+
+        apiKey = decryptSecret(byok.encrypted_key, byok.key_iv, byok.key_tag, byok.key_version)
+        providerType = `byok_${byok.provider}`
+
+        if (policy.endpoint) {
+          endpoint = policy.endpoint.replace(/\/+$/, '')
+        } else {
+          const cfg = getNosanaConfig()
+          endpoint = cfg.apiEndpoint.replace(/\/+$/, '')
+        }
+
+        if (!resolvedModel) {
+          resolvedModel = byok.custom_model || (byok.provider === 'openai' ? 'gpt-4o-mini' : '')
+        }
+      } catch (decryptErr: any) {
+        console.error('[runInference] failed to decrypt tenant BYOK credential:', decryptErr?.message)
+        await admin.rpc('fail_ai_job', {
+          p_job_id: input.jobId,
+          p_user_id: input.userId,
+          p_error: 'Failed to decrypt tenant AI credentials',
+        })
+        return
+      }
+    }
+  }
+
+  // Fallback to platform Nosana if no active BYOK resolved
+  if (!apiKey) {
+    const cfg = getNosanaConfig()
+    endpoint = cfg.apiEndpoint.replace(/\/+$/, '')
+    apiKey = cfg.clusterKey
+    if (!resolvedModel) {
+      resolvedModel = cfg.defaultModel
+    }
+
+    if (!endpoint || !apiKey) {
+      await admin.rpc('fail_ai_job', {
+        p_job_id: input.jobId,
+        p_user_id: input.userId,
+        p_error: 'AI inference is not configured (no active BYOK or platform provider)',
+      })
+      return
+    }
+  }
+
+  const model = resolvedModel || 'default'
   const messages = []
   if (input.systemPrompt?.trim()) {
     messages.push({ role: 'system', content: input.systemPrompt.trim() })
@@ -111,10 +213,12 @@ export async function runInference(input: RunInferenceInput): Promise<void> {
   try {
     await heartbeat()
 
-    const res = await fetch(`${endpoint}/v1/chat/completions`, {
+    const targetUrl = `${endpoint}/v1/chat/completions`
+
+    const res = await safeProviderFetch(targetUrl, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${cfg.clusterKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -127,10 +231,11 @@ export async function runInference(input: RunInferenceInput): Promise<void> {
 
     if (!res.ok || !res.body) {
       const detail = await res.text().catch(() => '')
+      const sanitizedError = sanitizeProviderError(res.status, detail)
       await admin.rpc('fail_ai_job', {
         p_job_id: input.jobId,
         p_user_id: input.userId,
-        p_error: `Nosana request failed (${res.status}): ${detail.slice(0, 200)}`,
+        p_error: sanitizedError,
       })
       return
     }
@@ -171,10 +276,14 @@ export async function runInference(input: RunInferenceInput): Promise<void> {
       p_output_final: buffer,
     })
   } catch (err: any) {
+    const errorMsg = (err?.message || 'Inference failed')
+      .replace(/bearer\s+[a-zA-Z0-9_\-\.]+/gi, 'Bearer [REDACTED]')
+      .slice(0, 300)
+
     await admin.rpc('fail_ai_job', {
       p_job_id: input.jobId,
       p_user_id: input.userId,
-      p_error: (err?.message || 'Inference failed').slice(0, 300),
+      p_error: errorMsg,
     })
   } finally {
     clearTimeout(timer)

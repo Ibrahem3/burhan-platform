@@ -48,14 +48,29 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'AI generation is not enabled for this subscription plan' })
   }
 
-  // M1 boundary adapter:
-  // -1 (canonical unlimited) -> 2147483647 (Postgres 32-bit signed int max)
-  // Finite limits (>= 0) passed directly.
+  // Check whether the organization has an active BYOK credential
+  const { data: activeByok } = await admin
+    .from('tenant_ai_credentials')
+    .select('id')
+    .eq('organization_id', orgId)
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle()
+
+  const isByokActive = !!activeByok?.id
+
+  // Abuse protection: monthly_ai_requests remains strictly enforced for all jobs
   const reqLimitRaw = sub.limits.monthly_ai_requests ?? 0
   const tokLimitRaw = sub.limits.monthly_ai_tokens ?? 0
 
   const requestLimit = reqLimitRaw === -1 ? 2147483647 : Math.max(0, Number(reqLimitRaw))
-  const tokenLimit = tokLimitRaw === -1 ? 2147483647 : Math.max(0, Number(tokLimitRaw))
+
+  // Token boundary adapter:
+  // For BYOK: tenant pays provider directly -> passes canonical M1 unlimited adapter (2147483647)
+  // For Platform: respects organization plan limits
+  const tokenLimit = isByokActive
+    ? 2147483647
+    : (tokLimitRaw === -1 ? 2147483647 : Math.max(0, Number(tokLimitRaw)))
 
   const { data, error } = await admin.rpc('create_ai_job', {
     p_user_id: caller.userId,
@@ -93,6 +108,7 @@ export default defineEventHandler(async (event) => {
     runInference({
       jobId: data.id,
       userId: caller.userId,
+      orgId,
       prompt: trimmed,
       systemPrompt: systemPrompt || null,
       language: language || 'ar',
