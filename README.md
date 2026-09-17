@@ -10,20 +10,21 @@
 ---
 
 > [!IMPORTANT]
-> **⚠️ Strategic & Visionary Notice (June 2026)**
-> Development on this standalone repository is officially frozen and transitioned into a Technical Waqf (وقف تقني) as a public, source-available asset.
+> **🛡️ Strategic & Ethical Architecture: A Sovereign Technical Waqf (وقف تقني)**
 >
-> As a Solo Founder, time and energy are the most critical resources. Therefore, I have made the strategic decision to ruthlessly channel 100% of my focus and engineering effort into building the centralized core engine inside my unified Go-based Super-App.
+> Burhan is engineered and dedicated as an Ethical Technical Asset (وقف تقني)—a production-grade, source-available platform built to advance digital sovereignty, resist centralized data monopolies, and plant enduring seeds of light across the open web (نشر بذور النور في الأرض).
 >
-> Instead of letting this enterprise architecture sit unused, it has been completely open-sourced to achieve a higher purpose: To plant seeds of light across the digital landscape (نشر بذور النور في الأرض).
+> By exposing this sovereign architecture, the objective is to empower independent thinkers, developers, and scholarly organizations with battle-tested infrastructure that eliminates months of development. Burhan is built for autonomous self-hosting, community-driven enhancements, and total intellectual resilience.
 >
-> By exposing this production-ready code, the goal is to empower indie developers, support our community's digital sovereignty against central monopolies, and provide a solid foundation that saves months of development. Live registration is permanently closed, but the repository remains entirely open for community UI/UX enhancements, learning, and independent ethical self-hosting.
+> ⚡ **Current Phase — Decentralized AI Architecture:** We are actively extending Burhan's sovereign chassis to integrate decentralized, permissionless GPU inference. By shifting intelligence to open compute networks, Burhan eliminates reliance on centralized, surveillance-driven AI gatekeepers, bringing censorship-resistant, private writing pipelines directly to content creators.
 
 ## 1. The Manifesto: Tech Sovereignty in the Age of Censorship
 
-In an era of centralized digital monopolies and algorithmic silencing, independent thinkers and scholarly institutions face a new form of silencing: **Digital Censorship (الاغتيال الرقمي)**. When platforms arbitrary ban channels and purge archives, relying on third-party infrastructure becomes an existential vulnerability.
+In an era of centralized digital monopolies, arbitrary deplatforming, and opaque algorithmic filtering, independent thinkers and scholarly institutions face a systemic threat: **Digital Censorship (الاغتيال الرقمي)**. When platforms gatekeep reach and purge archives at will, depending on proprietary, centralized infrastructure is an existential risk.
 
-**Burhan** is established as an **Ethical & Sovereign Technical Asset (وقف تقني)**. It provides a secure, decentralized, and self-hosted alternative for media distribution, intellectual defense (الثغور الفكرية), and scholarly dialogue. By giving organizations absolute control over their databases, media channels, and user networks, Burhan ensures that truth remains uncensored and accessible.
+**Burhan** is architected as an **Ethical & Sovereign Technical Asset (وقف تقني)**. It serves as an uncompromising, decentralized, and self-hosted alternative for media distribution, intellectual defense (الثغور الفكرية), and rigorous scholarly discourse.
+
+By guaranteeing organizations and creators absolute sovereign ownership over their databases, content delivery networks, and AI inference pipelines, Burhan ensures that truth remains uncensored, preserved, and universally accessible.
 
 ---
 
@@ -135,7 +136,7 @@ By cloning, deploying, or contributing to this project, you agree to the followi
 3.  **Setup Database Schemas:**
     *   Open your project in the **Supabase Dashboard**.
     *   Go to the **SQL Editor** tab.
-    *   Open [`supabase/schema.sql`](file:///mnt/Data/burhan/supabase/schema.sql) in your code editor, copy its entire contents, paste it into the Supabase SQL Editor, and click **Run**. This builds all tables, enums, triggers, security functions, RLS policies, and storage buckets in one click.
+    *   Open [`supabase/schema.sql`](./supabase/schema.sql) in your code editor, copy its entire contents, paste it into the Supabase SQL Editor, and click **Run**. This builds all tables, enums, triggers, security functions, RLS policies, and storage buckets in one click.
 
 4.  **Run the local server:**
     ```bash
@@ -154,7 +155,7 @@ However, the Frontend UI is currently in a functional state. We explicitly invit
 ### How to Contribute:
 1.  Fork the repository.
 2.  Create a feature branch (`git checkout -b feature/ui-enhancement`).
-3.  Polish the UI components under [`app/components/`](file:///mnt/Data/burhan/app/components) or pages under [`app/pages/`](file:///mnt/Data/burhan/app/pages).
+3.  Polish the UI components under [`app/components/`](./app/components) or pages under [`app/pages/`](./app/pages).
 4.  Submit a Pull Request with a clear explanation of your visual improvements.
 
 Let's build a sovereign and resilient infrastructure together!
