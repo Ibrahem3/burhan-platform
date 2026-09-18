@@ -1,6 +1,26 @@
 # بُرهان — Burhan Platform
 
-> **Decentralized, Sovereign Media-CMS & Digital Intellectual Observatory Engine**
+<table align="left" style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px; max-width: 500px; background: #ffffff;">
+  <tr>
+    <td>
+      <img alt="GitHub" src="https://ph-files.imgix.net/dae462f6-9602-4dba-a3b6-4f7f89a78ab3.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=80&w=80" width="64" height="64" style="border-radius: 8px;">
+    </td>
+    <td style="padding-left: 12px; vertical-align: top;">
+      <strong style="font-size: 18px; color: #1a1a1a;">GitHub</strong><br>
+      <span style="font-size: 14px; color: #666666; line-height: 1.4;">Production-ready SaaS boilerplate to ship in hours.</span>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" style="padding-top: 12px;">
+      <a href="https://www.producthunt.com/products/github-442?embed=true&utm_source=embed&utm_medium=post_embed" target="_blank" rel="noopener">
+        <img src="https://img.shields.io/badge/Check%20it%20out%20on-Product%20Hunt-FF6154?style=for-the-badge&logo=producthunt&logoColor=white" alt="Product Hunt">
+      </a>
+    </td>
+  </tr>
+</table>
+<br clear="left" />
+
+
 
 ![Sovereignty](https://img.shields.io/badge/Sovereignty-Ethical_Asset-blueviolet?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge)
@@ -10,22 +30,23 @@
 ---
 
 > [!IMPORTANT]
-> **🛡️ Strategic & Ethical Architecture: A Sovereign Technical Waqf (وقف تقني)**
->
-> Burhan is engineered and dedicated as an Ethical Technical Asset (وقف تقني)—a production-grade, source-available platform built to advance digital sovereignty, resist centralized data monopolies, and plant enduring seeds of light across the open web (نشر بذور النور في الأرض).
->
+> ### 🛡️ Strategic & Ethical Architecture: A Sovereign Technical Waqf (وقف تقني)
+> Burhan is engineered and dedicated as an **Ethical Technical Asset (وقف تقني)**—a production-grade, source-available platform built to advance digital sovereignty, resist centralized data monopolies, and plant enduring seeds of light across the open web (نشر بذور النور في الأرض).
+> 
 > By exposing this sovereign architecture, the objective is to empower independent thinkers, developers, and scholarly organizations with battle-tested infrastructure that eliminates months of development. Burhan is built for autonomous self-hosting, community-driven enhancements, and total intellectual resilience.
->
-> ⚡ **Current Phase — Decentralized AI Architecture:** We are actively extending Burhan's sovereign chassis to integrate decentralized, permissionless GPU inference. By shifting intelligence to open compute networks, Burhan eliminates reliance on centralized, surveillance-driven AI gatekeepers, bringing censorship-resistant, private writing pipelines directly to content creators.
+> 
+> ⚡ **Current Phase — Decentralized AI Architecture:**
+> We are actively extending Burhan's sovereign chassis to integrate decentralized, permissionless GPU inference. By shifting intelligence to open compute networks, Burhan eliminates reliance on centralized, surveillance-driven AI gatekeepers, bringing censorship-resistant, private writing pipelines directly to content creators.
 
-## 1. The Manifesto: Tech Sovereignty in the Age of Censorship
+---
+
+### 1. The Manifesto: Tech Sovereignty in the Age of Censorship
 
 In an era of centralized digital monopolies, arbitrary deplatforming, and opaque algorithmic filtering, independent thinkers and scholarly institutions face a systemic threat: **Digital Censorship (الاغتيال الرقمي)**. When platforms gatekeep reach and purge archives at will, depending on proprietary, centralized infrastructure is an existential risk.
 
-**Burhan** is architected as an **Ethical & Sovereign Technical Asset (وقف تقني)**. It serves as an uncompromising, decentralized, and self-hosted alternative for media distribution, intellectual defense (الثغور الفكرية), and rigorous scholarly discourse.
+Burhan is architected as an **Ethical & Sovereign Technical Asset (وقف تقني)**. It serves as an uncompromising, decentralized, and self-hosted alternative for media distribution, intellectual defense (الثغور الفكرية), and rigorous scholarly discourse. 
 
 By guaranteeing organizations and creators absolute sovereign ownership over their databases, content delivery networks, and AI inference pipelines, Burhan ensures that truth remains uncensored, preserved, and universally accessible.
-
 ---
 
 ## 2. Core Architectural Features
@@ -159,3 +180,5 @@ However, the Frontend UI is currently in a functional state. We explicitly invit
 4.  Submit a Pull Request with a clear explanation of your visual improvements.
 
 Let's build a sovereign and resilient infrastructure together!
+
+💬 **Join our Discord Community:** [Join Ainux on Discord](https://discord.gg/mD9eQ7TX8S)
