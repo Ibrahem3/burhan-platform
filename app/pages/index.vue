@@ -22,6 +22,10 @@ const { data: organizations, pending, error } = useFetch<OrgWithCount[]>('/api/o
   transform: (data) => data ?? [],
 })
 
+const totalPublicContent = computed(() => {
+  return organizations.value?.reduce((sum, o) => sum + (o.content_count || 0), 0) || 0
+})
+
 const speedDialOpen = ref(false)
 
 const speedDialItems = computed(() => [
@@ -300,30 +304,86 @@ function scrollToSection(id: string) {
     <!-- ===== Main Content ===== -->
     <main id="main-content" class="flex-1">
       <!-- Hero Section -->
-      <section id="hub-hero" class="relative overflow-hidden py-20 md:py-28 lg:py-36">
-        <div class="absolute top-1/4 -left-40 w-[500px] h-[500px] bg-gold/5 rounded-full blur-3xl" />
-        <div class="absolute top-1/3 -right-40 w-[400px] h-[400px] bg-gold/3 rounded-full blur-3xl" />
-        <div class="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/3 rounded-full blur-3xl" />
-        <div class="absolute inset-0 bg-gradient-to-b from-gold/5 via-transparent to-transparent pointer-events-none" />
+      <section id="hub-hero" class="relative overflow-hidden py-24 md:py-32 lg:py-40">
+        <!-- Ambient Mesh Gradients & Dot Matrix Background -->
+        <div class="absolute top-1/4 -left-40 w-[600px] h-[600px] bg-gold/10 rounded-full blur-[128px] pointer-events-none" />
+        <div class="absolute top-1/3 -right-40 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[128px] pointer-events-none" />
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-t from-gold/10 via-transparent to-transparent blur-3xl pointer-events-none" />
+        
+        <!-- Architectural Tech Grid Pattern with Radial Fade -->
+        <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] pointer-events-none" />
 
-        <div class="relative z-10 text-center max-w-4xl mx-auto px-4">
-          <div class="animate-fade-in">
-            <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight">
-              <span class="gradient-gold">{{ $t('hub.title') }}</span>
-            </h1>
-            <p class="text-lg md:text-xl lg:text-2xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-              {{ $t('hub.hero_description') }}
-            </p>
-            <div class="flex flex-wrap items-center justify-center gap-4">
-              <button
-                class="cta-glow inline-flex items-center justify-center font-medium transition-all duration-300 rounded-xl px-8 py-3.5 md:px-10 md:py-4 text-base md:text-lg bg-gold text-onyx hover:bg-gold-500 active:bg-gold-600 shadow-lg shadow-gold/20"
-                @click="scrollToSection('orgs-grid')"
-              >
-                {{ $t('hub.browse_orgs') }}
-              </button>
-              <Button variant="outline" size="lg">
-                {{ $t('hub.cta_learn') }}
-              </Button>
+        <div class="relative z-10 text-center max-w-5xl mx-auto px-4">
+          <!-- Top Announcement Capsule -->
+          <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full glass bg-white/[0.03] border border-white/10 hover:border-gold/30 shadow-lg shadow-black/40 mb-8 transition-all duration-300">
+            <span class="flex h-2 w-2 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span class="text-xs text-gray-300 font-medium">
+              {{ currentLocale === 'ar' ? 'المنظومة السيادية للردود والحوارات الفكرية' : 'Sovereign Multi-Tenant Knowledge Architecture' }}
+            </span>
+            <span class="text-gray-600">•</span>
+            <span class="text-[11px] font-mono text-gold bg-gold/10 px-2 py-0.5 rounded-md border border-gold/20">
+              v2.0
+            </span>
+          </div>
+
+          <!-- Main Title with Deep Gold Gradient -->
+          <h1 class="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold mb-6 tracking-tight leading-none select-none">
+            <span class="gradient-gold drop-shadow-2xl">{{ $t('hub.title') }}</span>
+          </h1>
+
+          <!-- Tagline Subtitle -->
+          <p class="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-6 max-w-3xl mx-auto leading-snug">
+            {{ $t('hub.subtitle') }}
+          </p>
+
+          <!-- Description Text -->
+          <p class="text-sm sm:text-base md:text-lg text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+            {{ $t('hub.hero_description') }}
+          </p>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap items-center justify-center gap-4 mb-16">
+            <button
+              class="cta-glow inline-flex items-center justify-center gap-2.5 font-semibold transition-all duration-300 rounded-2xl px-8 py-4 text-base md:text-lg bg-gold text-onyx hover:bg-gold-500 active:bg-gold-600 shadow-xl shadow-gold/25 group cursor-pointer"
+              @click="scrollToSection('orgs-grid')"
+            >
+              <svg class="w-5 h-5 transition-transform duration-300 group-hover:rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span>{{ $t('hub.browse_orgs') }}</span>
+            </button>
+
+            <NuxtLink
+              to="/signup"
+              class="inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 rounded-2xl px-7 py-4 text-base md:text-lg glass bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/10 hover:border-gold/40 shadow-xl group"
+            >
+              <span>{{ currentLocale === 'ar' ? 'أنشئ منظمتك الخاصة' : 'Launch Your Organization' }}</span>
+              <span class="transition-transform duration-300 group-hover:translate-x-1" :class="currentLocale === 'ar' ? 'group-hover:-translate-x-1' : ''">
+                {{ currentLocale === 'ar' ? '←' : '→' }}
+              </span>
+            </NuxtLink>
+          </div>
+
+          <!-- Live Metrics & Trust Ribbon -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto pt-8 border-t border-white/5">
+            <div class="glass backdrop-blur-md bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-center">
+              <p class="text-xl sm:text-2xl font-bold gradient-gold">{{ organizations?.length || 0 }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ currentLocale === 'ar' ? 'منظمات نشطة' : 'Active Tenants' }}</p>
+            </div>
+            <div class="glass backdrop-blur-md bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-center">
+              <p class="text-xl sm:text-2xl font-bold text-white">{{ totalPublicContent }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ currentLocale === 'ar' ? 'مادة ومرجع موثق' : 'Published Entries' }}</p>
+            </div>
+            <div class="glass backdrop-blur-md bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-center">
+              <p class="text-xl sm:text-2xl font-bold gradient-gold">100%</p>
+              <p class="text-xs text-gray-400 mt-1">{{ currentLocale === 'ar' ? 'عزل بيانات سيادي' : 'Isolated Multi-Tenancy' }}</p>
+            </div>
+            <div class="glass backdrop-blur-md bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-center">
+              <p class="text-xl sm:text-2xl font-bold text-emerald-400">DeAI</p>
+              <p class="text-xs text-gray-400 mt-1">{{ currentLocale === 'ar' ? 'ذكاء اصطناعي مشفر' : 'Encrypted BYOK AI' }}</p>
             </div>
           </div>
         </div>
@@ -480,32 +540,160 @@ function scrollToSection(id: string) {
       </section>
     </main>
 
-    <!-- ===== Footer ===== -->
-    <footer class="border-t border-white/5 glass mt-auto">
-      <div class="max-w-7xl mx-auto px-4 py-10">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div class="flex flex-col items-center md:items-start gap-1">
-            <span class="text-lg font-bold gradient-gold">{{ $t('brand.name') }}</span>
-            <span class="text-xs text-gray-500">{{ $t('brand.tagline') }}</span>
+    <!-- ===== Pre-Footer Enterprise CTA Strip ===== -->
+    <section class="max-w-7xl mx-auto px-4 pb-16">
+      <div class="relative rounded-3xl overflow-hidden glass border border-white/10 p-8 sm:p-12 shadow-2xl bg-gradient-to-r from-gold/10 via-white/[0.02] to-gold/5">
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-gold/15 rounded-full blur-3xl pointer-events-none" />
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-gold/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-start">
+          <div class="space-y-3 max-w-2xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/20 text-xs text-gold font-medium">
+              <span>✦</span>
+              <span>{{ currentLocale === 'ar' ? 'للمؤسسات والمراكز الفكرية' : 'For Institutions & Intellectual Centers' }}</span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+              {{ currentLocale === 'ar' ? 'هل تدير منظومة معرفية أو فكرية؟' : 'Managing a Knowledge or Research Entity?' }}
+            </h2>
+            <p class="text-sm sm:text-base text-gray-400 leading-relaxed">
+              {{ currentLocale === 'ar' 
+                ? 'انضم إلى شبكة برهان وأسّس مساحتك الرقمية المستقلة بأعلى معايير العزل والأمان والذكاء الاصطناعي السيادي.' 
+                : 'Join Burhan network to establish your independent digital hub backed by sovereign tenant isolation, BYOK encryption, and modern learning series.' 
+              }}
+            </p>
           </div>
-          <div class="flex items-center gap-6">
-            <NuxtLink to="/about" class="text-sm text-gray-500 hover:text-gold transition-colors">
+
+          <div class="flex flex-wrap items-center justify-center gap-4 shrink-0">
+            <NuxtLink
+              to="/signup"
+              class="cta-glow inline-flex items-center gap-2.5 font-bold transition-all duration-300 rounded-2xl px-8 py-4 text-base bg-gold text-onyx hover:bg-gold-500 active:bg-gold-600 shadow-xl shadow-gold/20"
+            >
+              <span>{{ currentLocale === 'ar' ? 'ابدأ تأسيس منظمتك الآن' : 'Launch Your Platform' }}</span>
+              <span>{{ currentLocale === 'ar' ? '←' : '→' }}</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/about"
+              class="inline-flex items-center gap-2 font-medium transition-all duration-300 rounded-2xl px-6 py-4 text-base glass bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-gold/30"
+            >
               {{ $t('footer.about_platform') }}
-            </NuxtLink>
-            <NuxtLink to="/terms" class="text-sm text-gray-500 hover:text-gold transition-colors">
-              {{ $t('footer.terms') }}
-            </NuxtLink>
-            <NuxtLink to="/privacy" class="text-sm text-gray-500 hover:text-gold transition-colors">
-              {{ $t('footer.privacy') }}
-            </NuxtLink>
-            <NuxtLink to="/contact" class="text-sm text-gray-500 hover:text-gold transition-colors">
-              {{ $t('footer.contact') }}
             </NuxtLink>
           </div>
         </div>
-        <div class="border-t border-white/5 mt-6 pt-6 text-center">
-          <p class="text-xs text-gray-600">
+      </div>
+    </section>
+
+    <!-- ===== Sovereign Foundation Footer ===== -->
+    <footer class="border-t border-white/5 glass bg-onyx/80 backdrop-blur-2xl mt-auto">
+      <div class="max-w-7xl mx-auto px-4 pt-16 pb-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-14">
+          <!-- Column 1: Brand & Mission (5 cols) -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl font-black tracking-tight gradient-gold">{{ $t('brand.name') }}</span>
+              <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-gold/10 text-gold border border-gold/20">
+                v2.0 Sovereign
+              </span>
+            </div>
+
+            <p class="text-xs text-gray-400 leading-relaxed max-w-sm">
+              {{ $t('hub.hero_description') }}
+            </p>
+
+            <!-- System Live Status Indicator -->
+            <div class="pt-2 flex items-center gap-2.5">
+              <span class="flex h-2 w-2 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span class="text-xs font-mono text-gray-400">
+                {{ currentLocale === 'ar' ? 'جميع أنظمة برهان تعمل بكفاءة' : 'All Systems Operational' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Column 2: Platform Links (2 cols) -->
+          <div class="lg:col-span-2 space-y-3">
+            <p class="text-xs font-bold text-white uppercase tracking-wider">
+              {{ currentLocale === 'ar' ? 'المنظومة' : 'Platform' }}
+            </p>
+            <ul class="space-y-2.5 text-xs text-gray-400">
+              <li>
+                <button class="hover:text-gold transition-colors text-start" @click="scrollToSection('orgs-grid')">
+                  {{ $t('hub.orgs_title') }}
+                </button>
+              </li>
+              <li>
+                <NuxtLink to="/signup" class="hover:text-gold transition-colors">
+                  {{ currentLocale === 'ar' ? 'تسجيل منظمة' : 'Register Tenant' }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/dashboard" class="hover:text-gold transition-colors">
+                  {{ $t('nav.dashboard') }}
+                </NuxtLink>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 3: Trust & Governance (2 cols) -->
+          <div class="lg:col-span-2 space-y-3">
+            <p class="text-xs font-bold text-white uppercase tracking-wider">
+              {{ currentLocale === 'ar' ? 'الحوكمة والميثاق' : 'Governance' }}
+            </p>
+            <ul class="space-y-2.5 text-xs text-gray-400">
+              <li>
+                <NuxtLink to="/about" class="hover:text-gold transition-colors">
+                  {{ $t('footer.about_platform') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/terms" class="hover:text-gold transition-colors">
+                  {{ $t('footer.terms') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/privacy" class="hover:text-gold transition-colors">
+                  {{ $t('footer.privacy') }}
+                </NuxtLink>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 4: Contact & Locale (3 cols) -->
+          <div class="lg:col-span-3 space-y-3">
+            <p class="text-xs font-bold text-white uppercase tracking-wider">
+              {{ currentLocale === 'ar' ? 'التواصل واللغة' : 'Connect' }}
+            </p>
+            <ul class="space-y-2.5 text-xs text-gray-400">
+              <li>
+                <NuxtLink to="/contact" class="hover:text-gold transition-colors">
+                  {{ $t('footer.contact') }}
+                </NuxtLink>
+              </li>
+            </ul>
+
+            <!-- Inline Language Selector Pill -->
+            <div class="pt-3">
+              <button
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl glass bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 hover:text-gold transition-all"
+                @click="toggleLocale()"
+              >
+                <svg class="w-3.5 h-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m0 4h.01M21 12l-4 4m0 0l-4-4m4 4V8" />
+                </svg>
+                <span>{{ currentLocale === 'ar' ? 'English' : 'العربية' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-Footer Bottom Bar -->
+        <div class="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-start">
+          <p class="text-xs text-gray-500">
             &copy; {{ new Date().getFullYear() }} {{ $t('footer.rights') }}
+          </p>
+          <p class="text-[11px] font-mono text-gray-600">
+            Engineered for Sovereign Knowledge & Multi-Tenant Integrity
           </p>
         </div>
       </div>

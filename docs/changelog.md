@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Cinematic Hub Hero & Sovereign Foundation Footer Overhaul
+
+### Changed
+- [`app/pages/index.vue`](../app/pages/index.vue): Overhauled Main Hub header and footer architecture:
+  - **Cinematic Hero:** Added ambient mesh aura, radial-masked tech grid pattern, v2.0 announcement capsule, dual elevated CTAs, and a 4-pillar live metrics ribbon (`Tenants`, `Published Entries`, `100% Isolation`, `DeAI`).
+  - **Pre-Footer Enterprise Strip:** Added high-impact glass banner inviting knowledge organizations to launch their sovereign platform.
+  - **4-Column Foundation Footer:** Implemented institutional 4-column glass layout with live system operational status indicator, direct platform & governance links, inline language selector, and 2026 copyright ribbon.
+
 ## [2026-09-18] - Sovereign Organization Cards Redesign
 
 ### Changed
