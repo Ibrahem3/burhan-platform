@@ -10,7 +10,8 @@ definePageMeta({
 const supabase = useSupabaseClient<Database>()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
-const { profile } = useUser()
+const { profile, isSuperAdmin } = useUser()
+const { isReadOnly } = useSubscription()
 
 type Entity = Database['public']['Tables']['entities']['Row']
 type Branch = Database['public']['Tables']['branches']['Row']
@@ -166,6 +167,10 @@ watch(orgId, (id) => {
 }, { immediate: true })
 
 function openCreateModal() {
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'لا يمكن إنشاء محتوى جديد: اشتراك المنظمة في وضع القراءة فقط.'
+    return
+  }
   editingId.value = null
   form.title_ar = ''
   form.title_en = ''
@@ -185,10 +190,18 @@ function openCreateModal() {
 }
 
 function navigateToNew() {
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'لا يمكن إنشاء محتوى جديد: اشتراك المنظمة في وضع القراءة فقط.'
+    return
+  }
   navigateTo(localePath('/dashboard/entities/new'))
 }
 
 function openEditModal(entity: Entity) {
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'لا يمكن تعديل المحتوى: اشتراك المنظمة في وضع القراءة فقط.'
+    return
+  }
   const ct = (entity as any).content_type
   if (ct === 'article' || (!ct && !entity.video_id && !isAudio(entity))) {
     navigateTo(localePath(`/dashboard/entities/${entity.id}`))
@@ -218,6 +231,12 @@ function openEditModal(entity: Entity) {
 async function submitEntity() {
   error.value = ''
   success.value = ''
+
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'العملية مرفوضة: المنظمة في وضع القراءة فقط.'
+    return
+  }
+
   if (!form.title_ar || !form.title_en || !form.branch_id) {
     error.value = t('dashboard.validation.title_branch_required')
     return
@@ -304,6 +323,10 @@ async function confirmDelete() {
       {{ success }}
     </div>
 
+    <div v-if="error" class="mb-6 text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+      {{ error }}
+    </div>
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
       <div class="hidden sm:block">
@@ -314,7 +337,12 @@ async function confirmDelete() {
         </p>
       </div>
       <div class="flex items-center gap-2 justify-between w-full sm:w-auto sm:justify-end" :class="locale === 'en' ? 'flex-row-reverse sm:flex-row' : ''">
-        <Button class="text-[11px] sm:text-sm px-2 sm:px-4" @click="navigateToNew">
+        <Button
+          class="text-[11px] sm:text-sm px-2 sm:px-4"
+          :disabled="isReadOnly && !isSuperAdmin"
+          :title="isReadOnly && !isSuperAdmin ? 'وضع القراءة فقط' : ''"
+          @click="navigateToNew"
+        >
           + {{ $t('dashboard.add_entity') }}
         </Button>
         <Button variant="outline" class="text-[11px] sm:text-sm px-2 sm:px-4" @click="navigateTo(localePath('/dashboard/series'))">
@@ -524,7 +552,9 @@ async function confirmDelete() {
             <div class="flex items-center justify-end gap-2">
               <button
                 class="p-2 rounded-lg bg-white/10 backdrop-blur border border-white/20 text-white hover:bg-gold/20 hover:text-gold hover:border-gold/30 transition-all duration-200"
-                :title="$t('common.edit')"
+                :class="isReadOnly && !isSuperAdmin ? 'opacity-50 cursor-not-allowed' : ''"
+                :disabled="isReadOnly && !isSuperAdmin"
+                :title="isReadOnly && !isSuperAdmin ? 'وضع القراءة فقط' : $t('common.edit')"
                 @click="openEditModal(entity)"
               >
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -814,7 +844,13 @@ async function confirmDelete() {
                 <Button variant="outline" :disabled="submitting" @click="showModal = false">
                   {{ $t('common.cancel') }}
                 </Button>
-                <Button type="submit" block :loading="submitting">
+                <Button
+                  type="submit"
+                  block
+                  :loading="submitting"
+                  :disabled="submitting || (isReadOnly && !isSuperAdmin)"
+                  :title="isReadOnly && !isSuperAdmin ? 'وضع القراءة فقط' : ''"
+                >
                   {{ isEditing ? $t('common.save') : $t('dashboard.add_entity') }}
                 </Button>
               </div>

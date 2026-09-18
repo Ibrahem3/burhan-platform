@@ -157,7 +157,7 @@ By cloning, deploying, or contributing to this project, you agree to the followi
 3.  **Setup Database Schemas:**
     *   Open your project in the **Supabase Dashboard**.
     *   Go to the **SQL Editor** tab.
-    *   Open [`supabase/schema.sql`](file:///mnt/Data/burhan/supabase/schema.sql) in your code editor, copy its entire contents, paste it into the Supabase SQL Editor, and click **Run**. This builds all tables, enums, triggers, security functions, RLS policies, and storage buckets in one click.
+    *   Open [`supabase/schema.sql`](./supabase/schema.sql) in your code editor, copy its entire contents, paste it into the Supabase SQL Editor, and click **Run**. This builds all tables, enums, triggers, security functions, RLS policies, and storage buckets in one click.
 
 4.  **Run the local server:**
     ```bash
@@ -176,7 +176,7 @@ However, the Frontend UI is currently in a functional state. We explicitly invit
 ### How to Contribute:
 1.  Fork the repository.
 2.  Create a feature branch (`git checkout -b feature/ui-enhancement`).
-3.  Polish the UI components under [`app/components/`](file:///mnt/Data/burhan/app/components) or pages under [`app/pages/`](file:///mnt/Data/burhan/app/pages).
+3.  Polish the UI components under [`app/components/`](./app/components) or pages under [`app/pages/`](./app/pages).
 4.  Submit a Pull Request with a clear explanation of your visual improvements.
 
 Let's build a sovereign and resilient infrastructure together!

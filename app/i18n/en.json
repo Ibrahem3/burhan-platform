@@ -144,7 +144,22 @@
     "org_slug_format": "Only letters, numbers, and hyphens are allowed",
     "org_create_error": "Failed to create organization. Please try again",
     "org_setup_title": "Organization Setup",
-    "org_setup_desc": "Create your new organization and become its owner"
+    "org_setup_desc": "Create your new organization and become its owner",
+    "otp_title": "Verify Email",
+    "otp_desc": "Enter the 6-digit verification code sent to {email}",
+    "otp_placeholder": "000000",
+    "verify_btn": "Verify & Continue",
+    "resend_btn": "Resend Code",
+    "resend_wait": "Resend in {seconds}s",
+    "resend_success": "Verification code resent successfully",
+    "invalid_otp": "Invalid verification code, please try again",
+    "expired_otp": "Verification code has expired, please request a new one",
+    "weak_password": "Password must be at least 7 characters",
+    "password_min_length": "Password must be at least 7 characters",
+    "rate_limited": "Too many requests. Please wait a moment before trying again",
+    "provisioning_failed": "Failed to set up organization. Please try again",
+    "retry_provisioning": "Retry Organization Setup",
+    "change_email": "Change email"
   },
   "dashboard": {
     "title": "Dashboard",

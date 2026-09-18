@@ -11,8 +11,11 @@ definePageMeta({
 const supabase = useSupabaseClient<Database>()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
-const { profile } = useUser()
+const { profile, isSuperAdmin } = useUser()
+const { isReadOnly, features } = useSubscription()
 const { uploadFile, uploading: isUploading } = useSupabaseStorage()
+
+const aiModalOpen = ref(false)
 
 type Branch = Database['public']['Tables']['branches']['Row']
 
@@ -90,6 +93,12 @@ async function handleCoverImage(file: File) {
 
 async function save() {
   error.value = ''
+
+  if (isReadOnly.value && !isSuperAdmin.value) {
+    error.value = 'لا يمكن إنشاء محتوى جديد: اشتراك المنظمة في وضع القراءة فقط.'
+    return
+  }
+
   if (!form.title_ar || !form.title_en || !form.branch_id || !form.slug) {
     error.value = t('dashboard.validation.title_branch_slug_required')
     return
@@ -145,6 +154,38 @@ async function onFileSelected(event: Event) {
   if (file) await handleCoverImage(file)
   input.value = ''
 }
+
+function applyAiContent({ content, mode }: { content: string; mode: 'insert' | 'append' | 'replace' }) {
+  // Simple markdown-to-HTML paragraph wrapping for clean Tiptap ingestion
+  const paragraphs = content
+    .split(/\n\s*\n/)
+    .map(p => p.trim())
+    .filter(Boolean)
+    .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+    .join('')
+
+  const formattedHtml = paragraphs || `<p>${content}</p>`
+
+  if (currentLang.value === 'ar') {
+    if (mode === 'replace' || !form.content_ar) {
+      form.content_ar = formattedHtml
+    } else if (mode === 'insert') {
+      form.content_ar = formattedHtml + form.content_ar
+    } else {
+      // append
+      form.content_ar = form.content_ar + formattedHtml
+    }
+  } else {
+    if (mode === 'replace' || !form.content_en) {
+      form.content_en = formattedHtml
+    } else if (mode === 'insert') {
+      form.content_en = formattedHtml + form.content_en
+    } else {
+      // append
+      form.content_en = form.content_en + formattedHtml
+    }
+  }
+}
 </script>
 
 <template>
@@ -163,7 +204,14 @@ async function onFileSelected(event: Event) {
         <Button variant="outline" size="sm" class="sm:text-sm" @click="navigateTo(localePath('/dashboard/entities'))">
           {{ $t('common.cancel') }}
         </Button>
-        <Button size="sm" class="sm:text-sm" :loading="saving" @click="save">
+        <Button
+          size="sm"
+          class="sm:text-sm"
+          :loading="saving"
+          :disabled="saving || (isReadOnly && !isSuperAdmin)"
+          :title="isReadOnly && !isSuperAdmin ? 'وضع القراءة فقط' : ''"
+          @click="save"
+        >
           {{ $t('common.save') }}
         </Button>
       </div>
@@ -203,16 +251,34 @@ async function onFileSelected(event: Event) {
           <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileSelected" />
         </div>
 
-        <!-- Language Tabs -->
-        <div class="flex items-center gap-2 bg-white/5 w-fit p-1 rounded-xl border border-white/10">
+        <!-- Language Tabs & AI Assistant Trigger -->
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-2 bg-white/5 w-fit p-1 rounded-xl border border-white/10">
+            <button
+              v-for="lang in ['ar', 'en']"
+              :key="lang"
+              class="px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2"
+              :class="currentLang === lang ? (lang === 'ar' ? 'bg-white text-black' : 'bg-gold text-black') : 'text-gray-500 hover:text-white'"
+              @click="setLang(lang as 'ar' | 'en')"
+            >
+              {{ lang === 'ar' ? $t('locale.switch_to_ar') : $t('locale.switch_to_en') }}
+            </button>
+          </div>
+
           <button
-            v-for="lang in ['ar', 'en']"
-            :key="lang"
-            class="px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2"
-            :class="currentLang === lang ? (lang === 'ar' ? 'bg-white text-black' : 'bg-gold text-black') : 'text-gray-500 hover:text-white'"
-            @click="setLang(lang as 'ar' | 'en')"
+            type="button"
+            class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border"
+            :class="(isReadOnly && !isSuperAdmin) || (features?.ai_generate === false && !isSuperAdmin)
+              ? 'bg-white/5 border-white/5 text-gray-500 cursor-not-allowed opacity-60'
+              : 'bg-gold/10 hover:bg-gold/20 text-gold border-gold/30 hover:border-gold/50 shadow-sm'"
+            :disabled="(isReadOnly && !isSuperAdmin) || (features?.ai_generate === false && !isSuperAdmin)"
+            :title="isReadOnly && !isSuperAdmin ? 'وضع القراءة فقط' : ''"
+            @click="aiModalOpen = true"
           >
-            {{ lang === 'ar' ? $t('locale.switch_to_ar') : $t('locale.switch_to_en') }}
+            <svg class="w-4 h-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>مساعد الذكاء الاصطناعي</span>
           </button>
         </div>
 
@@ -363,10 +429,25 @@ async function onFileSelected(event: Event) {
         <Button variant="outline" size="sm" class="flex-1" @click="navigateTo(localePath('/dashboard/entities'))">
           {{ $t('common.cancel') }}
         </Button>
-        <Button size="sm" class="flex-1" :loading="saving" @click="save">
+        <Button
+          size="sm"
+          class="flex-1"
+          :loading="saving"
+          :disabled="saving || (isReadOnly && !isSuperAdmin)"
+          :title="isReadOnly && !isSuperAdmin ? 'وضع القراءة فقط' : ''"
+          @click="save"
+        >
           {{ $t('common.save') }}
         </Button>
       </div>
     </div>
+
+    <!-- AI Assistant Modal -->
+    <EntityAiAssistantModal
+      v-model="aiModalOpen"
+      :current-lang="currentLang"
+      :branch-id="form.branch_id"
+      @apply="applyAiContent"
+    />
   </div>
 </template>

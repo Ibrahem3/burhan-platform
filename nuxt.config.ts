@@ -15,9 +15,19 @@ export default defineNuxtConfig({
     turnstile: {
       secretKey: '',
     },
+    nosana: {
+      apiEndpoint: '',
+      clusterKey: '',
+      defaultModel: '',
+    },
     public: {
       turnstile: {
         siteKey: '',
+      },
+      ai: {
+        generateEnabled: true,
+        requestLimit: 100,
+        tokenLimit: 1000000,
       },
     },
   },

@@ -6,8 +6,17 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const { usage, limits, plan } = useSubscription()
 
-const stats = ref([
+const branchesCountStr = computed(() => {
+  const count = usage.value.branchesCount ?? 0
+  const max = limits.value.max_branches
+  if (max === undefined || max === null) return `${count}`
+  if (max === -1) return `${count} / ∞`
+  return `${count} / ${max}`
+})
+
+const stats = computed(() => [
   {
     key: 'total_videos',
     descKey: 'stat_videos_desc',
@@ -18,8 +27,8 @@ const stats = ref([
   {
     key: 'active_branches',
     descKey: 'stat_branches_desc',
-    value: '0',
-    change: '—',
+    value: branchesCountStr.value,
+    change: plan.value?.slug ? plan.value.slug.toUpperCase() : '—',
     positive: true,
   },
   {

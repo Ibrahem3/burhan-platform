@@ -559,7 +559,7 @@ The admin client has `autoRefreshToken: false` and `persistSession: false` since
 
 1. Go to [supabase.com](https://supabase.com) and create a project.
 2. Go to **SQL Editor** in the Supabase Dashboard.
-3. Open the unified setup script [`supabase/schema.sql`](file:///mnt/Data/burhan/supabase/schema.sql), copy its entire contents, paste it into the SQL Editor, and click **Run**. This will build all tables, custom enums, trigger functions, RLS policies, indexes, and storage bucket settings at once.
+3. Open the unified setup script [`supabase/schema.sql`](./supabase/schema.sql), copy its entire contents, paste it into the SQL Editor, and click **Run**. This will build all tables, custom enums, trigger functions, RLS policies, indexes, and storage bucket settings at once.
 
 
 ### Environment Variables
