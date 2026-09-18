@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Centered Sub-Footer Typography & Isolated Ainux Brand Link
+
+### Changed
+- [`app/pages/index.vue`](../app/pages/index.vue), [`app/layouts/default.vue`](../app/layouts/default.vue), [`app/pages/[org_slug]/index.vue`](../app/pages/[org_slug]/index.vue):
+  - Centered all bottom sub-footer text, copyright lines, and sovereignty taglines (`items-center justify-center text-center`) replacing the asymmetrical start/end alignment.
+  - Isolated the external anchor hyperlink strictly to `ainux.online` / `آينوكس` rather than wrapping the preceding "Powered by" text.
+
+### Rationale
+- Improves typographic harmony and visual symmetry on desktop and mobile viewports, ensuring brand links are clean, intuitive, and properly scoped.
+
 ## [2026-09-18] - Ainux Ecosystem Integration, GitHub Open Source Link & Powered by Ainux
 
 ### Changed

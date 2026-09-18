@@ -1161,23 +1161,22 @@ const speedDialItems = computed(() => [
           </div>
         </div>
 
-        <!-- Sub-Footer Bottom Bar -->
-        <div class="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-start">
-          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-gray-500">
+        <!-- Sub-Footer Bottom Bar (Centered) -->
+        <div class="border-t border-white/5 pt-8 flex flex-col items-center justify-center text-center gap-2.5">
+          <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400">
             <span>&copy; {{ new Date().getFullYear() }} {{ displayOrgName }} &bull; {{ $t('brand.name') }}</span>
-            <span class="text-gray-700">•</span>
-            <a
-              href="https://ainux.online"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 text-gray-300 hover:text-gold transition-colors font-medium"
-            >
+            <span class="text-gray-600">•</span>
+            <span class="inline-flex items-center gap-1.5" dir="ltr">
               <span class="text-gray-500">Powered by</span>
-              <span class="text-gold font-bold hover:underline">ainux.online</span>
-              <span class="text-[10px] px-1.5 py-0.2 rounded bg-gold/10 text-gold border border-gold/20 font-mono">{{ currentLocale === 'ar' ? 'آينوكس' : 'Ainux' }}</span>
-            </a>
+              <a
+                href="https://ainux.online"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-gold font-bold hover:underline transition-colors"
+              >Ainux</a>
+            </span>
           </div>
-          <p class="text-[11px] font-mono text-gray-600">
+          <p class="text-[11px] font-mono text-gray-600 text-center">
             Powered by Burhan Cloud v2.0 &bull; 100% Isolated Sovereign Node
           </p>
         </div>
