@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Default Layout Navbar & Sovereign Foundation Footer Modernization
+
+### Changed
+- [`app/layouts/default.vue`](../app/layouts/default.vue): Re-architected global default layout used by public pages (`/signup`, `/login`, `/about`, `/terms`, `/privacy`, `/observatory`):
+  - **Sovereign Enterprise Navbar:** Replaced unbalanced flex ordering with a modern 3-point lockup (Brand Identity with v2.0 capsule + Central Navigation pills + End Actions with localized switcher and gold CTA).
+  - **Tenant Awareness:** Clean inline tenant badge and logo preview for tenant routes within the default layout context.
+  - **4-Column Foundation Footer:** Upgraded basic 2-column footer into the full sovereign foundation footer containing brand mission, live operational health indicator (`All Systems Operational`), platform navigation, governance/legal charters, and inline locale switcher pill.
+  - **Mobile Experience:** Added backdrop-blurred glassmorphic drawer menu with quick auth buttons and active navigation indicators.
+
+### Rationale
+- Unifies the design language across all secondary public pages and auth flows with the main hub's Onyx & Gold sovereign aesthetic, eliminating visual fragmentation and improving responsive readability.
+
 ## [2026-09-18] - Sovereign Dual-Panel Onboarding & Signup UX Overhaul
 
 ### Changed
