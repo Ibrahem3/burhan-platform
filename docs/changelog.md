@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Modern Floating Command Dock & Mobile UX Polish
+
+### Changed
+- [`app/pages/index.vue`](../app/pages/index.vue): Replaced legacy vertical speed dial FAB with a modern, glassmorphic Floating Command Dock:
+  - Added categorized floating island panel containing user status, quick navigation, auth/dashboard controls, and language toggle.
+  - Implemented responsive mobile sizing (`h-10`, `w-72`) while maintaining full desktop proportions (`h-13`, `w-80`).
+  - Added ambient pulsating gold indicator and smooth cubic-bezier `panel-pop` scale/fade animations.
+  - Fixed missing i18n key (`layout.hub` -> `hub.title`).
+- [`app/pages/[org_slug]/index.vue`](../app/pages/[org_slug]/index.vue): Replicated modern command dock for tenant public pages:
+  - Integrated tenant branding header with dynamic org avatar/initials, name, and tagline.
+  - Added direct smooth-scrolling section shortcuts (`hero`, `series`, `latest`, `about`) with live item counts.
+
+### Rationale
+- Enhances user experience across mobile and desktop by transitioning from scattered Android-style speed dial buttons to an integrated, unified Glassmorphism Command Panel matching Burhan's premium Onyx & Gold design system.
+
 ## [2026-09-18] - Documentation Overhaul & Strategic Architectural Alignment
 
 ### Changed

@@ -15,7 +15,7 @@ definePageMeta({
 
 const { t, locale } = useI18n()
 const { currentLocale, toggleLocale } = useLocale()
-const { user, signOut, isAuthenticated } = useUser()
+const { user, profile, signOut, isAuthenticated } = useUser()
 const currentLocaleVal = computed(() => locale.value as 'ar' | 'en')
 
 const { data: organizations, pending, error } = useFetch<OrgWithCount[]>('/api/orgs', {
@@ -107,54 +107,187 @@ function scrollToSection(id: string) {
       {{ $t('layout.skip_to_content') }}
     </a>
 
-    <!-- ===== Backdrop for speed dial ===== -->
+    <!-- ===== Backdrop for Quick Panel ===== -->
     <Transition name="fade">
       <div
         v-if="speedDialOpen"
-        class="fixed inset-0 z-40 bg-black/30"
+        class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
         @click="speedDialOpen = false"
       />
     </Transition>
 
-    <!-- ===== Speed Dial Wrapper ===== -->
+    <!-- ===== Modern Floating Command Dock ===== -->
     <div
-      class="fixed bottom-6 z-50 flex flex-col items-center"
-      :class="currentLocale === 'ar' ? 'right-6' : 'left-6'"
+      class="fixed bottom-4 sm:bottom-6 z-50 flex flex-col"
+      :class="currentLocale === 'ar' ? 'right-4 sm:right-6 items-end' : 'left-4 sm:left-6 items-start'"
     >
-      <!-- Speed Dial Items (in reverse order so first item is closest to FAB) -->
-      <TransitionGroup name="dial" tag="div" class="flex flex-col items-center gap-3 mb-4">
-        <button
-          v-for="(item, i) in speedDialItems"
-          :key="item.key"
-          v-show="speedDialOpen"
-          :style="{ transitionDelay: `${(speedDialItems.length - 1 - i) * 0.04}s` }"
-          :class="[
-            'flex items-center gap-2.5 px-4 py-2.5 glass backdrop-blur-2xl rounded-xl border border-white/10 shadow-lg transition-all duration-200 text-sm whitespace-nowrap',
-            item.red
-              ? 'text-red-400 hover:bg-red-500/10 hover:border-red-500/30'
-              : 'text-gray-300 hover:text-gold hover:bg-gold/10 hover:border-gold/30',
-          ]"
-          @click="item.action()"
+      <!-- Sleek Glass Command Panel -->
+      <Transition name="panel-pop">
+        <div
+          v-if="speedDialOpen"
+          class="mb-2.5 sm:mb-3 w-72 sm:w-80 max-w-[calc(100vw-2rem)] glass backdrop-blur-2xl bg-onyx/90 border border-white/10 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-2xl shadow-black/80 ring-1 ring-white/5 flex flex-col gap-2.5 sm:gap-3.5"
         >
-          <span class="w-4 h-4 shrink-0" v-html="item.icon" />
-          <span>{{ item.label }}</span>
-        </button>
-      </TransitionGroup>
+          <!-- User / Status Header -->
+          <div class="flex items-center justify-between pb-2 sm:pb-3 border-b border-white/5 px-1">
+            <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+              <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0 text-gold text-[11px] sm:text-xs font-bold">
+                <span v-if="isAuthenticated && profile?.role">{{ profile.role.charAt(0).toUpperCase() }}</span>
+                <span v-else>✦</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[11px] sm:text-xs font-medium text-white truncate">
+                  {{ isAuthenticated ? (user?.email || $t('nav.dashboard')) : $t('hub.title') }}
+                </p>
+                <p class="text-[9px] sm:text-[10px] text-gray-400 capitalize">
+                  {{ isAuthenticated ? (profile?.role || 'User') : $t('seo.hub_title') }}
+                </p>
+              </div>
+            </div>
 
-      <!-- FAB -->
+            <!-- Close button -->
+            <button
+              class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 flex items-center justify-center transition-colors"
+              @click="speedDialOpen = false"
+            >
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Section: Quick Navigation -->
+          <div class="space-y-0.5 sm:space-y-1">
+            <p class="text-[9px] sm:text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-2 mb-0.5 sm:mb-1">
+              {{ currentLocale === 'ar' ? 'التنقل السريع' : 'Navigation' }}
+            </p>
+            <button
+              class="w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all text-start group"
+              @click="speedDialOpen = false; scrollToSection('hub-hero')"
+            >
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-gold group-hover:bg-gold/10 transition-colors">
+                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+              </div>
+              <span class="flex-1">{{ $t('tenant.nav_home') }}</span>
+            </button>
+
+            <button
+              class="w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all text-start group"
+              @click="speedDialOpen = false; scrollToSection('orgs-grid')"
+            >
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-gold group-hover:bg-gold/10 transition-colors">
+                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <span class="flex-1">{{ $t('hub.orgs_title') }}</span>
+              <span class="text-[9px] sm:text-[10px] text-gray-500 bg-white/5 px-1.5 sm:px-2 py-0.5 rounded-full">{{ organizations?.length || 0 }}</span>
+            </button>
+          </div>
+
+          <!-- Section: Account / Actions -->
+          <div class="space-y-0.5 sm:space-y-1 pt-1 border-t border-white/5">
+            <p class="text-[9px] sm:text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-2 mb-0.5 sm:mb-1">
+              {{ currentLocale === 'ar' ? 'الحساب والنظام' : 'Account & Controls' }}
+            </p>
+
+            <template v-if="isAuthenticated">
+              <button
+                class="w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gold hover:text-gold-300 hover:bg-gold/10 transition-all text-start group"
+                @click="speedDialOpen = false; navigateTo('/dashboard')"
+              >
+                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-gold/10 flex items-center justify-center text-gold">
+                  <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <span class="flex-1">{{ $t('nav.dashboard') }}</span>
+                <span class="text-[9px] sm:text-[10px] text-gold/80 border border-gold/30 px-1.5 py-0.5 rounded">Pro</span>
+              </button>
+
+              <button
+                class="w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-start group"
+                @click="speedDialOpen = false; signOut()"
+              >
+                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-red-500/10 flex items-center justify-center text-red-400">
+                  <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </div>
+                <span class="flex-1">{{ $t('nav.logout') }}</span>
+              </button>
+            </template>
+
+            <template v-else>
+              <div class="grid grid-cols-2 gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
+                <button
+                  class="flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gray-300 bg-white/5 hover:bg-white/10 border border-white/5 transition-all"
+                  @click="speedDialOpen = false; navigateTo('/login')"
+                >
+                  <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  <span>{{ $t('nav.login') }}</span>
+                </button>
+
+                <button
+                  class="flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-onyx bg-gold hover:bg-gold-500 shadow-md shadow-gold/20 transition-all"
+                  @click="speedDialOpen = false; navigateTo('/signup')"
+                >
+                  <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  <span>{{ $t('nav.signup') }}</span>
+                </button>
+              </div>
+            </template>
+          </div>
+
+          <!-- Section: Footer / Locale Switcher -->
+          <div class="pt-1.5 sm:pt-2 border-t border-white/5 flex items-center justify-between px-1">
+            <span class="text-[10px] sm:text-[11px] text-gray-500">{{ currentLocale === 'ar' ? 'اللغة' : 'Language' }}</span>
+            <button
+              class="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs text-gold hover:text-gold-300 bg-gold/5 hover:bg-gold/10 border border-gold/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg transition-all"
+              @click="toggleLocale(); speedDialOpen = false"
+            >
+              <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m0 4h.01M21 12l-4 4m0 0l-4-4m4 4V8" />
+              </svg>
+              <span>{{ currentLocale === 'ar' ? 'English' : 'العربية' }}</span>
+            </button>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- Sleek Trigger Button -->
       <button
-        class="w-14 h-14 glass backdrop-blur-md rounded-2xl border border-white/10 shadow-glow-lg hover:shadow-glow transition-all duration-300 flex items-center justify-center"
+        class="group relative h-10 sm:h-13 px-2.5 sm:px-4 glass backdrop-blur-xl bg-onyx/80 hover:bg-onyx/95 rounded-xl sm:rounded-2xl border border-white/10 hover:border-gold/40 shadow-lg sm:shadow-xl shadow-black/50 hover:shadow-glow transition-all duration-300 flex items-center gap-2 sm:gap-2.5 cursor-pointer select-none"
         :aria-label="$t('common.menu')"
         @click="speedDialOpen = !speedDialOpen"
       >
-        <svg
-          class="w-6 h-6 text-gold transition-transform duration-300"
-          :class="{ 'rotate-90': speedDialOpen }"
-          fill="none" viewBox="0 0 24 24" stroke="currentColor"
-        >
-          <path v-if="!speedDialOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" />
-          <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <!-- Gold Ambient Indicator -->
+        <span class="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 flex h-2 w-2 sm:h-2.5 sm:w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
+          <span class="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-gold" />
+        </span>
+
+        <!-- Icon Animation -->
+        <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center text-gold group-hover:scale-105 transition-transform duration-300">
+          <svg
+            class="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300"
+            :class="{ 'rotate-90 text-gold-300': speedDialOpen }"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          >
+            <path v-if="!speedDialOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+
+        <span class="text-xs font-semibold text-gray-200 group-hover:text-gold transition-colors hidden sm:inline">
+          {{ speedDialOpen ? (currentLocale === 'ar' ? 'إغلاق' : 'Close') : (currentLocale === 'ar' ? 'القائمة السريعة' : 'Quick Menu') }}
+        </span>
       </button>
     </div>
 
@@ -369,14 +502,16 @@ function scrollToSection(id: string) {
   opacity: 0;
 }
 
-.dial-enter-active,
-.dial-leave-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+.panel-pop-enter-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.dial-enter-from,
-.dial-leave-to {
+.panel-pop-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 1, 1);
+}
+.panel-pop-enter-from,
+.panel-pop-leave-to {
   opacity: 0;
-  transform: translateY(12px) scale(0.95);
+  transform: translateY(16px) scale(0.94);
 }
 
 .cta-glow {
