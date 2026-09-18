@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Sovereign Tenant Institutional Profile, Navbar & 4-Column Footer Overhaul
+
+### Changed
+- [`app/pages/[org_slug]/index.vue`](../app/pages/[org_slug]/index.vue): Re-engineered the public organization tenant portal into an institutional sovereign showcase:
+  - **Sovereign Tenant Top Navbar:** Added persistent glassmorphic navbar with Hub quick back link, tenant avatar lockup, active live section counters (`Series`, `Latest`, `About`), language toggle pill, and direct auth/dashboard actions.
+  - **Cinematic Profile Hero:** Added panoramic geometric cover banner with mesh lighting, overlapping gold-ring sovereign avatar, verified institutional badge, live tenant metrics ribbon (`Series`, `Materials`, `Branches`, `100% Sovereign Isolation`), and elevated dual CTAs.
+  - **Sovereign 4-Column Foundation Footer:** Replaced legacy 2-row MVP footer with a 4-column institutional layout customized for tenant portals, highlighting Burhan Cloud node operational health, organization sections, platform governance links, and localized language switcher.
+  - **Preserved Core Functionality:** Retained smooth section scrolling, dynamic multi-lingual title/tagline fallbacks, responsive command dock, and real-time database queries.
+
+### Rationale
+- Transforms the tenant public landing page from a plain text hero into a high-credibility institutional knowledge portal, creating an authoritative identity for each organization while reinforcing the sovereign Onyx & Gold design system.
+
 ## [2026-09-18] - Default Layout Navbar & Sovereign Foundation Footer Modernization
 
 ### Changed

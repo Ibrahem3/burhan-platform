@@ -247,6 +247,111 @@ const speedDialItems = computed(() => [
       {{ $t('layout.skip_to_content') }}
     </a>
 
+    <!-- ===== Sovereign Tenant Top Navbar ===== -->
+    <header v-if="org" class="sticky top-0 z-40 backdrop-blur-xl bg-onyx/85 border-b border-white/10 shadow-lg shadow-black/40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
+        
+        <!-- Start: Back to Hub + Tenant Identity -->
+        <div class="flex items-center gap-3 min-w-0">
+          <NuxtLink
+            to="/"
+            class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-xs font-semibold text-gray-300 hover:text-gold transition-all shrink-0"
+            :title="$t('hub.title')"
+          >
+            <svg class="w-4 h-4 text-gold transition-transform duration-300 group-hover:-translate-x-1 rtl:group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span class="hidden sm:inline">{{ currentLocale === 'ar' ? 'الرئيسية' : 'Hub' }}</span>
+          </NuxtLink>
+
+          <!-- Divider -->
+          <div class="h-5 w-px bg-white/10 shrink-0 hidden sm:block" />
+
+          <!-- Tenant Lockup -->
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl p-0.5 bg-gradient-to-br from-gold/30 via-white/10 to-transparent border border-white/10 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+              <img v-if="orgLogo()" :src="orgLogo()!" :alt="displayOrgName" class="w-full h-full object-contain" />
+              <span v-else class="text-xs font-black text-gold">{{ orgInitial() }}</span>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs sm:text-sm font-bold text-white truncate max-w-[120px] sm:max-w-[200px] md:max-w-xs">{{ displayOrgName }}</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" :title="currentLocale === 'ar' ? 'جهة معرفية معتمدة' : 'Verified Tenant'" />
+              </div>
+              <p class="text-[10px] text-gray-500 font-mono truncate hidden md:block">/{{ orgSlug }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: Section Quick Navigation -->
+        <nav class="hidden md:flex items-center gap-1 p-1 rounded-2xl glass bg-white/[0.02] border border-white/5 text-xs font-medium">
+          <button
+            class="px-3 py-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+            @click="scrollToSection('org-hero')"
+          >
+            {{ $t('tenant.nav_home') }}
+          </button>
+          <button
+            class="px-3 py-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5"
+            @click="scrollToSection('org-series')"
+          >
+            <span>{{ $t('tenant.series_title') }}</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/5 text-gray-400">{{ seriesList.length }}</span>
+          </button>
+          <button
+            class="px-3 py-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5"
+            @click="scrollToSection('org-latest')"
+          >
+            <span>{{ $t('tenant.latest_title') }}</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/5 text-gray-400">{{ latestEntities.length }}</span>
+          </button>
+          <button
+            class="px-3 py-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+            @click="scrollToSection('about')"
+          >
+            {{ $t('tenant.nav_about') }}
+          </button>
+        </nav>
+
+        <!-- End: Locale + Auth Actions -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <!-- Locale Switcher Pill -->
+          <button
+            class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-gray-300 hover:text-gold rounded-xl glass bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 transition-all"
+            :aria-label="$t('locale.switch_to_en')"
+            :title="$t(currentLocale === 'ar' ? 'locale.switch_to_en' : 'locale.switch_to_ar')"
+            @click="toggleLocale()"
+          >
+            <svg class="w-3.5 h-3.5 text-gold shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m0 4h.01M21 12l-4 4m0 0l-4-4m4 4V8" />
+            </svg>
+            <span class="font-mono uppercase">{{ currentLocale === 'ar' ? 'EN' : 'عربي' }}</span>
+          </button>
+
+          <!-- Auth Actions (Desktop) -->
+          <div class="hidden sm:flex items-center gap-2">
+            <template v-if="isAuthenticated">
+              <NuxtLink to="/dashboard">
+                <Button variant="outline" size="sm" class="text-xs h-9 border-white/15 hover:border-gold/40">
+                  {{ $t('nav.dashboard') }}
+                </Button>
+              </NuxtLink>
+            </template>
+            <template v-else>
+              <NuxtLink to="/login">
+                <Button variant="ghost" size="sm" class="text-xs h-9">{{ $t('nav.login') }}</Button>
+              </NuxtLink>
+              <NuxtLink to="/signup">
+                <Button size="sm" class="text-xs h-9 font-bold shadow-lg shadow-gold/20 bg-gold hover:bg-gold-500 text-onyx">
+                  {{ $t('nav.signup') }}
+                </Button>
+              </NuxtLink>
+            </template>
+          </div>
+        </div>
+      </div>
+    </header>
+
     <!-- ===== Backdrop for Quick Panel ===== -->
     <Transition name="fade">
       <div
@@ -494,37 +599,139 @@ const speedDialItems = computed(() => [
 
     <!-- ===== Main content ===== -->
     <main v-else-if="org" id="main-content" class="flex-1">
-      <!-- ===== Immersive Hero ===== -->
-      <section id="org-hero" class="relative overflow-hidden py-20 md:py-28 lg:py-36">
-        <div class="absolute top-1/4 -left-40 w-[500px] h-[500px] bg-gold/5 rounded-full blur-3xl" />
-        <div class="absolute top-1/3 -right-40 w-[400px] h-[400px] bg-gold/3 rounded-full blur-3xl" />
-        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/3 rounded-full blur-3xl" />
-        <div class="absolute inset-0 bg-gradient-to-b from-gold/5 via-transparent to-transparent pointer-events-none" />
-
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[200px] md:text-[320px] font-black text-white/3 pointer-events-none select-none leading-none">
-          {{ orgInitial() }}
+      <!-- ===== Cinematic Sovereign Institutional Hero ===== -->
+      <section id="org-hero" class="relative overflow-hidden pt-6 pb-12 sm:pt-10 sm:pb-16 md:pt-12 md:pb-20">
+        <!-- Ambient Backdrops & Geometric Mesh -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+          <div class="absolute top-1/4 -right-40 w-[600px] h-[600px] bg-gold/10 rounded-full blur-[140px]" />
+          <div class="absolute bottom-1/4 -left-40 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[140px]" />
+          <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
         </div>
 
-        <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <div class="animate-fade-in">
-            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-4">
-              <span class="gradient-gold">{{ $t('tenant.welcome', { name: displayOrgName }) }}</span>
-            </h1>
-            <p v-if="displayOrgNameEn" class="text-xl sm:text-2xl md:text-3xl text-gray-500 font-light tracking-wide mb-5">
-              {{ displayOrgNameEn }}
-            </p>
-            <p v-if="getTagline()" class="text-base md:text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              {{ getTagline() }}
-            </p>
-            <div class="flex flex-wrap items-center justify-center gap-4">
-              <button
-                class="cta-glow inline-flex items-center justify-center font-medium transition-all duration-300 rounded-xl px-8 py-3.5 md:px-10 md:py-4 text-base md:text-lg bg-gold text-onyx hover:bg-gold-500 active:bg-gold-600 shadow-lg shadow-gold/20"
-                @click="scrollToSection('org-series')"
-              >
-                {{ $t('tenant.hero_cta') }}
-              </button>
+        <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6">
+          
+          <!-- Panoramic Cover Card with Overlapping Avatar -->
+          <div class="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.02] shadow-2xl mb-8">
+            <!-- Cover Header Banner -->
+            <div class="h-36 sm:h-48 md:h-56 relative overflow-hidden bg-gradient-to-r from-onyx via-[#19150E] to-[#12100A] flex items-center justify-center">
+              <div class="absolute inset-0 bg-[linear-gradient(to_right,#d4af370a_1px,transparent_1px),linear-gradient(to_bottom,#d4af370a_1px,transparent_1px)] bg-[size:2rem_2rem]" />
+              <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-gold/15 rounded-full blur-3xl" />
+              <div class="absolute -left-10 -top-10 w-64 h-64 bg-gold/10 rounded-full blur-3xl" />
+              
+              <!-- Subtle Watermark in Cover -->
+              <span class="text-[120px] sm:text-[180px] md:text-[220px] font-black text-white/[0.03] select-none pointer-events-none font-mono">
+                {{ orgInitial() }}
+              </span>
+
+              <!-- Live Sovereign Status Tag on Top Corner -->
+              <div class="absolute top-4 end-4 flex items-center gap-2 px-3 py-1.5 rounded-full glass bg-black/40 border border-white/10 text-[11px] text-gray-300">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span class="font-mono text-gold font-medium">{{ currentLocale === 'ar' ? 'جهة معرفية معتمدة' : 'Verified Tenant' }}</span>
+              </div>
+            </div>
+
+            <!-- Profile Info Section with Avatar Overlap -->
+            <div class="relative px-6 pb-8 pt-0 sm:px-10 text-center sm:text-start flex flex-col sm:flex-row items-center sm:items-end justify-between gap-6">
+              
+              <!-- Left: Avatar + Names -->
+              <div class="flex flex-col sm:flex-row items-center gap-5 -mt-16 sm:-mt-20">
+                <!-- Large Sovereign Avatar -->
+                <div class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl p-1 bg-gradient-to-br from-gold/50 via-white/20 to-black/80 border-2 border-gold/40 shadow-2xl shadow-black/80 flex items-center justify-center overflow-hidden bg-onyx shrink-0">
+                  <img v-if="orgLogo()" :src="orgLogo()!" :alt="displayOrgName" class="w-full h-full object-contain p-2 rounded-2xl" />
+                  <span v-else class="text-4xl sm:text-5xl font-black text-gold font-mono">{{ orgInitial() }}</span>
+                </div>
+
+                <!-- Text Headings -->
+                <div class="space-y-1 text-center sm:text-start">
+                  <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
+                      {{ displayOrgName }}
+                    </h1>
+                    <span class="inline-flex items-center text-gold" :title="currentLocale === 'ar' ? 'موثق' : 'Verified'">
+                      <svg class="w-5 h-5 fill-gold" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
+
+                  <p v-if="displayOrgNameEn && displayOrgNameEn !== displayOrgName" class="text-sm sm:text-base text-gray-400 font-light">
+                    {{ displayOrgNameEn }}
+                  </p>
+
+                  <div class="flex items-center justify-center sm:justify-start gap-2 pt-1 font-mono text-xs text-gray-500" dir="ltr">
+                    <span>https://burhan.ainux.online/{{ orgSlug }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Quick Hero CTAs -->
+              <div class="flex items-center gap-3 shrink-0">
+                <button
+                  class="cta-glow inline-flex items-center justify-center font-bold transition-all duration-300 rounded-xl px-6 py-3 text-sm bg-gold text-onyx hover:bg-gold-500 active:bg-gold-600 shadow-lg shadow-gold/20 cursor-pointer"
+                  @click="scrollToSection('org-series')"
+                >
+                  {{ $t('tenant.hero_cta') }}
+                </button>
+                <button
+                  class="inline-flex items-center justify-center font-medium transition-all duration-200 rounded-xl px-5 py-3 text-sm glass bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 cursor-pointer"
+                  @click="scrollToSection('about')"
+                >
+                  {{ $t('tenant.about_org') }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Tagline / Bio Strip -->
+            <div v-if="getTagline()" class="px-6 sm:px-10 pb-6 pt-2 border-t border-white/5">
+              <p class="text-sm text-gray-300 leading-relaxed max-w-3xl">
+                {{ getTagline() }}
+              </p>
             </div>
           </div>
+
+          <!-- Live Tenant 4-Pillar Metrics Ribbon -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div class="p-4 rounded-2xl glass bg-white/[0.02] border border-white/5 text-center sm:text-start flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0 text-gold text-base">
+                📚
+              </div>
+              <div>
+                <p class="text-lg sm:text-xl font-black text-white font-mono leading-none">{{ seriesList.length }}</p>
+                <p class="text-[11px] text-gray-400 mt-1">{{ $t('tenant.series_title') }}</p>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl glass bg-white/[0.02] border border-white/5 text-center sm:text-start flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0 text-gold text-base">
+                📄
+              </div>
+              <div>
+                <p class="text-lg sm:text-xl font-black text-white font-mono leading-none">{{ latestEntities.length }}</p>
+                <p class="text-[11px] text-gray-400 mt-1">{{ $t('tenant.latest_title') }}</p>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl glass bg-white/[0.02] border border-white/5 text-center sm:text-start flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0 text-gold text-base">
+                🏛️
+              </div>
+              <div>
+                <p class="text-lg sm:text-xl font-black text-white font-mono leading-none">{{ branches.length }}</p>
+                <p class="text-[11px] text-gray-400 mt-1">{{ currentLocale === 'ar' ? 'فروع علمية' : 'Branches' }}</p>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl glass bg-white/[0.02] border border-white/5 text-center sm:text-start flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400 text-base">
+                🛡️
+              </div>
+              <div>
+                <p class="text-xs sm:text-sm font-bold text-emerald-400 leading-tight">100%</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">{{ currentLocale === 'ar' ? 'عزل سيادي مستقل' : 'Sovereign Isolation' }}</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -820,32 +1027,131 @@ const speedDialItems = computed(() => [
       </div>
     </main>
 
-    <!-- ===== Footer ===== -->
-    <footer class="border-t border-white/5 glass mt-auto">
-      <div class="max-w-7xl mx-auto px-4 py-10">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div class="flex flex-col items-center md:items-start gap-1">
-            <span class="text-lg font-bold gradient-gold">{{ $t('brand.name') }}</span>
-            <span class="text-xs text-gray-500">{{ $t('brand.tagline') }}</span>
+    <!-- ===== Sovereign Tenant 4-Column Foundation Footer ===== -->
+    <footer class="border-t border-white/10 glass bg-gradient-to-b from-onyx/80 via-[#0B0B0B] to-[#070707] mt-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 pb-12">
+          
+          <!-- Column 1: Tenant Identity & Cloud Platform (5 cols) -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl p-0.5 bg-gradient-to-br from-gold/30 via-white/10 to-transparent border border-white/10 flex items-center justify-center overflow-hidden shadow-md">
+                <img v-if="orgLogo()" :src="orgLogo()!" :alt="displayOrgName" class="w-full h-full object-contain" />
+                <span v-else class="text-sm font-black text-gold">{{ orgInitial() }}</span>
+              </div>
+              <div>
+                <span class="text-lg font-black tracking-tight text-white">{{ displayOrgName }}</span>
+                <p class="text-xs text-gray-500">{{ getTagline() || $t('brand.tagline') }}</p>
+              </div>
+            </div>
+
+            <p class="text-xs text-gray-400 leading-relaxed max-w-sm">
+              {{ currentLocale === 'ar'
+                ? 'بوابة علمية معرفية مستقلة، تدار ضمن البنية التحتية السيادية لمنصة برهان مع ضمان العزل التام للبيانات وأعلى معايير الأمان المؤسسي.'
+                : 'A sovereign intellectual portal operating within Burhan Cloud infrastructure, guaranteeing isolated tenancy and cryptographic privacy.'
+              }}
+            </p>
+
+            <!-- Operational Status Indicator -->
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-xs text-gray-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span class="text-[11px] font-mono text-emerald-400/90">{{ currentLocale === 'ar' ? 'المنظومة السحابية تعمل بكفاءة' : 'Cloud Node Operational' }}</span>
+            </div>
           </div>
-          <div class="flex items-center gap-6">
-            <NuxtLink to="/about" class="text-sm text-gray-500 hover:text-gold transition-colors">
-              {{ $t('footer.about_platform') }}
-            </NuxtLink>
-            <NuxtLink to="/terms" class="text-sm text-gray-500 hover:text-gold transition-colors">
-              {{ $t('footer.terms') }}
-            </NuxtLink>
-            <NuxtLink to="/privacy" class="text-sm text-gray-500 hover:text-gold transition-colors">
-              {{ $t('footer.privacy') }}
-            </NuxtLink>
-            <NuxtLink to="/contact" class="text-sm text-gray-500 hover:text-gold transition-colors">
-              {{ $t('footer.contact') }}
-            </NuxtLink>
+
+          <!-- Column 2: Organization Sections (2 cols) -->
+          <div class="lg:col-span-2 space-y-3">
+            <p class="text-xs font-bold text-white uppercase tracking-wider">
+              {{ currentLocale === 'ar' ? 'أقسام المنظمة' : 'Sections' }}
+            </p>
+            <ul class="space-y-2.5 text-xs text-gray-400">
+              <li>
+                <button class="hover:text-gold transition-colors text-start" @click="scrollToSection('org-hero')">
+                  {{ $t('tenant.nav_home') }}
+                </button>
+              </li>
+              <li>
+                <button class="hover:text-gold transition-colors text-start" @click="scrollToSection('org-series')">
+                  {{ $t('tenant.series_title') }}
+                </button>
+              </li>
+              <li>
+                <button class="hover:text-gold transition-colors text-start" @click="scrollToSection('org-latest')">
+                  {{ $t('tenant.latest_title') }}
+                </button>
+              </li>
+              <li>
+                <button class="hover:text-gold transition-colors text-start" @click="scrollToSection('about')">
+                  {{ $t('tenant.about_org') }}
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 3: Burhan Network & Governance (2 cols) -->
+          <div class="lg:col-span-2 space-y-3">
+            <p class="text-xs font-bold text-white uppercase tracking-wider">
+              {{ currentLocale === 'ar' ? 'شبكة برهان' : 'Burhan Network' }}
+            </p>
+            <ul class="space-y-2.5 text-xs text-gray-400">
+              <li>
+                <NuxtLink to="/" class="hover:text-gold transition-colors">
+                  {{ currentLocale === 'ar' ? 'المركز الرئيسي' : 'Main Hub' }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/observatory" class="hover:text-gold transition-colors">
+                  {{ $t('observatory.nav') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/terms" class="hover:text-gold transition-colors">
+                  {{ $t('footer.terms') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/privacy" class="hover:text-gold transition-colors">
+                  {{ $t('footer.privacy') }}
+                </NuxtLink>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 4: Contact & Locale (3 cols) -->
+          <div class="lg:col-span-3 space-y-3">
+            <p class="text-xs font-bold text-white uppercase tracking-wider">
+              {{ currentLocale === 'ar' ? 'التواصل واللغة' : 'Connect' }}
+            </p>
+            <ul class="space-y-2.5 text-xs text-gray-400">
+              <li>
+                <NuxtLink to="/contact" class="hover:text-gold transition-colors">
+                  {{ $t('footer.contact') }}
+                </NuxtLink>
+              </li>
+            </ul>
+
+            <!-- Inline Language Selector Pill -->
+            <div class="pt-2">
+              <button
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl glass bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 hover:text-gold transition-all"
+                @click="toggleLocale()"
+              >
+                <svg class="w-3.5 h-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m0 4h.01M21 12l-4 4m0 0l-4-4m4 4V8" />
+                </svg>
+                <span>{{ currentLocale === 'ar' ? 'English' : 'العربية' }}</span>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="border-t border-white/5 mt-6 pt-6 text-center">
-          <p class="text-xs text-gray-600">
-            &copy; {{ new Date().getFullYear() }} {{ $t('footer.rights') }}
+
+        <!-- Sub-Footer Bottom Bar -->
+        <div class="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-start">
+          <p class="text-xs text-gray-500">
+            &copy; {{ new Date().getFullYear() }} {{ displayOrgName }} &bull; {{ $t('brand.name') }}
+          </p>
+          <p class="text-[11px] font-mono text-gray-600">
+            Powered by Burhan Cloud v2.0 &bull; 100% Isolated Sovereign Node
           </p>
         </div>
       </div>
