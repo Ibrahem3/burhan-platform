@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Sovereign Course Detail Page Overhaul & Start Learning CTA Fix
+
+### Changed
+- [`app/pages/[org_slug]/series/[id].vue`](../app/pages/[org_slug]/series/[id].vue):
+  - **Start Learning CTA Fix:** Fixed the "Start Learning Now 🚀" button which was previously an inert anchor link (`href="#lesson-xxx"`) appending hashes without scrolling or starting the lecture. Re-engineered the button to directly route the user into the first lesson (`/${orgSlugParam}/content/${lessons[0].id}`).
+  - **Syllabus Smooth Scroll:** Added a dedicated secondary action (`Browse Syllabus`) invoking smooth-scroll (`scrollToCurriculum`) directly to `#curriculum-section` without mutating router URLs or hash fragments.
+  - **Sovereign Series Navbar:** Modernized the top header with breadcrumb navigation (Hub → Tenant Profile → Active Series Title capsule), back-to-org button, and bilingual locale switcher.
+  - **Academic Course Showcase:** Upgraded cover presentation with 16:10 / 4:3 aspect ratio, geometric blueprint fallback with emblem, dual branch/series floating badges, and curated curriculum verification indicator.
+  - **Curriculum & Lesson Modules:** Re-engineered each lecture item into an interactive sovereign card featuring mono gold numeral badges, start indicator for first lecture, rich media format badges (video/audio/article), publication dates, and dynamic play buttons.
+  - **Sovereign 4-Column Foundation Footer:** Upgraded footer to full 4-column foundation layout with ecosystem integration (GitHub open-source repository, Ainux Client-Side Tools) and centered sub-footer attribution.
+
+### Rationale
+- Resolves broken navigation UX on the course landing page by immediately launching students into active study, while transforming the page layout into an authoritative institutional syllabus aligned with the Onyx & Gold sovereign ecosystem.
+
+
+
 ## [2026-09-18] - Redesign Tenant Course & Series Cards into Sovereign Academic Showcase
 
 ### Changed
