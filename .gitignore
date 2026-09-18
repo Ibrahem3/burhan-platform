@@ -9,3 +9,4 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+supabase/.temp/

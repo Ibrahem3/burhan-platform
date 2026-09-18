@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Sovereign Research Demo Organizations & Official Seed Baseline
+
+### Changed
+- [`supabase/seed.sql`](../supabase/seed.sql):
+  - Codified the official reproducible seed data baseline for Burhan Platform with zero-delete migration safety.
+  - Configured 3 sovereign Web3 / DeAI research organizations (`burhan-lab`, `nosana-deai`, `open-archives`) with bilingual Arabic/English names and descriptions.
+  - Linked each organization with active subscriptions, primary branches, curriculum series tracks, and verifiable published articles.
+  - Ensured all demo entities have `is_public_to_hub: true`, `is_premium: false`, and `content_type: 'article'`, populating dynamic active content counters on public cards.
+- [`.gitignore`](../.gitignore):
+  - Ignored `supabase/.temp/` CLI cache directory.
+
+### Rationale
+- Elevates Burhan Platform from crude development test placeholders to an authoritative, verifiable sovereign knowledge showcase while strictly preserving all existing database UUIDs, foreign keys, and user profile relationships without schema or code modifications.
+
+
+
 ## [2026-09-18] - Sovereign Course Detail Page Overhaul & Start Learning CTA Fix
 
 ### Changed
