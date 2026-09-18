@@ -194,6 +194,38 @@ function scrollToSection(id: string) {
               <span class="flex-1">{{ $t('hub.orgs_title') }}</span>
               <span class="text-[9px] sm:text-[10px] text-gray-500 bg-white/5 px-1.5 sm:px-2 py-0.5 rounded-full">{{ organizations?.length || 0 }}</span>
             </button>
+
+            <!-- Ainux Tools Ecosystem Link -->
+            <a
+              href="https://tools.ainux.online/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gray-300 hover:text-gold hover:bg-gold/5 transition-all text-start group"
+              @click="speedDialOpen = false"
+            >
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-gold/10 flex items-center justify-center text-gold text-xs">
+                🛠️
+              </div>
+              <span class="flex-1">{{ currentLocale === 'ar' ? 'أدوات آينوكس' : 'Ainux Tools' }}</span>
+              <span class="text-[9px] sm:text-[10px] text-gold bg-gold/10 border border-gold/20 px-1.5 py-0.2 rounded-full font-mono">57</span>
+            </a>
+
+            <!-- GitHub Repo Link -->
+            <a
+              href="https://github.com/Ibrahem3/burhan-platform"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all text-start group"
+              @click="speedDialOpen = false"
+            >
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                </svg>
+              </div>
+              <span class="flex-1">GitHub Repo</span>
+              <span class="text-[9px] sm:text-[10px] text-gray-500 font-mono">Open</span>
+            </a>
           </div>
 
           <!-- Section: Account / Actions -->
@@ -345,9 +377,9 @@ function scrollToSection(id: string) {
           </p>
 
           <!-- Action Buttons -->
-          <div class="flex flex-wrap items-center justify-center gap-4 mb-16">
+          <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10">
             <button
-              class="cta-glow inline-flex items-center justify-center gap-2.5 font-semibold transition-all duration-300 rounded-2xl px-8 py-4 text-base md:text-lg bg-gold text-onyx hover:bg-gold-500 active:bg-gold-600 shadow-xl shadow-gold/25 group cursor-pointer"
+              class="cta-glow inline-flex items-center justify-center gap-2.5 font-semibold transition-all duration-300 rounded-2xl px-7 py-3.5 sm:px-8 sm:py-4 text-base md:text-lg bg-gold text-onyx hover:bg-gold-500 active:bg-gold-600 shadow-xl shadow-gold/25 group cursor-pointer"
               @click="scrollToSection('orgs-grid')"
             >
               <svg class="w-5 h-5 transition-transform duration-300 group-hover:rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -358,13 +390,67 @@ function scrollToSection(id: string) {
 
             <NuxtLink
               to="/signup"
-              class="inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 rounded-2xl px-7 py-4 text-base md:text-lg glass bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/10 hover:border-gold/40 shadow-xl group"
+              class="inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 rounded-2xl px-6 py-3.5 sm:px-7 sm:py-4 text-base md:text-lg glass bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/10 hover:border-gold/40 shadow-xl group"
             >
               <span>{{ currentLocale === 'ar' ? 'أنشئ منظمتك الخاصة' : 'Launch Your Organization' }}</span>
               <span class="transition-transform duration-300 group-hover:translate-x-1" :class="currentLocale === 'ar' ? 'group-hover:-translate-x-1' : ''">
                 {{ currentLocale === 'ar' ? '←' : '→' }}
               </span>
             </NuxtLink>
+
+            <!-- GitHub Repository Button -->
+            <a
+              href="https://github.com/Ibrahem3/burhan-platform"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center gap-2.5 font-semibold transition-all duration-300 rounded-2xl px-5 py-3.5 sm:py-4 text-sm sm:text-base glass bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 hover:text-white border border-white/10 hover:border-gold/40 shadow-xl group"
+              title="GitHub Open Source Repository"
+            >
+              <svg class="w-5 h-5 text-gray-300 group-hover:text-gold transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              <span>GitHub</span>
+              <span class="text-[10px] font-mono text-gold bg-gold/10 px-2 py-0.5 rounded border border-gold/20">Open Source</span>
+            </a>
+          </div>
+
+          <!-- Ainux Client-Side Tools Interactive Banner -->
+          <div class="mb-12 max-w-2xl mx-auto">
+            <a
+              href="https://tools.ainux.online/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group relative block p-3 sm:p-4 rounded-2xl glass bg-gradient-to-r from-gold/[0.06] via-white/[0.02] to-gold/[0.06] border border-white/10 hover:border-gold/40 shadow-xl shadow-black/50 transition-all duration-300 hover:scale-[1.01]"
+            >
+              <div class="flex items-center justify-between gap-3 text-start">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0 text-gold text-lg group-hover:rotate-12 transition-transform duration-300">
+                    🛠️
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs sm:text-sm font-bold text-white group-hover:text-gold transition-colors">
+                        {{ currentLocale === 'ar' ? 'منظومة أدوات آينوكس المجانية' : 'Ainux Client-Side Tools Hub' }}
+                      </span>
+                      <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gold/20 text-gold border border-gold/30">
+                        57 Tools
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-0.5">
+                      {{ currentLocale === 'ar'
+                        ? 'تعديل PDF، إزالة الخلفيات، وتحويل الوسائط.. تعمل 100% داخل متصفحك بدون خوادم وبأعلى خصوصية'
+                        : 'PDF editing, background removal, media converters.. 100% client-side zero-server privacy'
+                      }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="shrink-0 hidden sm:flex items-center text-xs font-bold text-gold gap-1 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">
+                  <span>{{ currentLocale === 'ar' ? 'تصفح الأدوات' : 'Open Tools' }}</span>
+                  <span>{{ currentLocale === 'ar' ? '←' : '→' }}</span>
+                </div>
+              </div>
+            </a>
           </div>
 
           <!-- Live Metrics & Trust Ribbon -->
@@ -670,6 +756,22 @@ function scrollToSection(id: string) {
                   {{ $t('footer.contact') }}
                 </NuxtLink>
               </li>
+              <li>
+                <a href="https://tools.ainux.online/" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition-colors inline-flex items-center gap-1.5 text-gray-300 group">
+                  <span class="text-gold">🛠️</span>
+                  <span class="group-hover:underline">{{ currentLocale === 'ar' ? 'أدوات آينوكس (57 أداة مجانية)' : 'Ainux Tools (57 Tools)' }}</span>
+                  <span class="text-[10px] text-gold font-mono">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/Ibrahem3/burhan-platform" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition-colors inline-flex items-center gap-1.5 text-gray-400 group">
+                  <svg class="w-3.5 h-3.5 fill-currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                  </svg>
+                  <span class="group-hover:underline">GitHub Repository</span>
+                  <span class="text-[10px] text-gray-500 font-mono">↗</span>
+                </a>
+              </li>
             </ul>
 
             <!-- Inline Language Selector Pill -->
@@ -689,9 +791,20 @@ function scrollToSection(id: string) {
 
         <!-- Sub-Footer Bottom Bar -->
         <div class="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-start">
-          <p class="text-xs text-gray-500">
-            &copy; {{ new Date().getFullYear() }} {{ $t('footer.rights') }}
-          </p>
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-gray-500">
+            <span>&copy; {{ new Date().getFullYear() }} {{ $t('footer.rights') }}</span>
+            <span class="text-gray-700">•</span>
+            <a
+              href="https://ainux.online"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 text-gray-300 hover:text-gold transition-colors font-medium"
+            >
+              <span class="text-gray-500">Powered by</span>
+              <span class="text-gold font-bold hover:underline">ainux.online</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded bg-gold/10 text-gold border border-gold/20 font-mono">{{ currentLocale === 'ar' ? 'آينوكس' : 'Ainux' }}</span>
+            </a>
+          </div>
           <p class="text-[11px] font-mono text-gray-600">
             Engineered for Sovereign Knowledge & Multi-Tenant Integrity
           </p>

@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Ainux Ecosystem Integration, GitHub Open Source Link & Powered by Ainux
+
+### Changed
+- [`app/pages/index.vue`](../app/pages/index.vue):
+  - **Hub Hero:** Added direct GitHub Open Source repository button (`https://github.com/Ibrahem3/burhan-platform`) alongside the primary CTAs.
+  - **Ainux Tools Interactive Banner:** Integrated interactive ecosystem card highlighting Ainux Client-Side Tools (`https://tools.ainux.online/` - 57 zero-server browser utilities for PDF editing, background removal, and media tools).
+  - **Floating Command Dock:** Embedded quick shortcuts for Ainux Tools and GitHub.
+  - **4-Column Foundation Footer:** Added Ainux Tools and GitHub links in the Connect column, and added `Powered by ainux.online` (آينوكس) in the sub-footer bar.
+- [`app/layouts/default.vue`](../app/layouts/default.vue):
+  - Added Ainux Tools and GitHub repository links in the footer Connect column.
+  - Added `Powered by ainux.online` (آينوكس) attribution in the sub-footer bar.
+- [`app/pages/[org_slug]/index.vue`](../app/pages/[org_slug]/index.vue):
+  - Added Ainux Tools and GitHub repository links in the tenant footer Connect column.
+  - Added `Powered by ainux.online` (آينوكس) attribution in the sub-footer bar.
+
+### Rationale
+- Strengthens brand authority, transparency, and ecosystem synergy across the platform by showcasing open-source governance on GitHub, connecting users to the privacy-first Ainux Tools suite, and anchoring platform architecture under `ainux.online`.
+
 ## [2026-09-18] - Sovereign Tenant Institutional Profile, Navbar & 4-Column Footer Overhaul
 
 ### Changed
