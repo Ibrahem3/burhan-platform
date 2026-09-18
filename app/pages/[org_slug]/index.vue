@@ -804,49 +804,100 @@ const speedDialItems = computed(() => [
               </div>
             </div>
 
-            <!-- Series grid -->
+            <!-- Series grid (Supercharged Sovereign Course Cards) -->
             <div v-else-if="seriesList.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div
                 v-for="s in seriesList"
                 :key="s.id"
-                class="group glass backdrop-blur-md rounded-2xl overflow-hidden border border-white/5 hover:border-gold/30 transition-all duration-500 hover:shadow-glow"
+                class="group relative rounded-3xl overflow-hidden border border-white/10 hover:border-gold/40 bg-[#0E0E0E]/90 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-black/90 flex flex-col justify-between"
               >
-                <div class="relative aspect-video overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-                  <img
-                    v-if="s.cover_url"
-                    :src="s.cover_url"
-                    :alt="seriesTitle(s)"
-                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div v-else class="w-full h-full bg-gradient-to-br from-gold/10 via-gray-800 to-gold/5 flex items-center justify-center">
-                    <svg class="w-16 h-16 text-gold/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
+                <!-- Top Gold Ambient Glow Line on Hover -->
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-20" />
+
+                <!-- Card Top: Cover & Badges -->
+                <div>
+                  <div class="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#161616] via-[#121212] to-black">
+                    <img
+                      v-if="s.cover_url"
+                      :src="s.cover_url"
+                      :alt="seriesTitle(s)"
+                      class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    
+                    <!-- Fallback Cover: Academic Geometric Pattern -->
+                    <div v-else class="w-full h-full bg-gradient-to-br from-gold/15 via-[#141414] to-[#0A0A0A] flex flex-col items-center justify-center relative p-6">
+                      <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:1.5rem_1.5rem]" />
+                      <div class="w-16 h-16 rounded-2xl bg-gold/10 border border-gold/20 flex items-center justify-center text-gold shadow-lg group-hover:scale-110 transition-transform duration-500">
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                      </div>
+                      <span class="text-xs font-bold text-gray-500 mt-2.5 font-mono uppercase tracking-widest">{{ $t('tenant.series_title') }}</span>
+                    </div>
+
+                    <!-- Vignette Shadow at bottom of cover -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0E0E0E] via-black/20 to-transparent pointer-events-none" />
+
+                    <!-- Top Left: Branch Badge -->
+                    <div v-if="seriesBranchName(s)" class="absolute top-3.5 left-3.5 z-10">
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-bold bg-black/75 backdrop-blur-md border border-white/15 text-white shadow-lg">
+                        <span class="text-gold text-[10px]">🏛️</span>
+                        <span>{{ seriesBranchName(s) }}</span>
+                      </span>
+                    </div>
+
+                    <!-- Top Right: Premium Badge -->
+                    <div class="absolute top-3.5 right-3.5 z-10">
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider bg-gold text-onyx shadow-lg shadow-gold/20">
+                        <span>✦</span>
+                        <span>{{ $t('tenant.series_badge') }}</span>
+                      </span>
+                    </div>
+
+                    <!-- Bottom Tag inside Cover -->
+                    <div class="absolute bottom-3 left-4 right-4 z-10 flex items-center justify-between text-[11px] text-gray-300">
+                      <span class="inline-flex items-center gap-1 font-mono text-gray-400 bg-black/60 px-2 py-0.5 rounded-lg border border-white/5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span>{{ currentLocale === 'ar' ? 'سلسلة علمية معتمدة' : 'Curated Track' }}</span>
+                      </span>
+                    </div>
                   </div>
-                  <div class="absolute top-3 right-3">
-                    <Badge variant="premium" size="sm">
-                      {{ $t('tenant.series_badge') }}
-                    </Badge>
-                  </div>
-                  <div v-if="seriesBranchName(s)" class="absolute top-3 left-3">
-                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-md border border-white/10 text-white shadow-lg">
-                      {{ seriesBranchName(s) }}
-                    </span>
+
+                  <!-- Card Body -->
+                  <div class="p-5 sm:p-6 space-y-3.5">
+                    <!-- Title -->
+                    <h3 class="font-bold text-white text-base sm:text-lg leading-snug line-clamp-2 group-hover:text-gold transition-colors duration-200">
+                      {{ seriesTitle(s) }}
+                    </h3>
+
+                    <!-- Description -->
+                    <p v-if="seriesDescription(s)" class="text-xs sm:text-sm text-gray-400 line-clamp-2 leading-relaxed">
+                      {{ seriesDescription(s) }}
+                    </p>
+                    <p v-else class="text-xs text-gray-600 italic">
+                      {{ currentLocale === 'ar' ? 'سلسلة علمية متخصصة تابعة للمنظمة' : 'Structured intellectual curriculum' }}
+                    </p>
                   </div>
                 </div>
-                <div class="p-5 space-y-3">
-                  <h3 class="font-bold text-white text-sm leading-snug line-clamp-2 min-h-[2.5rem]">
-                    {{ seriesTitle(s) }}
-                  </h3>
-                  <p v-if="seriesDescription(s)" class="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                    {{ seriesDescription(s) }}
-                  </p>
-                  <NuxtLink :to="`/${orgSlug}/series/${s.id}`">
+
+                <!-- Card Footer Action Button -->
+                <div class="px-5 pb-5 sm:px-6 sm:pb-6 pt-0">
+                  <NuxtLink :to="`/${orgSlug}/series/${s.id}`" class="block">
                     <button
-                      class="w-full inline-flex items-center justify-center font-medium transition-all duration-300 rounded-xl px-5 py-2.5 text-sm bg-gold text-onyx hover:bg-gold-500 active:bg-gold-600 shadow-lg shadow-gold/20"
+                      class="w-full inline-flex items-center justify-between font-bold transition-all duration-300 rounded-2xl px-5 py-3 text-xs sm:text-sm bg-white/[0.04] hover:bg-gold text-white hover:text-onyx border border-white/10 hover:border-gold shadow-lg hover:shadow-gold/25 group/btn cursor-pointer"
                     >
-                      {{ $t('tenant.series_cta') }}
+                      <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gold group-hover/btn:text-onyx transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{{ $t('tenant.series_cta') }}</span>
+                      </span>
+                      
+                      <div class="w-7 h-7 rounded-xl bg-white/5 group-hover/btn:bg-onyx/20 flex items-center justify-center transition-all duration-300 group-hover/btn:translate-x-1 rtl:group-hover/btn:-translate-x-1">
+                        <span class="text-xs">{{ currentLocale === 'ar' ? '←' : '→' }}</span>
+                      </div>
                     </button>
                   </NuxtLink>
                 </div>

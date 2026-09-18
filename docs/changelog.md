@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Redesign Tenant Course & Series Cards into Sovereign Academic Showcase
+
+### Changed
+- [`app/pages/[org_slug]/index.vue`](../app/pages/[org_slug]/index.vue):
+  - Upgraded series and course card components to modern sovereign presentation cards:
+    - **Aesthetic Glass Cards:** Converted flat cards into deep rounded (`rounded-3xl`) glass containers with high-contrast borders and an ambient top gold glow line on hover (`h-1 bg-gradient-to-r from-transparent via-gold to-transparent`).
+    - **Academic Cover Presentation:** Added high-definition 16:10 aspect ratio cover images with smooth zoom hover transitions, paired with a geometric academic blueprint fallback pattern when no cover image is uploaded.
+    - **Dual Floating Badges & Live Tag:** Overlaid branch origin badge (`🏛️ Branch`), verified premium track badge (`✦ Series`), and an in-cover live status pill (`سلسلة علمية معتمدة` / `Curated Track`).
+    - **Interactive Action Bar:** Re-engineered the card footer CTA button into a sleek glass pill with an animated directional hover arrow (`←` / `→`) and smooth gold transition.
+
+### Rationale
+- Elevates the visual impact and institutional authority of tenant courses and series tracks, making curricular offerings engaging, trustworthy, and visually aligned with the Onyx & Gold sovereign ecosystem.
+
+
 ## [2026-09-18] - Centered Sub-Footer Typography & Isolated Ainux Brand Link
 
 ### Changed
