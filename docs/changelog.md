@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Sovereign Dual-Panel Onboarding & Signup UX Overhaul
+
+### Changed
+- [`app/pages/signup.vue`](../app/pages/signup.vue): Redesigned onboarding flow into a dual-panel sovereign enterprise experience:
+  - **Left Showcase Panel (`lg:col-span-5`):** Added institutional value proposition pillar highlighting Burhan Cloud v2.0, sovereign multi-tenancy, atomic provisioning, zero-knowledge encrypted AI, and security indicators.
+  - **Right Form Container (`lg:col-span-7`):** Elevated glassmorphic card with interactive 3-step progress ribbon (`Account -> Org -> Verify OTP`), icon-enhanced inputs, password show/hide toggles, real-time live subdomain URL preview, and stylized 6-digit OTP entry field.
+  - **Preserved Core Logic:** Kept 100% of the registration security boundaries, password memory-wiping logic, tenant slug sanitization, Supabase OTP verification, resend cooldown timer (60s), and provisioning retry mechanisms intact.
+
+### Rationale
+- Elevates the tenant onboarding experience from an isolated single-column modal to a high-conversion institutional dual-panel workspace, visually aligning with the Onyx & Gold design system while maintaining zero-debt security and auth invariants.
+
 ## [2026-09-18] - Cinematic Hub Hero & Sovereign Foundation Footer Overhaul
 
 ### Changed
