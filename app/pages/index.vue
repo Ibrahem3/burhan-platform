@@ -91,6 +91,12 @@ function orgLogo(org: OrgWithCount): string | null {
   return s?.logos?.dark || s?.logos?.light || null
 }
 
+function orgTagline(org: OrgWithCount): string {
+  if (!org.settings) return ''
+  const s = typeof org.settings === 'string' ? JSON.parse(org.settings) : org.settings
+  return localizedValue(s?.description, currentLocaleVal.value) || ''
+}
+
 function scrollToSection(id: string) {
   speedDialOpen.value = false
   const el = document.getElementById(id)
@@ -378,79 +384,94 @@ function scrollToSection(id: string) {
         </div>
 
         <!-- Orgs cards -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
           <NuxtLink
             v-for="org in organizations"
             :key="org.id"
             :to="`/${org.org_slug}`"
-            class="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 rounded-2xl"
+            class="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 rounded-3xl"
           >
             <div
-              class="relative rounded-2xl p-5 border border-white/[0.05] overflow-hidden transition-all duration-500 group-hover:border-gold/35 group-hover:shadow-glow group-hover:-translate-y-1"
-              style="background: rgba(10, 10, 10, 0.75); backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);"
+              class="relative rounded-3xl border border-white/[0.08] overflow-hidden transition-all duration-500 group-hover:border-gold/40 group-hover:shadow-glow group-hover:-translate-y-1.5 flex flex-col h-full"
+              style="background: rgba(14, 14, 14, 0.85); backdrop-filter: blur(24px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);"
             >
-              <!-- Top border glow gradient -->
-              <div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-gold/0 via-gold/40 to-gold/0 opacity-60 group-hover:opacity-100 transition-opacity" />
+              <!-- Card Top Header Banner -->
+              <div class="relative h-24 sm:h-28 overflow-hidden bg-gradient-to-br from-gold/15 via-gold/5 to-transparent border-b border-white/5">
+                <!-- Decorative Geometric Pattern -->
+                <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#d4af37_1px,transparent_1px)] [background-size:12px_12px]" />
+                <div class="absolute top-0 right-0 w-36 h-36 bg-gold/10 rounded-full blur-2xl group-hover:bg-gold/20 transition-all duration-700 pointer-events-none" />
+                
+                <!-- Status / Material Badge in Top Corner -->
+                <div class="absolute top-3.5" :class="currentLocale === 'ar' ? 'left-3.5' : 'right-3.5'">
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-onyx/80 backdrop-blur-md border border-white/10 text-[11px] text-gray-300 shadow-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+                    <span>{{ $t('hub.orgs_count', { count: org.content_count }) }}</span>
+                  </div>
+                </div>
 
-              <!-- Hover background glow -->
-              <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-gold/[0.01] group-hover:bg-gold/[0.04] rounded-full blur-3xl transition-all duration-700 group-hover:scale-150 pointer-events-none" />
+                <!-- Slug Watermark -->
+                <div class="absolute bottom-2 font-mono text-[10px] text-gray-600/60 uppercase tracking-widest pointer-events-none" :class="currentLocale === 'ar' ? 'left-4' : 'right-4'">
+                  /{{ org.org_slug }}
+                </div>
+              </div>
 
-              <div class="relative flex items-start gap-4">
-                <!-- Logo Frame -->
-                <div class="shrink-0">
-                  <div class="w-16 h-16 rounded-xl overflow-hidden border border-white/5 bg-white/[0.02] transition-all duration-500 group-hover:border-gold/20 group-hover:shadow-glow-sm">
-                    <img
-                      v-if="orgLogo(org)"
-                      :src="orgLogo(org)!"
-                      :alt="localizedName(org)"
-                      class="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div
-                      v-else
-                      class="w-full h-full bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center transition-transform duration-500 group-hover:scale-105"
-                    >
-                      <span class="text-2xl font-bold gradient-gold">
-                        {{ localizedName(org).charAt(0) || localizedNameEn(org).charAt(0) || '?' }}
-                      </span>
+              <!-- Main Card Body with Overlapping Avatar -->
+              <div class="relative px-5 pt-0 pb-5 flex-1 flex flex-col">
+                <!-- Floating Avatar Overlap -->
+                <div class="-mt-10 mb-3 flex items-end justify-between">
+                  <div class="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl p-1 bg-onyx border-2 border-white/10 group-hover:border-gold/50 shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:shadow-glow-sm">
+                    <div class="w-full h-full rounded-xl overflow-hidden bg-white/[0.03] flex items-center justify-center">
+                      <img
+                        v-if="orgLogo(org)"
+                        :src="orgLogo(org)!"
+                        :alt="localizedName(org)"
+                        class="w-full h-full object-contain p-1.5 transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div
+                        v-else
+                        class="w-full h-full bg-gradient-to-br from-gold/25 via-gold/10 to-transparent flex items-center justify-center"
+                      >
+                        <span class="text-2xl font-bold gradient-gold">
+                          {{ localizedName(org).charAt(0) || localizedNameEn(org).charAt(0) || '?' }}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Info Block -->
-                <div class="min-w-0 flex-1 pt-0.5">
-                  <h3 class="text-base font-bold text-white group-hover:text-gold transition-colors duration-300 line-clamp-2 leading-snug">
-                    {{ localizedName(org) }}
-                  </h3>
-                  <p v-if="localizedNameEn(org) !== localizedName(org)" class="text-[11px] text-gray-500 mt-0.5 line-clamp-1 leading-relaxed">
-                    {{ localizedNameEn(org) }}
-                  </p>
-                  
-                  <div class="flex flex-wrap items-center gap-2 mt-3">
-                    <!-- Monospace slug badge -->
-                    <span class="inline-block px-2 py-0.5 text-[10px] font-mono rounded bg-white/[0.04] text-gray-400 group-hover:bg-gold/10 group-hover:text-gold/90 border border-white/5 group-hover:border-gold/25 transition-all duration-300">
-                      /{{ org.org_slug }}
-                    </span>
-                    <span class="text-[10px] text-gray-700">•</span>
-                    <!-- Materials counter -->
-                    <span class="inline-flex items-center gap-1 text-[11px] text-gray-500 group-hover:text-gray-400 transition-colors">
-                      <svg class="w-3.5 h-3.5 text-gold/40 group-hover:text-gold/60 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
-                      {{ $t('hub.orgs_count', { count: org.content_count }) }}
-                    </span>
+                  <!-- Quick Action Indicator -->
+                  <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 group-hover:text-gold group-hover:bg-gold/10 group-hover:border-gold/20 transition-all duration-300">
+                    <svg class="w-4 h-4 transition-transform duration-300 group-hover:scale-110" :class="currentLocale === 'ar' ? 'rotate-180 group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
                 </div>
 
-                <!-- Navigation Arrow -->
-                <div 
-                  class="shrink-0 pt-1 opacity-25 group-hover:opacity-100 transition-all duration-300"
-                  :class="[
-                    locale === 'ar' ? 'translate-x-1 group-hover:-translate-x-0.5' : '-translate-x-1 group-hover:translate-x-0.5'
-                  ]"
-                >
-                  <svg class="w-4 h-4 text-gold" :class="locale === 'ar' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
+                <!-- Titles and Identity -->
+                <div class="space-y-1 mb-3">
+                  <h3 class="text-base sm:text-lg font-bold text-white group-hover:text-gold transition-colors duration-300 line-clamp-1 leading-snug">
+                    {{ localizedName(org) }}
+                  </h3>
+                  <p v-if="localizedNameEn(org) !== localizedName(org)" class="text-xs text-gray-500 line-clamp-1">
+                    {{ localizedNameEn(org) }}
+                  </p>
+                </div>
+
+                <!-- Tagline / Bio (if available) or Default Overview -->
+                <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed flex-1 mb-4">
+                  {{ orgTagline(org) || $t('hub.hero_description') }}
+                </p>
+
+                <!-- Footer Meta: Verified Badge + Explore CTA -->
+                <div class="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-gray-400">
+                  <div class="flex items-center gap-1.5 text-gray-400 font-mono text-[11px]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
+                    <span>{{ currentLocale === 'ar' ? 'منصة معتمدة' : 'Verified' }}</span>
+                  </div>
+
+                  <span class="inline-flex items-center gap-1 font-semibold text-gold group-hover:text-gold-300 transition-colors text-[11px]">
+                    <span>{{ currentLocale === 'ar' ? 'دخول المنظمة' : 'Visit Hub' }}</span>
+                    <span>{{ currentLocale === 'ar' ? '←' : '→' }}</span>
+                  </span>
                 </div>
               </div>
             </div>

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Sovereign Organization Cards Redesign
+
+### Changed
+- [`app/pages/index.vue`](../app/pages/index.vue): Re-engineered organization grid cards into a Sovereign Institutional Profile Showcase:
+  - Added dynamic geometric banner headers with gold mesh gradients and pulsing active materials badges.
+  - Implemented overlapping glassmorphic avatars with gold-ring accents and smooth hover elevation.
+  - Displayed localized taglines/bios from organization settings with dual-language support.
+  - Added institutional verification badges and direct call-to-action links.
+
 ## [2026-09-18] - Modern Floating Command Dock & Mobile UX Polish
 
 ### Changed
