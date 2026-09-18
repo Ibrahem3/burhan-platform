@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Resilient Localization Utility & Frontend Signup OTP Flow
+
+### Changed
+- [`app/utils/localized.ts`](../app/utils/localized.ts): Hardened `localizedValue` helper against arbitrary string inputs:
+  - Directly returns plain strings (`"burhan"`, `"أكاديمية البرهان"`) without attempting `JSON.parse`.
+  - Reliably resolves language keys (`locale`, `ar`, `en`) from JavaScript objects and PostgreSQL JSONB rows.
+  - Safely attempts JSON parsing on bracketed JSON strings (`{...}`) inside a `try/catch` block, never throwing on syntax errors.
+  - Prevents fatal frontend crashes on tenant view (`/[org_slug]`) and dashboard views.
+- [`app/pages/signup.vue`](../app/pages/signup.vue): Implemented 3-step signup state machine (`account` -> `org` -> `verify`):
+  - Added secure 6-digit email OTP verification via Supabase `auth.verifyOtp({ type: 'signup' })`.
+  - Added 60-second cooldown timer for `resend` with complete lifecycle cleanup (`onUnmounted`).
+  - Added zero-leak security boundary: immediately wipes passwords and OTP code from memory before and after state transitions.
+  - Added dedicated idempotent provisioning retry handling if `register-tenant` encounters network/500 errors after OTP consumption.
+  - Updated post-provisioning destination to route newly provisioned tenant owners directly to `/dashboard` instead of the public tenant page.
+- [`app/i18n/ar.json`](../app/i18n/ar.json) & [`app/i18n/en.json`](../app/i18n/en.json): Added full bilingual localization for OTP screens, resend cooldowns, and structured machine-readable error messages.
+
+### Rationale
+- Completely resolves the runtime `SyntaxError: Unexpected token 'b'` preventing new organizations from rendering, while completing the client-side email verification security flow against the Migration 00019 transactional backend.
+
+
+
 ## [2026-09-18] - Migration 00019: Atomic Tenant Provisioning Engine
 
 ### Added
