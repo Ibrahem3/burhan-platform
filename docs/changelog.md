@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Documentation Overhaul & Strategic Architectural Alignment
+
+### Changed
+- [`README.md`](../README.md): Comprehensive update reflecting modern production architecture:
+  - Expanded Architectural Features to document DeAI M1 inference, Atomic Tenant Provisioning, Multi-Tenant Subscriptions, and BYOK.
+  - Aligned project tree to reflect migrations 00001 through 00019, Nitro server routes (`/api/ai/`, `/api/org/`), and composables (`useAiGenerate`, `useSubscription`).
+  - Documented modern environment variables (`NUXT_NOSANA_*`, `BYOK_ENCRYPTION_KEY`).
+- [`SUPABASE.md`](../SUPABASE.md): Synchronized database documentation with canonical `schema.sql`:
+  - Added table manifests for `plans`, `subscriptions`, `ai_jobs`, `ai_usage`, and `tenant_ai_credentials`.
+  - Added trigger documentation for `check_branch_limit()` and `enforce_profile_security()`.
+  - Added RPC reference for `public.provision_tenant()` and the DeAI lifecycle RPCs.
+- [`ARCHITECTURE.md`](../ARCHITECTURE.md): Completed architectural single-source-of-truth:
+  - Expanded Section 17 (Migration History) to fully chronicle migrations 00008 through 00019.
+  - Added Section 22: Decentralized AI (DeAI) Architecture & Job Lifecycle.
+  - Added Section 23: Multi-Tenant Subscriptions & Entitlements Engine.
+  - Added Section 24: BYOK & Cryptographic Subsystem.
+  - Added Section 25: Atomic Tenant Provisioning Engine & Auth OTP Gate.
+
+### Rationale
+- Completely eliminates documentation debt, aligning all external documentation (`README.md`), backend references (`SUPABASE.md`), and system blueprints (`ARCHITECTURE.md`) with the current code, test suites, and canonical database schema.
+
+
+
 ## [2026-09-18] - Resilient Localization Utility & Frontend Signup OTP Flow
 
 ### Changed

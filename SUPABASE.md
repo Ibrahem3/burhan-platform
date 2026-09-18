@@ -188,6 +188,115 @@ INDEXES:
   idx_threats_neutralized   ON observatory_threats (status) WHERE status = 'neutralized'
 ```
 
+### 2h. `plans` — Subscription Tiers & Quotas (Migration 00015)
+
+```sql
+CREATE TABLE plans (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           TEXT NOT NULL,
+  slug           TEXT UNIQUE NOT NULL,
+  description    TEXT,
+  price_monthly  INTEGER NOT NULL DEFAULT 0,
+  price_yearly   INTEGER NOT NULL DEFAULT 0,
+  limits         JSONB NOT NULL DEFAULT '{}'::jsonb,
+  features       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_active      BOOLEAN NOT NULL DEFAULT true,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INDEX: idx_plans_slug ON plans (slug)
+```
+
+**Canonical plans seeded:**
+- `community`: Free, perpetual (`branches: -1` unlimited, `custom_domain: false`, `ai_generate: false`)
+- `pro`: Tiered (`branches: 10`, `custom_domain: true`, `ai_generate: true`)
+
+### 2i. `subscriptions` — Tenant Plan Assignments (Migration 00015)
+
+```sql
+CREATE TABLE subscriptions (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id  UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  plan_id          UUID NOT NULL REFERENCES plans(id),
+  status           TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'past_due', 'cancelled', 'expired')),
+  billing_period   TEXT NOT NULL DEFAULT 'monthly' CHECK (billing_period IN ('monthly', 'yearly')),
+  starts_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at       TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INDEX: idx_subscriptions_org_active ON subscriptions (organization_id) WHERE status = 'active'
+```
+
+### 2j. `ai_jobs` — Server-Only AI Inference Lifecycle (Migration 00010)
+
+```sql
+CREATE TABLE ai_jobs (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id    UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  branch_id          UUID REFERENCES branches(id) ON DELETE SET NULL,
+  user_id            UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  status             TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
+  prompt             TEXT NOT NULL,
+  system_prompt      TEXT,
+  language           TEXT NOT NULL DEFAULT 'ar',
+  model              TEXT NOT NULL,
+  provider           TEXT NOT NULL DEFAULT 'nosana',
+  estimated_tokens   INTEGER NOT NULL DEFAULT 0,
+  tokens_used        INTEGER,
+  error              TEXT,
+  output             TEXT,
+  stream_buffer      TEXT,
+  period_month       VARCHAR(7) NOT NULL,
+  quota_reconciled   BOOLEAN NOT NULL DEFAULT false,
+  consumed           BOOLEAN NOT NULL DEFAULT false,
+  last_heartbeat_at  TIMESTAMPTZ,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INDEXES:
+  idx_ai_jobs_organization_id ON ai_jobs (organization_id)
+  idx_ai_jobs_user_id         ON ai_jobs (user_id)
+  idx_ai_jobs_status          ON ai_jobs (status)
+  idx_ai_jobs_stale           ON ai_jobs (status, last_heartbeat_at)
+```
+
+### 2k. `ai_usage` — Monthly Quota Accounting Ledger (Migration 00010)
+
+```sql
+CREATE TABLE ai_usage (
+  organization_id   UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  period_month      VARCHAR(7) NOT NULL,
+  requests_used     INTEGER NOT NULL DEFAULT 0,
+  tokens_reserved   INTEGER NOT NULL DEFAULT 0,
+  tokens_used       INTEGER NOT NULL DEFAULT 0,
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (organization_id, period_month)
+);
+```
+
+### 2l. `tenant_ai_credentials` — BYOK Encrypted Vault (Migration 00018)
+
+```sql
+CREATE TABLE tenant_ai_credentials (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id  UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  provider         TEXT NOT NULL,
+  encrypted_key    TEXT NOT NULL,
+  key_iv           TEXT NOT NULL,
+  key_tag          TEXT NOT NULL,
+  key_version      INTEGER NOT NULL DEFAULT 1,
+  key_suffix       TEXT NOT NULL,
+  base_url         TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT uq_tenant_ai_credentials_org_provider UNIQUE (organization_id, provider)
+);
+
+INDEX: idx_tenant_ai_credentials_lookup ON tenant_ai_credentials (organization_id, provider)
+```
+
 ---
 
 ## 3. Triggers
@@ -249,6 +358,50 @@ CREATE TRIGGER trg_auto_detect_platform
   EXECUTE FUNCTION auto_detect_platform();
 ```
 
+### `check_branch_limit()` — Enforce Plan Branch Quotas (Migration 00016)
+
+```sql
+CREATE OR REPLACE FUNCTION public.check_branch_limit()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+...
+-- Enforces plan limit from active subscription:
+-- -1 = unlimited branches (Community plan)
+-- > 0 = strict cap; raises 'branch_limit_exceeded' on breach
+-- Super Admins bypass the limit
+$$;
+
+CREATE TRIGGER trg_enforce_branch_limit
+  BEFORE INSERT ON public.branches
+  FOR EACH ROW
+  EXECUTE FUNCTION public.check_branch_limit();
+```
+
+### `enforce_profile_security()` — Guard Role Escalation & Tenant Boundaries (Migration 00017)
+
+```sql
+CREATE OR REPLACE FUNCTION public.enforce_profile_security()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+...
+-- Prevents self-assignment to organizations
+-- Blocks cross-tenant switching
+-- Blocks unauthorized role elevation (member -> manager/owner/super_admin)
+-- Enforces active subscription destination check on Super Admin assignments
+$$;
+
+CREATE TRIGGER trg_enforce_profile_security
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_profile_security();
+```
+
 **Behavior:**
 - Fires on every `auth.users` INSERT (signup, admin create)
 - Creates a `profiles` row with `role = 'member'` and `organization_id = NULL`
@@ -301,9 +454,51 @@ AS $$
     WHERE id = auth.uid() AND role = 'super_admin'
   );
 $$;
+
+-- Evaluate Active Tenant Subscription (Migration 00015)
+CREATE FUNCTION public.is_org_subscription_active(org_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.subscriptions
+    WHERE organization_id = org_id
+      AND status = 'active'
+      AND (expires_at IS NULL OR expires_at > now())
+  );
+END;
+$$;
+
+-- Atomic Tenant Provisioning Engine (Migration 00019)
+CREATE FUNCTION public.provision_tenant(p_user_id UUID, p_org_name TEXT, p_org_slug TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+...
+-- Single atomic transaction:
+-- 1. Input sanitization & slug regex check
+-- 2. Concurrency lock: SELECT id FROM profiles WHERE id = p_user_id FOR UPDATE
+-- 3. Idempotency check: returns existing tenant if matching slug, rejects if user already owns tenant
+-- 4. Inserts organization with unique slug error trapping
+-- 5. Inserts perpetual community subscription
+-- 6. Inserts canonical main branch
+-- 7. Upgrades profile to owner
+-- 8. Returns canonical JSON payload
+$$;
+-- Granted strictly to service_role; denied to public, anon, authenticated.
+
+-- DeAI Inference RPCs (Migration 00010) — Granted strictly to service_role:
+-- public.reserve_ai_job_quota(p_user_id, p_org_id, p_branch_id, p_prompt, p_system_prompt, p_model, p_provider, p_estimated_tokens, p_lang)
+-- public.complete_ai_job(p_job_id, p_actual_tokens, p_output, p_model)
+-- public.fail_ai_job(p_job_id, p_error)
+-- public.cancel_ai_job(p_job_id)
+-- public.heartbeat_ai_job(p_job_id)
+-- public.reap_stale_ai_job(p_job_id)
+-- public.reconcile_abandoned_terminal_ai_jobs(p_org_id)
 ```
 
-**Permissions:** Helper function permissions are revoked from `public` and `anon`, and explicitly granted to `authenticated` users only (or restricted to triggers internally).
+**Permissions:** Helper function permissions are revoked from `public` and `anon`, and explicitly granted to `authenticated` users only (or restricted to `service_role` exclusively for RPCs like `provision_tenant` and DeAI lifecycle engines).
 
 ---
 

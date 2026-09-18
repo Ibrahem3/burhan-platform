@@ -31,6 +31,10 @@
 19. [FAB + Side Drawer Navigation Pattern](#19-fab--side-drawer-navigation-pattern)
 20. [Supabase Schema Reference](#supabase-schema-reference)
 21. [Digital Intellectual Observatory](#21-digital-intellectual-observatory)
+22. [Decentralized AI (DeAI) Architecture & Job Lifecycle](#22-decentralized-ai-deai-architecture--job-lifecycle)
+23. [Multi-Tenant Subscriptions & Entitlements Engine](#23-multi-tenant-subscriptions--entitlements-engine)
+24. [BYOK & Cryptographic Subsystem](#24-byok--cryptographic-subsystem)
+25. [Atomic Tenant Provisioning Engine & Auth OTP Gate](#25-atomic-tenant-provisioning-engine--auth-otp-gate)
 
 ---
 
@@ -1044,6 +1048,42 @@ Added `series` table (id, organization_id, branch_id, title JSONB, description J
 ### `00007_add_content_type_audio.sql`
 Added `'audio'` to the `valid_content_type` CHECK constraint on `entities.content_type`. Enables the audio/podcast content type alongside video and article. No new columns needed — uses existing `audio_url` and `audio_file` fields.
 
+### `00008_fix_security_lints.sql`
+Addressed Supabase security linter findings: pinned `search_path = ''` on triggers and functions, hardened public schema privileges, and revoked anonymous access to internal tables.
+
+### `00009_observatory_module.sql`
+Added Digital Intellectual Observatory schema: `observatory_analysts` and `observatory_threats` tables with RLS policies, indexes, and `auto_detect_platform()` trigger.
+
+### `00010_ai_jobs_hardened.sql`
+Enterprise DeAI inference engine: `ai_jobs` table (5 lifecycle states, immutable terminal states, heartbeat, `last_heartbeat_at`), `ai_usage` table (PK org + period_month, atomic quota accounting), 13 SECURITY DEFINER RPCs with explicit `p_user_id`, lazy stale-job reaper, and crash-window recovery sweep. Client SELECT-own only; direct mutations revoked.
+
+### `00011_fix_public_read_rls.sql`
+Restored public anonymous read access on `entities` and `branches` tables, ensuring non-premium content renders smoothly on public tenant pages.
+
+### `00012_storage_tenant_isolation.sql`
+Hardened storage bucket security: enforced strict prefix path validation `(storage.foldername(name))[1] = organization_id` for all uploads in `org-assets`.
+
+### `00013_align_storage_bucket_contract.sql`
+Standardized bucket naming to `org-assets` and locked allowed MIME types to web-safe images and audio files.
+
+### `00014_restore_entities_content_type_check.sql`
+Idempotently restored the `valid_content_type` CHECK constraint on `entities.content_type` for clean database re-runs.
+
+### `00015_subscription_foundation.sql`
+Multi-tenant subscription engine: `plans` (community unlimited vs pro tier) and `subscriptions` tables with default plan seeds, RLS mutation guards, and `is_org_subscription_active` evaluation function.
+
+### `00016_enforce_branch_limit.sql`
+Enforced branch creation limits at database level via `check_branch_limit()` trigger. Supports canonical `-1` unlimited community branches and strict positive limits on paid plans.
+
+### `00017_enforce_membership_security.sql`
+Hardened tenant profile security via `enforce_profile_security()` trigger: blocked self-assignment, prevented cross-tenant reassignment, prevented self-role escalation, and gated super-admin reassignment behind destination active subscription checks.
+
+### `00018_tenant_ai_credentials.sql`
+BYOK subsystem: `tenant_ai_credentials` encrypted vault (AES-256-GCM keys, IVs, tags, key versioning, custom base_url). PostgREST client access completely revoked; server-only `service_role` execution.
+
+### `00019_tenant_provisioning_engine.sql`
+Atomic tenant provisioning engine: `public.provision_tenant(p_user_id, p_org_name, p_org_slug)` RPC executing organization creation, community subscription, canonical main branch, and owner profile upgrade in a single atomic transaction with `SELECT FOR UPDATE` concurrency locks and fail-closed automatic rollbacks.
+
 ---
 
 ## 18. Series / Courses Management
@@ -1262,3 +1302,85 @@ Managed via the `observatory_analysts` table. Users must pass the `observatory-a
 The public submission endpoint (`POST /api/observatory/report`) is protected by **Cloudflare Turnstile** to prevent robotic abuse.
 - Validation is performed server-side by checking the Turnstile token against `challenges.cloudflare.com/turnstile/v0/siteverify` using Nitros' fetch wrapper.
 - Controlled by `NUXT_PUBLIC_TURNSTILE_SITE_KEY` and `NUXT_TURNSTILE_SECRET_KEY` environment variables. If these variables are not configured in runtime config, the validation is skipped silently for testing.
+
+---
+
+## 22. Decentralized AI (DeAI) Architecture & Job Lifecycle
+
+The Burhan DeAI subsystem provides an un-censorable, privacy-preserving AI writing and research engine backed by decentralized GPU networks (Nosana) and secure BYOK execution pipelines.
+
+### 22.1 State Machine Lifecycle
+
+```
+[Client / UI]
+     │ POST /api/ai/generate (prompt, systemPrompt, lang)
+     ▼
+[Quota Admission Gate] ──(exceeded?)──► HTTP 429 quota_exceeded
+     │
+     ▼ (Atomic reserve_ai_job_quota RPC)
+[pending] (requests_used + 1, tokens_reserved + estimated)
+     │
+     ▼ (Nosana Worker Stream / event.waitUntil)
+[processing] ──(every ~3s)──► heartbeat_ai_job()
+     │
+     ├─► [completed] (tokens_reserved released, tokens_used charged, immutable)
+     ├─► [failed]    (tokens_reserved released, tokens_used = 0, requests_used persists)
+     └─► [cancelled] (client explicit abort, reservation refunded)
+```
+
+### 22.2 Reliability & Watchdog Mechanics
+- **Watchdog Liveness:** Long-running jobs update `last_heartbeat_at` every ~3 seconds.
+- **Lazy Stale-Job Reaper (`reap_stale_ai_job`):** Triggered on status polling (`GET /api/ai/jobs/:id`). If a worker drops without completing for > 90 seconds, the job is transitioned to `failed` and quota reservations are safely released.
+- **Crash-Window Recovery (`reconcile_abandoned_terminal_ai_jobs`):** Background sweep ensuring any terminal job whose worker terminated before delta reconciliation is processed cleanly without double-charging.
+- **Frontend Assistant Modal (`EntityAiAssistantModal.vue`):** Embedded directly in the article and entity workspace (`new.vue` and `[id].vue`), allowing content creators to stream ideas and choose insertion mode (`insert`, `append`, `replace`).
+
+---
+
+## 23. Multi-Tenant Subscriptions & Entitlements Engine
+
+Burhan implements an authoritative database-enforced subscription tiering system to govern multi-tenant resource limits and monetization.
+
+### 23.1 Plan Tiers
+- **Community Plan (`slug = 'community'`):** Perpetual free tier assigned automatically to all newly provisioned tenants. Includes unlimited branches (`limits: { "branches": -1 }`) to support grassroots scholarly proliferation.
+- **Pro Plan (`slug = 'pro'`):** Tiered plan with quota caps (`limits: { "branches": 10 }`) and premium feature flags (`features: { "custom_domain": true, "ai_generate": true }`).
+
+### 23.2 Enforcement Architecture
+- **Branch Creation Gate (`check_branch_limit()`):** PostgreSQL trigger intercepts `BEFORE INSERT ON branches`. If active subscription limits are exceeded, it raises `branch_limit_exceeded`. Super admins bypass this check automatically.
+- **Graceful Degradation (Read-Only Mode):** If a tenant's subscription expires or lapses (`isReadOnly = true`), public visitors can still view articles and media, but dashboard content creation (`POST/PUT/PATCH`) is guarded and disabled with visual badges (`SubscriptionBanner.vue`).
+
+---
+
+## 24. BYOK & Cryptographic Subsystem
+
+The BYOK (Bring Your Own Key) subsystem enables tenants to connect their proprietary LLM credentials (OpenAI, OpenRouter, Anthropic, or custom private inference endpoints) without exposing plaintext secrets.
+
+### 24.1 Key Encryption Specification
+- **Algorithm:** AES-256-GCM (Authenticated Encryption).
+- **Master Key:** 256-bit key (`BYOK_ENCRYPTION_KEY`, 64 hex characters) kept exclusively on the server runtime.
+- **Per-Key Entropy:** Every encryption operation generates a cryptographically secure 12-byte initialization vector (`IV`) and produces a 16-byte authentication tag (`TAG`).
+- **Database Vault (`tenant_ai_credentials`):** Stores `encrypted_key`, `key_iv`, `key_tag`, `key_version`, and a public non-sensitive `key_suffix` (last 4 characters). Direct PostgREST access is unconditionally revoked for `anon` and `authenticated` roles.
+
+### 24.2 SSRF Hardening Layer (`server/utils/ssrf.ts`)
+To prevent server-side request forgery when tenants configure custom API endpoints:
+- **Private IP Blocking:** Blocks IPv4/IPv6 loopbacks (`127.0.0.1`, `::1`), RFC1918 private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), link-local addresses (`169.254.0.0/16`), carrier-grade NAT, and AWS/GCP/Azure instance metadata endpoints.
+- **DNS Rebinding Defense:** Validates IP addresses resolved at request dispatch time and prohibits redirect followings (`redirect: 'manual'`).
+- **Strict Protocol Enforcement:** Only `https:` protocols are permitted in production environments.
+
+---
+
+## 25. Atomic Tenant Provisioning Engine & Auth OTP Gate
+
+Tenant onboarding in Burhan is governed by an atomic, transactional state machine engineered to eliminate partial registration states, slug collisions, and orphaned database records.
+
+### 25.1 The 4-Pillar Provisioning Transaction (`provision_tenant`)
+A single `SECURITY DEFINER` PostgreSQL RPC orchestrates four mandatory pillars:
+1. **Organization Creation:** Inserts `organizations` row, trapping PostgreSQL `unique_violation` to return clean domain errors (`slug_already_taken`).
+2. **Community Subscription:** Inserts an active perpetual `subscriptions` row pointing to the default `community` plan.
+3. **Canonical Main Branch:** Automatically creates the root branch (`slug = 'main'`) with bilingual default names (`الفرع الرئيسي` / `Main Branch`).
+4. **Profile Ownership Upgrade:** Elevates the user's profile row to `role = 'owner'` and associates it with the new `organization_id`.
+
+### 25.2 Concurrency & Idempotency
+- **Serialization Lock:** Executes `SELECT id FROM profiles WHERE id = p_user_id FOR UPDATE` at function entry, serializing concurrent requests for the same user and eliminating duplicate tenant race conditions.
+- **Four-Pillar Idempotency:** If the same user retries provisioning with their existing slug, the RPC returns the existing tenant without creating duplicates.
+- **Email Verification Gate:** Supabase Auth 6-digit email OTP (`auth.verifyOtp`) must be verified before the server invokes `provision_tenant`. Unconfirmed email attempts are rejected with HTTP 403.
+- **Post-Provisioning Routing:** Upon successful provisioning and verification, the tenant owner is immediately routed to `/dashboard`.

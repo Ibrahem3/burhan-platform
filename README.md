@@ -77,6 +77,29 @@ A unified CMS supporting multiple content categories and formats with native bil
 *   **Premium Gate:** Restricts exclusive courses or refutations behind a subscription barrier, bypassed automatically for tenant staff.
 *   **Umami Integration:** Built-in tracking using self-hosted, privacy-first Umami Analytics to ensure analytics data is not harvested by advertising networks.
 
+### 2.5 Decentralized AI Inference Engine (DeAI M1)
+A sovereign, censorship-resistant AI writing assistant built on decentralized GPU compute:
+*   **Decentralized Cluster Inference:** Streamed OpenAI-compatible inference orchestrated via the **Nosana** compute cluster with bounded timeouts (~120s) and keep-alive heartbeats.
+*   **Transactional Quota Ledger:** Monthly token and request allowances (`ai_usage`) reserved at job creation, debited on completion, and safely released on failure or cancellation.
+*   **Fail-Safe Recovery Watchdog:** Lazy stale-job reaper and recovery sweep preventing orphan jobs and locked quotas during client or worker dropouts.
+*   **Dashboard Assistant Modal:** Native drafting assistant in the article editor supporting streaming preview and insertion modes (insert, append, replace).
+
+### 2.6 Atomic Tenant Provisioning & Email OTP Gate
+Bulletproof tenant onboarding ensuring zero orphaned states:
+*   **Atomic Provisioning Engine (`provision_tenant`):** Single-transaction RPC orchestrating organization creation, perpetual community plan subscription, canonical main branch, and profile ownership upgrade.
+*   **3-Step Signup State Machine:** Enforces email verification via 6-digit OTP (`auth.verifyOtp`) prior to provisioning, with 60-second resend cooldowns and fail-closed rollbacks.
+*   **Resilient Localization:** Built-in tolerance in frontend helpers handling both structured bilingual JSONB objects and plain string tenant names without runtime crashes.
+
+### 2.7 Multi-Tenant Subscriptions & Entitlements
+*   **Tier Hierarchy:** Out-of-the-box perpetual Community tier (`branches = -1` unlimited) and Pro tier with customizable feature flags (`custom_domain`, `advanced_analytics`, `ai_generate`).
+*   **Database-Level Enforcement:** PostgreSQL triggers (`check_branch_limit`) enforce plan quotas directly on INSERT, preventing API bypasses.
+*   **Graceful Degradation:** Expired or cancelled tenants transition smoothly into read-only mode, retaining public viewability while guarding content mutations.
+
+### 2.8 BYOK (Bring Your Own Key) Cryptographic Subsystem
+Empowers enterprise tenants to provide their own LLM API credentials with maximum security:
+*   **Authenticated Encryption:** Keys are encrypted using **AES-256-GCM** with unique per-record IVs and authenticated tags, isolated from client-side exposure.
+*   **SSRF Protection Layer:** Strict runtime inspection blocks private IPv4/IPv6 ranges, loopbacks, cloud metadata endpoints (169.254.169.254), and prevents DNS rebinding attacks.
+
 ---
 
 ## 3. Project Structure
@@ -87,24 +110,24 @@ burhan/
 │   ├── app.vue                   # Root component & transitions
 │   ├── assets/css/main.css       # Onyx/Gold global design system styles
 │   ├── components/
-│   │   ├── dashboard/            # RichTextEditor, FloatingSidebar, editor-toolbar
+│   │   ├── dashboard/            # RichTextEditor, EntityAiAssistantModal, FloatingSidebar
 │   │   ├── hub/                  # EntityCard, CategorySection
 │   │   ├── premium/              # PremiumGate
 │   │   ├── tenant/               # OrgHeader, BranchNav, VideoPlayer
 │   │   └── ui/                   # Button, Badge, GlassCard, AppSelect, Avatar
-│   ├── composables/              # useUser, useOrg, useLocale, useEntities
+│   ├── composables/              # useAiGenerate, useSubscription, useTenantBootstrap, useUser, useOrg
 │   ├── i18n/                     # Bilingual UI translations (ar.json, en.json)
 │   ├── layouts/                  # default.vue (public), dashboard.vue (admin)
 │   ├── middleware/               # dashboard-auth.ts, org.global.ts, observatory-auth.ts
-│   ├── pages/                    # File-system routing (Hub, Tenant, Observatory, Dashboard)
-│   ├── types/                    # Database TypeScript definitions
-│   └── utils/                    # localized.ts, image.ts
+│   ├── pages/                    # File-system routing (Hub, Tenant, Observatory, Dashboard, Signup OTP)
+│   ├── types/                    # Database & Subscription TypeScript definitions
+│   └── utils/                    # localized.ts (crash-resilient), image.ts
 ├── server/                       # Nitro Server Engine (Cloudflare Pages compatible)
-│   ├── api/                      # Server routes (auth, tenant registration, observatory)
-│   └── utils/                    # supabase.ts (admin client factory)
+│   ├── api/                      # Server routes (ai, auth, org, observatory, admin)
+│   └── utils/                    # nosana.ts, crypto.ts (AES-256-GCM), ssrf.ts, entitlements.ts, supabase.ts
 ├── supabase/                     # Supabase database config
-│   ├── migrations/               # Chronological database patches (00001 - 00009)
-│   └── schema.sql                # Unified database setup script (one-click setup)
+│   ├── migrations/               # Chronological database patches (00001 - 00019)
+│   └── schema.sql                # Unified canonical database setup script (00001 - 00019 in one click)
 ├── public/                       # PWA icons and loaders
 ├── nuxt.config.ts                # Nuxt configuration
 ├── tailwind.config.ts            # Tailwind onyx/gold theme definition
@@ -130,6 +153,7 @@ By cloning, deploying, or contributing to this project, you agree to the followi
 *   Node.js 20+
 *   A Supabase Project (URL + Anon Key + Service Role Key)
 *   Cloudflare Turnstile Account (Optional, for Observatory spam protection)
+*   Nosana Inference Cluster Credentials (Optional, for Decentralized AI)
 
 ### 5.2 Local Installation
 
@@ -144,14 +168,28 @@ By cloning, deploying, or contributing to this project, you agree to the followi
     ```bash
     cp .env.example .env
     ```
-    Open `.env` and fill in your Supabase project endpoints and credentials:
+    Open `.env` and fill in your project credentials:
     ```bash
+    # Supabase Connection Settings
     SUPABASE_URL=https://your-project.supabase.co
     SUPABASE_KEY=your-anon-public-key
     SUPABASE_SECRET_KEY=your-service-role-key
-    # Optional Cloudflare Turnstile keys
+
+    # Platform SEO Settings
+    NUXT_PUBLIC_SITE_URL=http://localhost:3000
+    NUXT_PUBLIC_SITE_NAME=Burhan
+
+    # Cloudflare Turnstile Spam Protection (Optional)
     NUXT_PUBLIC_TURNSTILE_SITE_KEY=your-site-key
     NUXT_TURNSTILE_SECRET_KEY=your-secret-key
+
+    # Decentralized AI Inference (Server-only Nosana cluster)
+    NUXT_NOSANA_API_ENDPOINT=https://api.nosana.io/v1
+    NUXT_NOSANA_CLUSTER_KEY=your-nosana-cluster-key
+    NUXT_NOSANA_DEFAULT_MODEL=deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+
+    # BYOK Master Encryption Key (64-character hex string for AES-256-GCM)
+    BYOK_ENCRYPTION_KEY=your-64-char-hex-encryption-key
     ```
 
 3.  **Setup Database Schemas:**
