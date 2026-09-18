@@ -20,6 +20,7 @@
 </table>
 <br clear="left" />
 
+<img width="1255" height="868" alt="Screenshot_٢٠٢٦٠٩١٨_٢٣٣٤٤٩" src="https://github.com/user-attachments/assets/c2434905-ab47-44d1-8434-138356694401" />
 
 
 ![Sovereignty](https://img.shields.io/badge/Sovereignty-Ethical_Asset-blueviolet?style=for-the-badge)
