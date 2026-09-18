@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-18] - Migration 00019: Atomic Tenant Provisioning Engine
+
+### Added
+- [`supabase/migrations/00019_tenant_provisioning_engine.sql`](../supabase/migrations/00019_tenant_provisioning_engine.sql): Implemented transactional RPC `public.provision_tenant(p_user_id, p_org_name, p_org_slug)`:
+  - Single atomic transaction unit covering organization creation, perpetual community subscription, main branch creation, and profile ownership upgrade.
+  - Fail-closed automatic rollback on any failure with zero orphaned organizations or subscriptions.
+  - Concurrency locking using `SELECT ... FOR UPDATE` on the canonical user profile row to prevent duplicate tenant creation.
+  - DB-authoritative slug collision handling directly catching PostgreSQL `unique_violation` on `organizations.org_slug` and emitting domain error `slug_already_taken`.
+  - Four-pillar idempotency verification: safely returns existing organization and main branch (`is_existing: true`) on matching slug retries, rejecting multi-tenant attempts with `user_already_has_tenant`, and raising `tenant_state_corrupted` on incomplete states.
+  - Hardened execution privileges: strictly revoked from `PUBLIC`, `anon`, and `authenticated`; granted exclusively to `service_role`.
+
+### Changed
+- [`supabase/schema.sql`](../supabase/schema.sql): Appended Migration 00019 to maintain canonical synchronized database schema.
+- [`server/api/auth/register-tenant.post.ts`](../server/api/auth/register-tenant.post.ts): Replaced legacy multi-step non-atomic PostgREST calls with a single atomic RPC invocation:
+  - Added email confirmation gate verifying `confirmed_at` / `email_confirmed_at` on Supabase Auth user before invoking provisioning.
+  - Mapped DB domain errors to standard, machine-readable HTTP codes: `400 invalid_payload`, `401 invalid_session`, `403 email_not_confirmed`, `409 slug_already_taken`, `409 user_already_has_tenant`, `500 tenant_state_corrupted`, `500 provisioning_failed`.
+  - Returned HTTP 201 for freshly provisioned tenants and HTTP 200 for idempotent retries.
+
+### Rationale
+- Completely eliminates partial failure states, orphaned tenant rows, and race conditions during user registration, establishing an authoritative transactional backend foundation that guarantees safe retries for the upcoming email verification and signup flows.
+
+
 ## [2026-09-18] - Frontend Quota & Read-Only Integration
 
 ### Changed
