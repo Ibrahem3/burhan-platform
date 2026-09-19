@@ -13,6 +13,8 @@
 > Built for zero vendor lock-in, Burhan empowers developers, independent researchers, and scholarly institutions to deploy fully self-hosted, tenant-isolated knowledge hubs in minutes.
 
 ---
+<img width="1255" height="868" alt="Screenshot_٢٠٢٦٠٩١٨_٢٣٣٤٤٩" src="https://github.com/user-attachments/assets/87c50192-c029-414e-9e2b-ba6a0c19f98a" />
+
 
 ## 1. The Manifesto: Tech Sovereignty in the Age of Censorship
 
