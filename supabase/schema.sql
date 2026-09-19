@@ -517,7 +517,7 @@ CREATE POLICY series_select_org
 
 -- All users can see active series on public hub (joined through org via tenant pages)
 CREATE POLICY series_select_public
-  ON series FOR SELECT TO anon
+  ON series FOR SELECT TO anon, authenticated
   USING (is_active = true);
 
 -- INSERT: owner, manager, super_admin

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-19] - Database RLS: Fix Public Series Read for Authenticated Cross-Tenant Users
+
+### Changed
+- [`supabase/migrations/00021_fix_public_series_read.sql`](../supabase/migrations/00021_fix_public_series_read.sql):
+  - Created migration updating `series_select_public` policy to target `TO anon, authenticated`.
+  - Allowed logged-in users from any organization to view active public series (`is_active = true`) while browsing other organizations.
+  - Strictly preserved tenant isolation: inactive draft series remain hidden from unauthorized users and visible only to the owning organization.
+- [`supabase/schema.sql`](../supabase/schema.sql):
+  - Updated canonical schema definition to align 1:1 with production.
+
+### Rationale
+- Migration 00006 previously scoped `series_select_public` strictly `TO anon`. When an authenticated user browsed another organization's public tenant page, PostgreSQL RLS evaluated only the organization-scoped policy and blocked active public series, displaying 0 courses.
+
 ## [2026-09-19] - UI Fix: Desktop FloatingSidebar Smooth Hover & Jitter Elimination
 
 ### Changed
