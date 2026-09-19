@@ -160,13 +160,15 @@ async function toggleActive(s: Series) {
             <div class="flex items-center gap-2">
               <span class="text-[11px] text-gray-500">{{ s.is_active ? 'منشور' : 'غير منشور' }}</span>
               <button
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                type="button"
+                dir="ltr"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
                 :class="s.is_active ? 'bg-gold' : 'bg-white/10'"
                 :disabled="togglingId === s.id"
                 @click.stop="toggleActive(s)"
               >
                 <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200"
                   :class="s.is_active ? 'translate-x-6' : 'translate-x-1'"
                 />
               </button>

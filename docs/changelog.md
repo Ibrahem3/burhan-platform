@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-19] - UI Fix: Fix RTL Switch Knob Translation Displacement on Toggles
+
+### Changed
+- [`app/pages/dashboard/branches.vue`](../app/pages/dashboard/branches.vue):
+  - Added `dir="ltr"` and `type="button"` to the branch status toggle switch button to ensure consistent positive X-axis translation for active/inactive state regardless of document text direction.
+- [`app/pages/dashboard/series/index.vue`](../app/pages/dashboard/series/index.vue):
+  - Added `dir="ltr"` and `type="button"` with smooth transition to the series publication toggle switch button to prevent the switch knob from moving outside the pill container in RTL mode.
+
+### Rationale
+- Under RTL (`dir="rtl"`), positive CSS transform values (`translate-x-6` or `translate-x-[18px]`) invert direction relative to the natural physical switch orientation, pushing the white circular knob outside the switch boundary or causing misalignment. Forcing `dir="ltr"` locally locks the coordinate system of the toggle switch.
+
 ## [2026-09-19] - Database RLS: Fix Public Series Read for Authenticated Cross-Tenant Users
 
 ### Changed

@@ -329,6 +329,8 @@ async function deleteBranch(id: string) {
             </div>
 
             <button
+              type="button"
+              dir="ltr"
               class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none"
               :class="[branch.is_active ? 'bg-green-500' : 'bg-white/10', isReadOnly && !isSuperAdmin ? 'opacity-50 cursor-not-allowed' : '']"
               :disabled="togglingId === branch.id || (isReadOnly && !isSuperAdmin)"
