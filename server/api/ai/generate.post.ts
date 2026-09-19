@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '../../utils/supabase'
 import { resolveCaller } from '../../utils/auth'
 import { runInference } from '../../utils/nosana'
 import { getActiveSubscription } from '../../utils/entitlements'
+import { EDITORIAL_LIMITS } from '../../utils/editorial'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -14,11 +15,59 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event).catch(() => ({}))
   const caller = await resolveCaller(event, body)
 
-  const { prompt, systemPrompt, language, model, branchId } = body
+  const {
+    prompt,
+    generationMode,
+    operation,
+    editorContent,
+    sourceContent,
+    sourceLanguage,
+    targetLanguage,
+    systemPrompt,
+    language,
+    model,
+    branchId,
+  } = body
+
   const trimmed = typeof prompt === 'string' ? prompt.trim() : ''
   if (!trimmed) {
     throw createError({ statusCode: 400, statusMessage: 'Missing required fields' })
   }
+
+  // Safety boundaries: validate instruction and editor content limits
+  if (trimmed.length > EDITORIAL_LIMITS.MAX_INSTRUCTION_CHARS) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Instruction exceeds maximum allowed length of ${EDITORIAL_LIMITS.MAX_INSTRUCTION_CHARS} characters`,
+    })
+  }
+
+  const cleanEditorContent = typeof editorContent === 'string' && editorContent.trim() ? editorContent.trim() : null
+  if (cleanEditorContent && cleanEditorContent.length > EDITORIAL_LIMITS.MAX_EDITOR_CONTENT_CHARS) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Editor content exceeds maximum allowed length of ${EDITORIAL_LIMITS.MAX_EDITOR_CONTENT_CHARS} characters`,
+    })
+  }
+
+  const cleanSourceContent = typeof sourceContent === 'string' && sourceContent.trim() ? sourceContent.trim() : null
+  if (cleanSourceContent && cleanSourceContent.length > EDITORIAL_LIMITS.MAX_EDITOR_CONTENT_CHARS) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Source content exceeds maximum allowed length of ${EDITORIAL_LIMITS.MAX_EDITOR_CONTENT_CHARS} characters`,
+    })
+  }
+
+  const totalChars = trimmed.length + (cleanEditorContent?.length || 0) + (cleanSourceContent?.length || 0)
+  if (totalChars > EDITORIAL_LIMITS.MAX_TOTAL_CONTEXT_CHARS) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Total context size exceeds maximum allowed limit',
+    })
+  }
+
+  const resolvedTargetLang = (targetLanguage === 'en' || language === 'en') ? 'en' : 'ar'
+  const resolvedSourceLang = (sourceLanguage === 'en' || sourceLanguage === 'ar') ? sourceLanguage : null
 
   // Repo-wide pre-existing issue: the typed client resolves `.from`/`.rpc`
   // to `never`. The service client is untyped here for service-role calls.
@@ -72,14 +121,22 @@ export default defineEventHandler(async (event) => {
     ? 2147483647
     : (tokLimitRaw === -1 ? 2147483647 : Math.max(0, Number(tokLimitRaw)))
 
+  const isTranslation = operation === 'translation' || Boolean(
+    cleanSourceContent && resolvedSourceLang && resolvedSourceLang !== resolvedTargetLang
+  )
+  const isBilingualLegacy = generationMode === 'both'
+  const estimatedTokens = isBilingualLegacy ? 1000 : 500
+  const jobLanguage = isBilingualLegacy ? 'both' : resolvedTargetLang
+
   const { data, error } = await admin.rpc('create_ai_job', {
     p_user_id: caller.userId,
     p_org_id: orgId,
     p_branch_id: branchId || null,
     p_prompt: trimmed,
     p_system_prompt: systemPrompt || null,
-    p_language: language || 'ar',
+    p_language: jobLanguage,
     p_model: model || null,
+    p_tokens_estimated: estimatedTokens,
     p_request_limit: requestLimit,
     p_token_limit: tokenLimit,
   })
@@ -110,8 +167,14 @@ export default defineEventHandler(async (event) => {
       userId: caller.userId,
       orgId,
       prompt: trimmed,
+      generationMode: isBilingualLegacy ? 'both' : 'current',
+      operation: isTranslation ? 'translation' : 'generation',
+      editorContent: cleanEditorContent,
+      sourceContent: cleanSourceContent,
+      sourceLanguage: resolvedSourceLang,
+      targetLanguage: resolvedTargetLang,
       systemPrompt: systemPrompt || null,
-      language: language || 'ar',
+      language: jobLanguage,
       model: model || null,
     })
   )
