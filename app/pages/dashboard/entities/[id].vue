@@ -187,18 +187,36 @@ async function onFileSelected(event: Event) {
   input.value = ''
 }
 
-function applyAiContent({ content, mode }: { content: string; mode: 'insert' | 'append' | 'replace' }) {
-  // Simple markdown-to-HTML paragraph wrapping for clean Tiptap ingestion
-  const paragraphs = content
+function formatAiContentForEditor(raw: string): string {
+  const trimmed = (raw || '').trim()
+  if (!trimmed) return ''
+
+  // If already semantic HTML containing block tags, return as-is to preserve Tiptap schema
+  const isSemanticHtml = /<\/?(p|h[1-6]|ul|ol|li|blockquote|strong|em|div|table|br)[\s>/]/i.test(trimmed)
+  if (isSemanticHtml) {
+    return trimmed
+  }
+
+  // Legacy plain-text fallback: wrap paragraphs in <p>
+  const paragraphs = trimmed
     .split(/\n\s*\n/)
     .map(p => p.trim())
     .filter(Boolean)
     .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
     .join('')
 
-  const formattedHtml = paragraphs || `<p>${content}</p>`
+  return paragraphs || `<p>${trimmed}</p>`
+}
 
-  if (currentLang.value === 'ar') {
+function applyAiContent({ content, mode, targetLang }: { content: string; mode: 'insert' | 'append' | 'replace'; targetLang?: 'ar' | 'en' }) {
+  const formattedHtml = formatAiContentForEditor(content)
+  if (!formattedHtml) return
+
+  // targetLang is the absolute source of truth for where content is written.
+  // currentLang is NEVER used to determine the destination of translation/generation output.
+  const destinationLang = targetLang || currentLang.value
+
+  if (destinationLang === 'ar') {
     if (mode === 'replace' || !form.content_ar) {
       form.content_ar = formattedHtml
     } else if (mode === 'insert') {
@@ -217,6 +235,9 @@ function applyAiContent({ content, mode }: { content: string; mode: 'insert' | '
       form.content_en = form.content_en + formattedHtml
     }
   }
+
+  // Switch active editor tab to destination language so user immediately sees the written content
+  currentLang.value = destinationLang
 }
 </script>
 
@@ -479,6 +500,9 @@ function applyAiContent({ content, mode }: { content: string; mode: 'insert' | '
       v-model="aiModalOpen"
       :current-lang="currentLang"
       :branch-id="form.branch_id"
+      :editor-content="currentLang === 'ar' ? form.content_ar : form.content_en"
+      :source-content="currentLang === 'ar' ? form.content_en : form.content_ar"
+      :source-language="currentLang === 'ar' ? 'en' : 'ar'"
       @apply="applyAiContent"
     />
   </div>

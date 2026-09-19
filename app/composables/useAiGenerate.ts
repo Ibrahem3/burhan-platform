@@ -1,7 +1,18 @@
 export type AiJobStatus = 'idle' | 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+export type GenerationMode = 'current' | 'both'
+
+export interface BilingualContent {
+  ar: string
+  en: string
+}
 
 export interface AiGenerateOptions {
   prompt: string
+  generationMode?: GenerationMode
+  editorContent?: string | null
+  sourceContent?: string | null
+  sourceLanguage?: 'ar' | 'en' | null
+  targetLanguage?: 'ar' | 'en' | null
   systemPrompt?: string | null
   language?: 'ar' | 'en'
   branchId?: string | null
@@ -12,6 +23,7 @@ export interface AiJobState {
   jobId: string | null
   outputBuffer: string
   outputFinal: string | null
+  outputBilingual: BilingualContent | null
   error: string | null
   tokensUsed: number | null
 }
@@ -26,6 +38,7 @@ export const useAiGenerate = () => {
     jobId: null,
     outputBuffer: '',
     outputFinal: null,
+    outputBilingual: null,
     error: null,
     tokensUsed: null,
   })
@@ -48,6 +61,7 @@ export const useAiGenerate = () => {
       jobId: null,
       outputBuffer: '',
       outputFinal: null,
+      outputBilingual: null,
       error: null,
       tokensUsed: null,
     }
@@ -80,6 +94,18 @@ export const useAiGenerate = () => {
       state.value.outputBuffer = res.streamBuffer || ''
       state.value.outputFinal = res.output || null
       state.value.tokensUsed = res.tokensUsed ?? null
+
+      if (res.output && res.output.includes('=== BURHAN_BILINGUAL_ARABIC ===')) {
+        const arMatch = res.output.match(/=== BURHAN_BILINGUAL_ARABIC ===\s*([\s\S]*?)\s*=== BURHAN_BILINGUAL_ENGLISH ===/)
+        const enMatch = res.output.match(/=== BURHAN_BILINGUAL_ENGLISH ===\s*([\s\S]*?)(?:\s*=== BURHAN_BILINGUAL_END ===|$)/)
+        if (arMatch && enMatch) {
+          const cleanFences = (s: string) => s.replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/i, '').trim()
+          state.value.outputBilingual = {
+            ar: cleanFences(arMatch[1].trim()),
+            en: cleanFences(enMatch[1].trim()),
+          }
+        }
+      }
 
       if (res.status === 'completed') {
         clearTimer()
@@ -172,8 +198,13 @@ export const useAiGenerate = () => {
         },
         body: {
           prompt: trimmedPrompt,
+          generationMode: options.generationMode || 'current',
+          editorContent: options.editorContent || null,
+          sourceContent: options.sourceContent || null,
+          sourceLanguage: options.sourceLanguage || null,
+          targetLanguage: options.targetLanguage || options.language || 'ar',
           systemPrompt: options.systemPrompt || null,
-          language: options.language || 'ar',
+          language: options.targetLanguage || options.language || 'ar',
           branchId: options.branchId || null,
         },
       })

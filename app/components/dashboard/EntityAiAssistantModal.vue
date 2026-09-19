@@ -5,14 +5,20 @@ const props = withDefaults(defineProps<{
   modelValue: boolean
   currentLang?: 'ar' | 'en'
   branchId?: string | null
+  editorContent?: string | null
+  sourceContent?: string | null
+  sourceLanguage?: 'ar' | 'en' | null
 }>(), {
   currentLang: 'ar',
   branchId: null,
+  editorContent: null,
+  sourceContent: null,
+  sourceLanguage: null,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  'apply': [{ content: string; mode: 'insert' | 'append' | 'replace' }]
+  'apply': [{ content: string; mode: 'insert' | 'append' | 'replace'; targetLang?: 'ar' | 'en' }]
 }>()
 
 const { t } = useI18n()
@@ -24,6 +30,8 @@ const prompt = ref('')
 const systemPrompt = ref('')
 const applyMode = ref<'insert' | 'append' | 'replace'>('append')
 const showAdvanced = ref(false)
+const showOverwriteConfirm = ref(false)
+const pendingTranslationAction = ref<(() => Promise<void>) | null>(null)
 
 const canUseAi = computed(() => {
   if (isSuperAdmin.value) return true
@@ -46,18 +54,102 @@ const isCompleted = computed(() => {
   return state.value.status === 'completed' && Boolean(state.value.outputFinal)
 })
 
+// Translation availability helpers
+const canTranslateToEnglish = computed(() => {
+  return props.currentLang === 'ar' &&
+    Boolean(props.editorContent?.replace(/<[^>]*>/g, '').trim())
+})
+
+const canTranslateToArabic = computed(() => {
+  return props.currentLang === 'en' &&
+    Boolean(props.editorContent?.replace(/<[^>]*>/g, '').trim())
+})
+
 function closeModal() {
   if (isGenerating.value) {
     cancel()
   }
+  showOverwriteConfirm.value = false
+  pendingTranslationAction.value = null
   emit('update:modelValue', false)
+}
+
+async function triggerDirectTranslation(targetLang: 'ar' | 'en') {
+  if (isGenerating.value || !canUseAi.value) return
+
+  // Check if target editor already has content -> ask for explicit overwrite confirmation
+  const targetAlreadyHasContent = Boolean(props.sourceContent?.replace(/<[^>]*>/g, '').trim())
+  if (targetAlreadyHasContent && !showOverwriteConfirm.value) {
+    pendingTranslationAction.value = () => executeTranslation(targetLang)
+    showOverwriteConfirm.value = true
+    return
+  }
+
+  showOverwriteConfirm.value = false
+  pendingTranslationAction.value = null
+  await executeTranslation(targetLang)
+}
+
+const activeTargetLang = ref<'ar' | 'en'>(props.currentLang)
+
+async function executeTranslation(targetLang: 'ar' | 'en') {
+  activeTargetLang.value = targetLang
+  const srcLang = targetLang === 'en' ? 'ar' : 'en'
+  const srcName = srcLang === 'ar' ? 'Arabic' : 'English'
+  const tgtName = targetLang === 'en' ? 'English' : 'Arabic'
+
+  const translationPrompt = `Translate this entire article into professional, editorial-quality ${tgtName} while strictly preserving all semantic HTML tags (<h2>, <h3>, <p>, <ul>, <ol>, <li>, <blockquote>, <strong>, <em>) and exact structure.`
+
+  prompt.value = translationPrompt
+
+  await generate({
+    prompt: translationPrompt,
+    generationMode: 'current',
+    editorContent: '',
+    sourceContent: props.editorContent || null,
+    sourceLanguage: srcLang,
+    targetLanguage: targetLang,
+    systemPrompt: systemPrompt.value.trim() || null,
+    language: targetLang,
+    branchId: props.branchId || null,
+  })
+}
+
+function confirmOverwriteAndProceed() {
+  if (pendingTranslationAction.value) {
+    const act = pendingTranslationAction.value
+    pendingTranslationAction.value = null
+    showOverwriteConfirm.value = false
+    act()
+  }
+}
+
+function cancelOverwrite() {
+  showOverwriteConfirm.value = false
+  pendingTranslationAction.value = null
 }
 
 async function handleGenerate() {
   if (!prompt.value.trim() || isGenerating.value || !canUseAi.value) return
 
+  activeTargetLang.value = props.currentLang
+  const userPrompt = prompt.value.trim()
+
+  // Check if translation / cross-language transform is explicitly requested
+  const isTranslationRequest = Boolean(
+    props.sourceContent &&
+    props.sourceLanguage &&
+    props.sourceLanguage !== props.currentLang &&
+    /\b(translate|translation|ترجم|ترجمة|مترجم|نقل|انقل)\b/i.test(userPrompt)
+  )
+
   await generate({
-    prompt: prompt.value.trim(),
+    prompt: userPrompt,
+    generationMode: 'current',
+    editorContent: props.editorContent || null,
+    sourceContent: isTranslationRequest ? props.sourceContent : null,
+    sourceLanguage: isTranslationRequest ? props.sourceLanguage : null,
+    targetLanguage: props.currentLang,
     systemPrompt: systemPrompt.value.trim() || null,
     language: props.currentLang,
     branchId: props.branchId || null,
@@ -65,27 +157,31 @@ async function handleGenerate() {
 }
 
 async function handleApply() {
-  const content = displayedResult.value
-  if (!content) return
-
   if (state.value.jobId) {
-    // Attempt non-blocking consumption flip
     consume(state.value.jobId).catch(() => {})
   }
+
+  const content = displayedResult.value
+  if (!content) return
 
   emit('apply', {
     content,
     mode: applyMode.value,
+    targetLang: activeTargetLang.value,
   })
 
   closeModal()
 }
 
 watch(() => props.modelValue, (open) => {
-  if (!open) {
+  if (open) {
+    activeTargetLang.value = props.currentLang
+  } else {
     reset()
     prompt.value = ''
     systemPrompt.value = ''
+    showOverwriteConfirm.value = false
+    pendingTranslationAction.value = null
   }
 })
 </script>
@@ -152,11 +248,105 @@ watch(() => props.modelValue, (open) => {
             </span>
           </div>
 
+          <!-- Translation Quick Action & Target Header -->
+          <div
+            v-if="canTranslateToEnglish || canTranslateToArabic"
+            class="p-3 bg-white/[0.03] border border-white/5 rounded-xl flex items-center justify-between"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">الترجمة السريعة:</span>
+              <span class="text-xs text-gray-300">ترجمة محتوى المقال الحالي مباشرة للغة الأخرى بدقة هيكلية كاملة</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                v-if="canTranslateToEnglish"
+                type="button"
+                class="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors flex items-center gap-1.5"
+                :disabled="isGenerating || !canUseAi"
+                @click="triggerDirectTranslation('en')"
+              >
+                <span>🌐</span>
+                <span>ترجمة للإنجليزية</span>
+              </button>
+              <button
+                v-else-if="canTranslateToArabic"
+                type="button"
+                class="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors flex items-center gap-1.5"
+                :disabled="isGenerating || !canUseAi"
+                @click="triggerDirectTranslation('ar')"
+              >
+                <span>🌐</span>
+                <span>ترجمة للعربية</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Explicit Overwrite Warning Dialog -->
+          <div
+            v-if="showOverwriteConfirm"
+            class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2"
+          >
+            <div class="flex items-center gap-2 font-bold">
+              <span>⚠️</span>
+              <span>تنبيه استبدال المحتوى</span>
+            </div>
+            <p>
+              يوجد محتوى سابق في حقل اللغة الهدف. المتابعة ستؤدي إلى استبدال هذا المحتوى بالنسخة المترجمة الجديدة.
+            </p>
+            <div class="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                class="px-3 py-1 rounded-lg text-xs text-gray-400 hover:text-white bg-white/5 transition-colors"
+                @click="cancelOverwrite"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1 rounded-lg text-xs font-bold text-black bg-amber-400 hover:bg-amber-300 transition-colors"
+                @click="confirmOverwriteAndProceed"
+              >
+                تأكيد واستبدال
+              </button>
+            </div>
+          </div>
+
           <!-- Prompt Input -->
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-              تعليمات التوليد (Prompt)
-            </label>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                تعليمات التحرير والتوليد (Instruction)
+              </label>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span
+                  class="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/20 font-mono uppercase font-bold"
+                >
+                  {{ currentLang === 'ar' ? 'الهدف: عربي' : 'Target: English' }}
+                </span>
+                <span
+                  v-if="editorContent && editorContent.replace(/<[^>]*>/g, '').trim().length > 0"
+                  class="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1 font-sans"
+                >
+                  <span>📄</span>
+                  <span>المحرر متصل</span>
+                </span>
+                <span
+                  v-else-if="sourceContent && sourceContent.replace(/<[^>]*>/g, '').trim().length > 0"
+                  class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 font-sans"
+                  :title="currentLang === 'en' ? 'Arabic source available for translation' : 'English source available for translation'"
+                >
+                  <span>🌐</span>
+                  <span>المقال متاح باللغة الأخرى للترجمة</span>
+                </span>
+                <span
+                  v-else
+                  class="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 border border-white/10 flex items-center gap-1 font-sans"
+                >
+                  <span>✨</span>
+                  <span>المحرر فارغ</span>
+                </span>
+              </div>
+            </div>
             <textarea
               v-model="prompt"
               rows="3"
