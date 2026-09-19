@@ -5,7 +5,7 @@ import { getActiveSubscription } from '../../utils/entitlements'
 import { EDITORIAL_LIMITS } from '../../utils/editorial'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig(event)
 
   // Kill switch — checked BEFORE any quota reservation or job creation.
   if (config.public.ai?.generateEnabled === false) {
@@ -176,6 +176,11 @@ export default defineEventHandler(async (event) => {
       systemPrompt: systemPrompt || null,
       language: jobLanguage,
       model: model || null,
+      platformConfig: {
+        apiEndpoint: (config.nosana?.apiEndpoint as string) || 'https://inference.nosana.com',
+        clusterKey: (config.nosana?.clusterKey as string) || '',
+        defaultModel: (config.nosana?.defaultModel as string) || 'qwen/qwen3.8-27b',
+      },
     })
   )
 

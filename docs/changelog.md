@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-19] - AI Inference: Request-Boundary Platform Config Injection for Cloudflare Pages
+
+### Changed
+- [`server/api/ai/generate.post.ts`](../server/api/ai/generate.post.ts):
+  - Bound `useRuntimeConfig(event)` to the active request context at the HTTP handler boundary.
+  - Explicitly extracted and injected `platformConfig` (`apiEndpoint`, `clusterKey`, `defaultModel`) into `runInference(...)` before scheduling via `event.waitUntil()`.
+- [`server/utils/nosana.ts`](../server/utils/nosana.ts):
+  - Updated `RunInferenceInput` to accept optional `platformConfig?: NosanaConfig`.
+  - Prioritized `input.platformConfig` in provider resolution before falling back to `getNosanaConfig()`.
+  - Decoupled asynchronous background execution (`waitUntil`) from parameterless `useRuntimeConfig()` which returned empty frozen startup snapshots in Cloudflare Workers.
+
+### Rationale
+- In Cloudflare Pages / Workers, `env` bindings are injected per-request. Parameterless `useRuntimeConfig()` returns the module startup snapshot (`_n`) frozen before request arrival, causing `clusterKey` to evaluate to `""` during background execution. Passing the resolved config explicitly from the request boundary ensures `clusterKey` reaches the provider check intact.
+
+
 ## [2026-09-19] - AI Inference: Platform Provider Resolution & Token Calibration Fix
 
 ### Changed

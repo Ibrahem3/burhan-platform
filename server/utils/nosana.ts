@@ -23,6 +23,7 @@ export interface RunInferenceInput {
   systemPrompt?: string | null
   language?: string
   model?: string | null
+  platformConfig?: NosanaConfig
 }
 
 export interface ParsedSseChunk {
@@ -216,7 +217,7 @@ export async function runInference(input: RunInferenceInput): Promise<void> {
         if (policy.endpoint) {
           endpoint = policy.endpoint.replace(/\/+$/, '')
         } else {
-          const cfg = getNosanaConfig()
+          const cfg = input.platformConfig || getNosanaConfig()
           endpoint = cfg.apiEndpoint.replace(/\/+$/, '')
         }
 
@@ -237,7 +238,7 @@ export async function runInference(input: RunInferenceInput): Promise<void> {
 
   // Fallback to platform Nosana if no active BYOK resolved
   if (!apiKey) {
-    const cfg = getNosanaConfig()
+    const cfg = input.platformConfig || getNosanaConfig()
     endpoint = cfg.apiEndpoint.replace(/\/+$/, '')
     apiKey = cfg.clusterKey
     if (!resolvedModel) {
