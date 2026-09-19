@@ -64,14 +64,14 @@ Strict Translation Invariants:
 5. Absolute Language Purity: The translation must be entirely in the specified TARGET TRANSLATION LANGUAGE.`
 
 // Architectural safety limits
-// Note: MAX_OUTPUT_TOKENS is provisionally set to 4096 tokens based on forensic analysis
+// Note: MAX_OUTPUT_TOKENS is calibrated to 6144 tokens based on forensic analysis
 // of Nosana vLLM qwen/qwen3.8-27b, where internal reasoning consumes ~1,500-2,500 tokens
-// and visible editorial HTML content consumes ~1,000-1,500 tokens.
+// and visible editorial HTML content consumes ~1,500-2,500 tokens.
 export const EDITORIAL_LIMITS = {
   MAX_INSTRUCTION_CHARS: 2000,
   MAX_EDITOR_CONTENT_CHARS: 50000,
-  MAX_OUTPUT_TOKENS: 4096,
-  MAX_BILINGUAL_OUTPUT_TOKENS: 4096,
+  MAX_OUTPUT_TOKENS: 6144,
+  MAX_BILINGUAL_OUTPUT_TOKENS: 6144,
   // Conservative character estimation: 1 token ~= 3.5 chars in mixed Arabic/English
   MAX_TOTAL_CONTEXT_CHARS: 55000,
 } as const

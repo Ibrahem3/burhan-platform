@@ -42,10 +42,14 @@ export interface NosanaConfig {
 
 export function getNosanaConfig(): NosanaConfig {
   const config = useRuntimeConfig()
+  const apiEndpoint = (config.nosana?.apiEndpoint as string) || process.env.NUXT_NOSANA_API_ENDPOINT || 'https://inference.nosana.com'
+  const clusterKey = (config.nosana?.clusterKey as string) || process.env.NUXT_NOSANA_CLUSTER_KEY || ''
+  const defaultModel = (config.nosana?.defaultModel as string) || process.env.NUXT_NOSANA_DEFAULT_MODEL || 'qwen/qwen3.8-27b'
+
   return {
-    apiEndpoint: (config.nosana?.apiEndpoint as string) || '',
-    clusterKey: (config.nosana?.clusterKey as string) || '',
-    defaultModel: (config.nosana?.defaultModel as string) || '',
+    apiEndpoint,
+    clusterKey,
+    defaultModel,
   }
 }
 

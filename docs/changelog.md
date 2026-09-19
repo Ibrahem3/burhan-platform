@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-19] - AI Inference: Platform Provider Resolution & Token Calibration Fix
+
+### Changed
+- [`server/utils/nosana.ts`](../server/utils/nosana.ts):
+  - Updated `getNosanaConfig()` to provide resilient defaults (`https://inference.nosana.com` and `qwen/qwen3.8-27b`) and fallback to `process.env.NUXT_NOSANA_*` variables.
+  - Eliminated single-point failure in Cloudflare Pages where omission of non-sensitive `NUXT_NOSANA_API_ENDPOINT` or `NUXT_NOSANA_DEFAULT_MODEL` falsely evaluated `!endpoint` as unconfigured.
+- [`server/utils/editorial.ts`](../server/utils/editorial.ts):
+  - Calibrated `EDITORIAL_LIMITS.MAX_OUTPUT_TOKENS` and `MAX_BILINGUAL_OUTPUT_TOKENS` from 4096 to 6144 tokens.
+  - Accommodates both Qwen vLLM deep reasoning token consumption (~1,500-2,500 tokens) and complete rich HTML editorial output (~1,500-2,500 tokens) without running into `finish_reason: length` truncation.
+
+### Rationale
+- Production returned `AI inference is not configured (no active BYOK or platform provider)` because the provider check `if (!endpoint || !apiKey)` failed when only `NUXT_NOSANA_CLUSTER_KEY` was bound. Local tests confirmed that reasoning models deduct `<think>` tokens from `max_tokens`; increasing budget to 6144 ensures completion with `finish_reason: 'stop'`.
+
+
 ## [2026-09-19] - Copy & Branding: Sovereign Infrastructure Hero & Footer Alignment
 
 ### Changed
