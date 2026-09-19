@@ -10,6 +10,35 @@ const { currentOrg } = useTenantBootstrap()
 const { plan, isReadOnly, isExpired } = useSubscription()
 const isPinned = useCookie('sidebar-pinned', { default: () => false })
 const mobileNavOpen = ref(false)
+const isHovered = ref(false)
+let hoverLeaveTimer: ReturnType<typeof setTimeout> | null = null
+
+const isExpanded = computed(() => isPinned.value || isHovered.value)
+
+function onMouseEnter() {
+  if (hoverLeaveTimer) {
+    clearTimeout(hoverLeaveTimer)
+    hoverLeaveTimer = null
+  }
+  isHovered.value = true
+}
+
+function onMouseLeave() {
+  if (hoverLeaveTimer) {
+    clearTimeout(hoverLeaveTimer)
+  }
+  // 250ms safe grace window to prevent flicker when crossing borders
+  hoverLeaveTimer = setTimeout(() => {
+    isHovered.value = false
+    hoverLeaveTimer = null
+  }, 250)
+}
+
+onUnmounted(() => {
+  if (hoverLeaveTimer) {
+    clearTimeout(hoverLeaveTimer)
+  }
+})
 
 const { visible: fabVisible } = useScrollAware()
 
@@ -72,8 +101,10 @@ function closeMobileNav() {
   >
     <div
       class="floating-sidebar border border-white/5 shadow-2xl"
-      :class="{ pinned: isPinned }"
+      :class="{ expanded: isExpanded, pinned: isPinned }"
       :style="{ backgroundColor: 'rgba(10, 10, 10, 0.96)' }"
+      @mouseenter="onMouseEnter"
+      @mouseleave="onMouseLeave"
       @dblclick="togglePin"
     >
       <!-- Collapsed bubble -->
@@ -434,13 +465,20 @@ function closeMobileNav() {
   width: 60px;
   height: 60px;
   border-radius: 9999px;
-  transition: width 0.35s ease, height 0.35s ease, border-radius 0.35s ease;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
+  transform-origin: bottom right;
 }
 
-.floating-sidebar:hover,
+[dir="ltr"] .floating-sidebar {
+  transform-origin: bottom left;
+}
+
+.floating-sidebar.expanded,
 .floating-sidebar.pinned {
   width: 320px;
   height: calc(100vh - 2rem);
@@ -454,11 +492,11 @@ function closeMobileNav() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
   z-index: 1;
 }
 
-.floating-sidebar:hover .bubble-icon,
+.floating-sidebar.expanded .bubble-icon,
 .floating-sidebar.pinned .bubble-icon {
   opacity: 0;
   pointer-events: none;
@@ -469,12 +507,14 @@ function closeMobileNav() {
   display: flex;
   flex-direction: column;
   opacity: 0;
-  transition: opacity 0.25s ease 0.1s;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
 }
 
-.floating-sidebar:hover .expanded-content,
+.floating-sidebar.expanded .expanded-content,
 .floating-sidebar.pinned .expanded-content {
   opacity: 1;
+  pointer-events: auto;
 }
 
 /* Mobile overlay transitions */
