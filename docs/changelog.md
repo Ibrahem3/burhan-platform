@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-19] - Copy & Branding: Sovereign Infrastructure Hero & Footer Alignment
+
+### Changed
+- [`app/i18n/ar.json`](../app/i18n/ar.json) & [`app/i18n/en.json`](../app/i18n/en.json):
+  - Added `hero.badge`, `hero.title`, and `hero.description` keys articulating Burhan's sovereign multi-tenant workspace, PostgreSQL RLS isolation, and autonomous DeAI integration.
+  - Added `footer.brand_tagline` and `footer.description` keys highlighting sovereign self-hosting for academic institutes and research centers.
+- [`app/pages/index.vue`](../app/pages/index.vue):
+  - Updated Hero announcement badge to consume `$t('hero.badge')`.
+  - Updated Hero subtitle and description to consume `$t('hero.title')` and `$t('hero.description')`.
+  - Updated landing footer brand description and badge to consume `$t('footer.description')` and `$t('footer.brand_tagline')`.
+- [`app/layouts/default.vue`](../app/layouts/default.vue):
+  - Replaced legacy hardcoded multi-tenant description with dynamic `$t('footer.description')`.
+
+### Rationale
+- Aligns customer-facing landing and layout copy with the enterprise sovereign infrastructure positioning, copyleft covenants (AGPL-3.0), and decentralized multi-tenant architecture.
+
 ## [2026-09-19] - UI/UX Optimization: Seamless Language Switching on Home Page
 
 ### Changed

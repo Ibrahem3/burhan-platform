@@ -354,11 +354,7 @@ function scrollToSection(id: string) {
               <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
             <span class="text-xs text-gray-300 font-medium">
-              {{ currentLocale === 'ar' ? 'المنظومة السيادية للردود والحوارات الفكرية' : 'Sovereign Multi-Tenant Knowledge Architecture' }}
-            </span>
-            <span class="text-gray-600">•</span>
-            <span class="text-[11px] font-mono text-gold bg-gold/10 px-2 py-0.5 rounded-md border border-gold/20">
-              v2.0
+              {{ $t('hero.badge') }}
             </span>
           </div>
 
@@ -369,12 +365,12 @@ function scrollToSection(id: string) {
 
           <!-- Tagline Subtitle -->
           <p class="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-6 max-w-3xl mx-auto leading-snug">
-            {{ $t('hub.subtitle') }}
+            {{ $t('hero.title') }}
           </p>
 
           <!-- Description Text -->
           <p class="text-sm sm:text-base md:text-lg text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            {{ $t('hub.hero_description') }}
+            {{ $t('hero.description') }}
           </p>
 
           <!-- Action Buttons -->
@@ -678,12 +674,12 @@ function scrollToSection(id: string) {
             <div class="flex items-center gap-3">
               <span class="text-2xl font-black tracking-tight gradient-gold">{{ $t('brand.name') }}</span>
               <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-gold/10 text-gold border border-gold/20">
-                v2.0 Sovereign
+                {{ $t('footer.brand_tagline') }}
               </span>
             </div>
 
             <p class="text-xs text-gray-400 leading-relaxed max-w-sm">
-              {{ $t('hub.hero_description') }}
+              {{ $t('footer.description') }}
             </p>
 
             <!-- System Live Status Indicator -->

@@ -11,6 +11,11 @@
     "admin": "Admin",
     "language": "العربية"
   },
+  "hero": {
+    "badge": "Sovereign Workspace & Publishing Chassis • v2.0",
+    "title": "Censorship-Resistant Knowledge Workspace & Sovereign CMS",
+    "description": "A multi-tenant infrastructure enforcing 100% database-level isolation via PostgreSQL RLS, integrating decentralized AI inference and sovereign media delivery in a unified workspace."
+  },
   "hub": {
     "title": "Burhan",
     "subtitle": "Intellectual Refutations & Scholarly Dialogues Platform",
@@ -317,6 +322,8 @@
     "session_expired": "Session expired. Please log in again"
   },
   "footer": {
+    "brand_tagline": "v2.0 Sovereign",
+    "description": "A sovereign knowledge publishing chassis and decentralized AI workspace, engineered for 100% tenant data isolation and autonomous self-hosting.",
     "rights": "All rights reserved — Burhan Platform",
     "terms": "Terms & Conditions",
     "privacy": "Privacy Policy",

@@ -288,10 +288,7 @@ function closeMenu() {
             </div>
 
             <p class="text-xs text-gray-400 leading-relaxed max-w-sm">
-              {{ currentLocale === 'ar'
-                ? 'منظومة معرفية سيادية متكاملة، تمنح المراكز العلمية والجهات الفكرية استقلالية تامة في إدارة المحتوى، مع عزل هيكلي متعدد المستأجرين وأعلى معايير الأمان.'
-                : 'A sovereign knowledge ecosystem granting intellectual centers complete content independence with enterprise multi-tenant isolation and end-to-end security.'
-              }}
+              {{ $t('footer.description') }}
             </p>
 
             <!-- Live Status Capsule -->
