@@ -696,6 +696,7 @@ CREATE INDEX idx_threats_neutralized   ON observatory_threats (status) WHERE sta
 CREATE OR REPLACE FUNCTION auto_detect_platform()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   NEW.platform := CASE
@@ -747,6 +748,13 @@ AS $$
   );
 $$;
 
+-- Revoke public/anon execute on Observatory administrative helpers
+REVOKE EXECUTE ON FUNCTION public.is_observatory_manager() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.is_observatory_manager() TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION public.is_super_admin() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated, service_role;
+
 -- 5. ROW LEVEL SECURITY
 -- ============================================================
 
@@ -762,25 +770,19 @@ CREATE POLICY "analysts_select_own"
   USING (id = auth.uid());
 
 CREATE POLICY "analysts_select_all_manager_or_super_admin"
-  ON observatory_analysts FOR SELECT
+  ON observatory_analysts FOR SELECT TO authenticated
   USING (is_observatory_manager() OR is_super_admin());
 
 CREATE POLICY "analysts_insert_manager_only"
-  ON observatory_analysts FOR INSERT
+  ON observatory_analysts FOR INSERT TO authenticated
   WITH CHECK (is_observatory_manager() OR is_super_admin());
 
 CREATE POLICY "analysts_delete_manager_only"
-  ON observatory_analysts FOR DELETE
+  ON observatory_analysts FOR DELETE TO authenticated
   USING (is_observatory_manager() OR is_super_admin());
 
 -- 5b. observatory_threats RLS
 -- ============================================================
-
--- PUBLIC / Anon: INSERT only, no SELECT/UPDATE/DELETE
-CREATE POLICY "threats_insert_public"
-  ON observatory_threats FOR INSERT
-  TO anon, authenticated
-  WITH CHECK (true);
 
 -- Super admin: full access
 CREATE POLICY "threats_select_super_admin"
