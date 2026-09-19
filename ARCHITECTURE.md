@@ -35,6 +35,8 @@
 23. [Multi-Tenant Subscriptions & Entitlements Engine](#23-multi-tenant-subscriptions--entitlements-engine)
 24. [BYOK & Cryptographic Subsystem](#24-byok--cryptographic-subsystem)
 25. [Atomic Tenant Provisioning Engine & Auth OTP Gate](#25-atomic-tenant-provisioning-engine--auth-otp-gate)
+26. [Decoupled Editorial Generation Engine & Golden Closure Rule](#26-decoupled-editorial-generation-engine--golden-closure-rule)
+27. [Cross-Tenant Public Series Access & RTL UI Hardening](#27-cross-tenant-public-series-access--rtl-ui-hardening)
 
 ---
 
@@ -1084,6 +1086,12 @@ BYOK subsystem: `tenant_ai_credentials` encrypted vault (AES-256-GCM keys, IVs, 
 ### `00019_tenant_provisioning_engine.sql`
 Atomic tenant provisioning engine: `public.provision_tenant(p_user_id, p_org_name, p_org_slug)` RPC executing organization creation, community subscription, canonical main branch, and owner profile upgrade in a single atomic transaction with `SELECT FOR UPDATE` concurrency locks and fail-closed automatic rollbacks.
 
+### `00020_observatory_security_hardening.sql`
+Security hardening for the Digital Observatory: explicit search_path enforcement on `auto_detect_platform` trigger function, restrictive RLS review, and strict non-escalation grants.
+
+### `00021_fix_public_series_read.sql`
+Cross-tenant public access fix: dropped restrictive `series_select_public` (which targeted only `anon`), recreating it with `TO anon, authenticated USING (is_active = true)`. Allows authenticated cross-tenant visitors to browse published courses and series without violating tenant draft isolation.
+
 ---
 
 ## 18. Series / Courses Management
@@ -1384,3 +1392,33 @@ A single `SECURITY DEFINER` PostgreSQL RPC orchestrates four mandatory pillars:
 - **Four-Pillar Idempotency:** If the same user retries provisioning with their existing slug, the RPC returns the existing tenant without creating duplicates.
 - **Email Verification Gate:** Supabase Auth 6-digit email OTP (`auth.verifyOtp`) must be verified before the server invokes `provision_tenant`. Unconfirmed email attempts are rejected with HTTP 403.
 - **Post-Provisioning Routing:** Upon successful provisioning and verification, the tenant owner is immediately routed to `/dashboard`.
+
+---
+
+## 26. Decoupled Editorial Generation Engine & Golden Closure Rule
+
+The editorial workspace (`entities/new.vue` and `entities/[id].vue`) features an autonomous AI drafting and translation pipeline engineered for bilingual parity and deterministic markup safety.
+
+### 26.1 Decoupled Translation Architecture
+- **Single-Shot Removal:** Legacy single-shot bilingual generation is strictly deprecated in favor of decoupled, directional workflows (Source Tab $\rightarrow$ Destination Tab).
+- **Active Tab Authority:** Translation targeting is bound authoritatively to the currently active UI language tab (`activeTab: 'ar' | 'en'`).
+- **Translation Protection Guard:** An explicit verification modal guards against accidental source content loss when initiating translations into non-empty tabs.
+- **Independent Field Injection:** The AI stream can target single fields (Title or Description or Content) independently without overwriting the rest of the draft.
+
+### 26.2 The Golden Closure Rule (HTML Stream Safety)
+LLM token streams frequently terminate abruptly, leaving unclosed tags (`<p>`, `<strong>`, `<blockquote>`, `<ul>`). When injected into `contenteditable` or rendered dynamically, unclosed tags corrupt the DOM hierarchy.
+- **The Engine:** An automated stack-based parser inspects the buffered stream on completion.
+- **Deterministic Auto-Balance:** Unmatched opening tags are identified and closed in reverse chronological order before emitting to the reactive state.
+- **SSE Stream Reasoning Parser:** Server-sent events (`/api/ai/generate`) unpack `<think>...</think>` tokens into collapsible reasoning telemetry, streaming only finalized clean HTML to the editor buffer.
+
+---
+
+## 27. Cross-Tenant Public Series Access & RTL UI Hardening
+
+### 27.1 Cross-Tenant Series Visibility (`00021_fix_public_series_read`)
+- **Problem:** Supabase policy `series_select_public` was originally scoped `TO anon`. When an authenticated member of Tenant A browsed Tenant B's public showcase, PostgreSQL bypassed the `anon` policy and defaulted to `series_select_org`, which evaluated `organization_id IN (profiles.organization_id)`, hiding all public courses from authenticated cross-tenant visitors.
+- **Solution:** Re-scoped `series_select_public` to `TO anon, authenticated USING (is_active = true)`. Authenticated cross-tenant visitors now see published series globally, while draft series (`is_active = false`) remain strictly isolated to the owning tenant staff.
+
+### 27.2 Bi-Directional Switch Knob Stabilization (`dir="ltr"`)
+- **Root Cause:** Standard CSS transform utilities (`translate-x-6`, `translate-x-[18px]`) invert direction when placed under document-level `dir="rtl"`. As a result, switch knobs (like active/inactive toggles on series and branches) were translated out of bounds in Arabic mode.
+- **Surgical Remedy:** Enforced `dir="ltr"` and `type="button"` directly on the toggle switch wrapper element, locking the Cartesian coordinate system regardless of the parent document direction.

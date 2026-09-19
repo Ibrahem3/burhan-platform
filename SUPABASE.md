@@ -549,7 +549,7 @@ $$;
 
 | Policy | Operation | Scope |
 |---|---|---|
-| `series_select_public` | SELECT (anon) | Active series only |
+| `series_select_public` | SELECT (anon, auth) | Active series only (`is_active = true`) |
 | `series_select_org` | SELECT (auth) | Same org members + super_admin |
 | `series_insert_org` | INSERT | owner/manager (same org) + super_admin |
 | `series_update_org` | UPDATE | owner/manager (same org) + super_admin |

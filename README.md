@@ -99,8 +99,8 @@ burhan/
 │   ├── api/              # Server routes (ai, auth, org, observatory, admin)
 │   └── utils/            # nosana.ts, crypto.ts (AES-256-GCM), ssrf.ts, entitlements.ts, supabase.ts
 ├── supabase/             # Supabase database config
-│   ├── migrations/       # Chronological database patches (00001 - 00019)
-│   └── schema.sql        # Unified canonical database setup script (00001 - 00019 in one click)
+│   ├── migrations/       # Chronological database patches (00001 - 00021)
+│   └── schema.sql        # Unified canonical database setup script (00001 - 00021 in one click)
 ├── public/               # PWA icons and loaders
 ├── nuxt.config.ts        # Nuxt configuration
 ├── tailwind.config.ts    # Tailwind onyx/gold theme definition
