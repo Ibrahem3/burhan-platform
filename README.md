@@ -1,53 +1,25 @@
-# بُرهان — Burhan Platform
+# Burhan Platform — بُرهان
 
-<table align="left" style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px; max-width: 500px; background: #ffffff;">
-  <tr>
-    <td>
-      <img alt="GitHub" src="https://ph-files.imgix.net/dae462f6-9602-4dba-a3b6-4f7f89a78ab3.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=80&w=80" width="64" height="64" style="border-radius: 8px;">
-    </td>
-    <td style="padding-left: 12px; vertical-align: top;">
-      <strong style="font-size: 18px; color: #1a1a1a;">GitHub</strong><br>
-      <span style="font-size: 14px; color: #666666; line-height: 1.4;">Production-ready SaaS boilerplate to ship in hours.</span>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center" style="padding-top: 12px;">
-      <a href="https://www.producthunt.com/products/github-442?embed=true&utm_source=embed&utm_medium=post_embed" target="_blank" rel="noopener">
-        <img src="https://img.shields.io/badge/Check%20it%20out%20on-Product%20Hunt-FF6154?style=for-the-badge&logo=producthunt&logoColor=white" alt="Product Hunt">
-      </a>
-    </td>
-  </tr>
-</table>
-<br clear="left" />
+### Sovereign SaaS Chassis & Decentralized AI Publishing Workspace
 
-<img width="1255" height="868" alt="Screenshot_٢٠٢٦٠٩١٨_٢٣٣٤٤٩" src="https://github.com/user-attachments/assets/c2434905-ab47-44d1-8434-138356694401" />
+[![Tech Stack](https://img.shields.io/badge/Stack-Nuxt%204%20%7C%20Supabase%20%7C%20Tailwind-0ea5e9.svg)](https://nuxt.com/)
+[![Database Isolation](https://img.shields.io/badge/Security-100%25%20PostgreSQL%20RLS-success.svg)](https://www.postgresql.org/)
+[![Compute](https://img.shields.io/badge/DeAI-Nosana%20Inference%20Cluster-emerald.svg)](https://nosana.io/)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-
-![Sovereignty](https://img.shields.io/badge/Sovereignty-Ethical_Asset-blueviolet?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge)
-![License](https://img.shields.io/badge/License-Ethical_Islamic_License-gold?style=for-the-badge)
-![Stack](https://img.shields.io/badge/Stack-Nuxt_4_%2B_Supabase_%2B_Tailwind-black?style=for-the-badge&logo=nuxtdotjs)
+> **Strategic Architecture: A Sovereign Technical Waqf (وقف تقني)**  
+> Burhan is architected and dedicated as an **Ethical Technical Asset (Technical Waqf)**—a production-grade, source-available chassis engineered to guarantee data sovereignty, resist digital deplatforming, and provide an immutable foundation for independent knowledge systems.  
+>  
+> Built for zero vendor lock-in, Burhan empowers developers, independent researchers, and scholarly institutions to deploy fully self-hosted, tenant-isolated knowledge hubs in minutes.
 
 ---
 
-> [!IMPORTANT]
-> ### 🛡️ Strategic & Ethical Architecture: A Sovereign Technical Waqf (وقف تقني)
-> Burhan is engineered and dedicated as an **Ethical Technical Asset (وقف تقني)**—a production-grade, source-available platform built to advance digital sovereignty, resist centralized data monopolies, and plant enduring seeds of light across the open web (نشر بذور النور في الأرض).
-> 
-> By exposing this sovereign architecture, the objective is to empower independent thinkers, developers, and scholarly organizations with battle-tested infrastructure that eliminates months of development. Burhan is built for autonomous self-hosting, community-driven enhancements, and total intellectual resilience.
-> 
-> ⚡ **Current Phase — Decentralized AI Architecture:**
-> We are actively extending Burhan's sovereign chassis to integrate decentralized, permissionless GPU inference. By shifting intelligence to open compute networks, Burhan eliminates reliance on centralized, surveillance-driven AI gatekeepers, bringing censorship-resistant, private writing pipelines directly to content creators.
-
----
-
-### 1. The Manifesto: Tech Sovereignty in the Age of Censorship
+## 1. The Manifesto: Tech Sovereignty in the Age of Censorship
 
 In an era of centralized digital monopolies, arbitrary deplatforming, and opaque algorithmic filtering, independent thinkers and scholarly institutions face a systemic threat: **Digital Censorship (الاغتيال الرقمي)**. When platforms gatekeep reach and purge archives at will, depending on proprietary, centralized infrastructure is an existential risk.
 
-Burhan is architected as an **Ethical & Sovereign Technical Asset (وقف تقني)**. It serves as an uncompromising, decentralized, and self-hosted alternative for media distribution, intellectual defense (الثغور الفكرية), and rigorous scholarly discourse. 
+Burhan is architected as an Ethical & Sovereign Technical Asset (وقف تقني). It serves as an uncompromising, decentralized, and self-hosted alternative for media distribution, intellectual preservation, and rigorous scholarly discourse. By guaranteeing organizations and creators absolute sovereign ownership over their databases, content delivery networks, and AI inference pipelines, Burhan ensures that truth remains uncensored, preserved, and universally accessible.
 
-By guaranteeing organizations and creators absolute sovereign ownership over their databases, content delivery networks, and AI inference pipelines, Burhan ensures that truth remains uncensored, preserved, and universally accessible.
 ---
 
 ## 2. Core Architectural Features
@@ -56,168 +28,164 @@ Burhan is built from the ground up for high performance, multi-tenant isolation,
 
 ### 2.1 Multi-Tenant Database Isolation
 Burhan employs a robust multi-tenant model where multiple organizations share a single database, yet remain completely isolated:
-*   **Database-level Isolation:** 100% data separation is enforced via PostgreSQL **Row-Level Security (RLS)** policies on all core tables.
-*   **4-Tier RBAC Hierarchy:** System access is governed by roles:
-    *   `super_admin`: Global bypass of RLS, manages the platform hub and cross-tenant services.
-    *   `owner`: Full administrative privileges over a specific tenant organization (billing, deletion, content, managers).
-    *   `manager`: Content creation and branch administration within the tenant organization.
-    *   `member`: General authenticated users with read-only access to free content.
+- **Database-Level Isolation:** 100% data separation is enforced via native PostgreSQL Row-Level Security (RLS) policies on all core tables.
+- **4-Tier RBAC Hierarchy:** System access is governed by granular roles:
+  - `super_admin`: Global administrative scope, platform hub, and cross-tenant operations.
+  - `owner`: Full administrative privileges over a specific tenant (billing, deletion, content, team).
+  - `manager`: Content creation and branch administration within the tenant organization.
+  - `member`: Authenticated users with read-only access to free content.
 
-### 2.2 Digital Intellectual Observatory (المرصد الفكري)
-A global, cross-tenant monitoring command center designed to track and refute digital misconceptions and threats:
-*   **Public Report Intake:** A glowing, high-impact public form protected by **Cloudflare Turnstile** spam prevention, allowing users to report threat URLs with danger levels and spread matrices.
-*   **Analyst Control Panel:** Observatory managers and analysts can triage incoming reports, assign scholars, and link scientific refutations (counter-measures). Neutralized threats are automatically published to the public defense feed.
+### 2.2 Decentralized Fact-Checking & Knowledge Observatory (المرصد المعرفي)
+A global, cross-tenant monitoring command center engineered to document and counter digital disinformation, platform censorship, and coordinated smear campaigns:
+- **Public Signal Ingestion:** High-impact reporting pipeline protected by Cloudflare Turnstile spam prevention, allowing users to submit threat vectors, manipulation sources, and URL archives.
+- **Analyst Triage & Counter-Manuscripts:** Sovereign research teams triage reports, dispatch verified rebuttals, and link immutable scholarly evidence to the public defense feed.
 
 ### 2.3 Omni-Channel Content Engine
 A unified CMS supporting multiple content categories and formats with native bilingual (Arabic/English) layout support:
-*   **Articles:** Rich text writing via TiPTap v3 with native logical CSS properties supporting seamless RTL/LTR layout transitions.
-*   **Video Streaming:** Resilient media player supporting YouTube embeddings alongside fallback stream sources (like Cloudflare Stream) to bypass censorship.
-*   **Audio/Podcasts:** Complete support for podcasts and lectures, allowing self-hosted MP3 uploads or external stream links.
+- **Rich-Text Publishing:** Native logical CSS properties via TiPTap v3 supporting seamless RTL/LTR layout transitions.
+- **Resilient Video Streaming:** Media player supporting video embeddings alongside fallback stream sources (like Cloudflare Stream) to bypass platform takedowns.
+- **Audio & Podcasts:** Native support for lectures and long-form podcasts via self-hosted audio or external stream links.
 
 ### 2.4 Premium Gate & Privacy-First Analytics
-*   **Premium Gate:** Restricts exclusive courses or refutations behind a subscription barrier, bypassed automatically for tenant staff.
-*   **Umami Integration:** Built-in tracking using self-hosted, privacy-first Umami Analytics to ensure analytics data is not harvested by advertising networks.
+- **Subscription Gate:** Restricts exclusive research or specialized publications behind configurable subscription barriers.
+- **Zero-Surveillance Analytics:** Built-in tracking using self-hosted, privacy-first Umami Analytics ensuring behavioral data is not harvested by ad networks.
 
 ### 2.5 Decentralized AI Inference Engine (DeAI M1)
 A sovereign, censorship-resistant AI writing assistant built on decentralized GPU compute:
-*   **Decentralized Cluster Inference:** Streamed OpenAI-compatible inference orchestrated via the **Nosana** compute cluster with bounded timeouts (~120s) and keep-alive heartbeats.
-*   **Transactional Quota Ledger:** Monthly token and request allowances (`ai_usage`) reserved at job creation, debited on completion, and safely released on failure or cancellation.
-*   **Fail-Safe Recovery Watchdog:** Lazy stale-job reaper and recovery sweep preventing orphan jobs and locked quotas during client or worker dropouts.
-*   **Dashboard Assistant Modal:** Native drafting assistant in the article editor supporting streaming preview and insertion modes (insert, append, replace).
+- **Decentralized Cluster Inference:** Streamed OpenAI-compatible inference orchestrated via the Nosana compute cluster with bounded timeouts (~120s) and keep-alive heartbeats.
+- **Transactional Quota Ledger:** Monthly token and request allowances (`ai_usage`) reserved at job creation, debited on completion, and safely released on failure or cancellation.
+- **Fail-Safe Recovery Watchdog:** Lazy stale-job reaper and recovery sweep preventing orphan jobs and locked quotas during client or worker dropouts.
+- **Dashboard Assistant Modal:** Native drafting assistant in the article editor supporting streaming preview and insertion modes (`insert`, `append`, `replace`).
 
 ### 2.6 Atomic Tenant Provisioning & Email OTP Gate
 Bulletproof tenant onboarding ensuring zero orphaned states:
-*   **Atomic Provisioning Engine (`provision_tenant`):** Single-transaction RPC orchestrating organization creation, perpetual community plan subscription, canonical main branch, and profile ownership upgrade.
-*   **3-Step Signup State Machine:** Enforces email verification via 6-digit OTP (`auth.verifyOtp`) prior to provisioning, with 60-second resend cooldowns and fail-closed rollbacks.
-*   **Resilient Localization:** Built-in tolerance in frontend helpers handling both structured bilingual JSONB objects and plain string tenant names without runtime crashes.
+- **Atomic Provisioning Engine (`provision_tenant`):** Single-transaction RPC orchestrating organization creation, perpetual community plan subscription, canonical main branch, and profile ownership upgrade.
+- **3-Step Signup State Machine:** Enforces email verification via 6-digit OTP (`auth.verifyOtp`) prior to provisioning, with 60-second resend cooldowns and fail-closed rollbacks.
+- **Resilient Localization:** Built-in tolerance in frontend helpers handling both structured bilingual JSONB objects and plain string tenant names without runtime crashes.
 
 ### 2.7 Multi-Tenant Subscriptions & Entitlements
-*   **Tier Hierarchy:** Out-of-the-box perpetual Community tier (`branches = -1` unlimited) and Pro tier with customizable feature flags (`custom_domain`, `advanced_analytics`, `ai_generate`).
-*   **Database-Level Enforcement:** PostgreSQL triggers (`check_branch_limit`) enforce plan quotas directly on INSERT, preventing API bypasses.
-*   **Graceful Degradation:** Expired or cancelled tenants transition smoothly into read-only mode, retaining public viewability while guarding content mutations.
+- **Tier Hierarchy:** Out-of-the-box perpetual Community tier and Pro tier with customizable feature flags (`custom_domain`, `advanced_analytics`, `ai_generate`).
+- **Database-Level Enforcement:** PostgreSQL triggers (`check_branch_limit`) enforce plan quotas directly on `INSERT`, preventing API-level bypasses.
+- **Graceful Degradation:** Expired or cancelled tenants transition smoothly into read-only mode, retaining public viewability while guarding content mutations.
 
 ### 2.8 BYOK (Bring Your Own Key) Cryptographic Subsystem
 Empowers enterprise tenants to provide their own LLM API credentials with maximum security:
-*   **Authenticated Encryption:** Keys are encrypted using **AES-256-GCM** with unique per-record IVs and authenticated tags, isolated from client-side exposure.
-*   **SSRF Protection Layer:** Strict runtime inspection blocks private IPv4/IPv6 ranges, loopbacks, cloud metadata endpoints (169.254.169.254), and prevents DNS rebinding attacks.
+- **Authenticated Encryption:** Keys are encrypted using AES-256-GCM with unique per-record IVs and authenticated tags, isolated from client-side exposure.
+- **SSRF Protection Layer:** Strict runtime inspection blocks private IPv4/IPv6 ranges, loopbacks, cloud metadata endpoints (`169.254.169.254`), and prevents DNS rebinding attacks.
 
 ---
 
 ## 3. Project Structure
 
-```
+```text
 burhan/
-├── app/                          # Nuxt 4 Frontend & App Shell
-│   ├── app.vue                   # Root component & transitions
-│   ├── assets/css/main.css       # Onyx/Gold global design system styles
+├── app/                  # Nuxt 4 Frontend & App Shell
+│   ├── app.vue           # Root component & transitions
+│   ├── assets/css/main.css # Onyx/Gold global design system styles
 │   ├── components/
-│   │   ├── dashboard/            # RichTextEditor, EntityAiAssistantModal, FloatingSidebar
-│   │   ├── hub/                  # EntityCard, CategorySection
-│   │   ├── premium/              # PremiumGate
-│   │   ├── tenant/               # OrgHeader, BranchNav, VideoPlayer
-│   │   └── ui/                   # Button, Badge, GlassCard, AppSelect, Avatar
-│   ├── composables/              # useAiGenerate, useSubscription, useTenantBootstrap, useUser, useOrg
-│   ├── i18n/                     # Bilingual UI translations (ar.json, en.json)
-│   ├── layouts/                  # default.vue (public), dashboard.vue (admin)
-│   ├── middleware/               # dashboard-auth.ts, org.global.ts, observatory-auth.ts
-│   ├── pages/                    # File-system routing (Hub, Tenant, Observatory, Dashboard, Signup OTP)
-│   ├── types/                    # Database & Subscription TypeScript definitions
-│   └── utils/                    # localized.ts (crash-resilient), image.ts
-├── server/                       # Nitro Server Engine (Cloudflare Pages compatible)
-│   ├── api/                      # Server routes (ai, auth, org, observatory, admin)
-│   └── utils/                    # nosana.ts, crypto.ts (AES-256-GCM), ssrf.ts, entitlements.ts, supabase.ts
-├── supabase/                     # Supabase database config
-│   ├── migrations/               # Chronological database patches (00001 - 00019)
-│   └── schema.sql                # Unified canonical database setup script (00001 - 00019 in one click)
-├── public/                       # PWA icons and loaders
-├── nuxt.config.ts                # Nuxt configuration
-├── tailwind.config.ts            # Tailwind onyx/gold theme definition
-└── package.json                  # Dependencies & scripts
+│   │   ├── dashboard/    # RichTextEditor, EntityAiAssistantModal, FloatingSidebar
+│   │   ├── hub/          # EntityCard, CategorySection
+│   │   ├── premium/      # PremiumGate
+│   │   ├── tenant/       # OrgHeader, BranchNav, VideoPlayer
+│   │   └── ui/           # Button, Badge, GlassCard, AppSelect, Avatar
+│   ├── composables/      # useAiGenerate, useSubscription, useTenantBootstrap, useUser, useOrg
+│   ├── i18n/             # Bilingual UI translations (ar.json, en.json)
+│   ├── layouts/          # default.vue (public), dashboard.vue (admin)
+│   ├── middleware/       # dashboard-auth.ts, org.global.ts, observatory-auth.ts
+│   ├── pages/            # File-system routing (Hub, Tenant, Observatory, Dashboard, Signup OTP)
+│   ├── types/            # Database & Subscription TypeScript definitions
+│   └── utils/            # localized.ts (crash-resilient), image.ts
+├── server/               # Nitro Server Engine (Cloudflare Pages compatible)
+│   ├── api/              # Server routes (ai, auth, org, observatory, admin)
+│   └── utils/            # nosana.ts, crypto.ts (AES-256-GCM), ssrf.ts, entitlements.ts, supabase.ts
+├── supabase/             # Supabase database config
+│   ├── migrations/       # Chronological database patches (00001 - 00019)
+│   └── schema.sql        # Unified canonical database setup script (00001 - 00019 in one click)
+├── public/               # PWA icons and loaders
+├── nuxt.config.ts        # Nuxt configuration
+├── tailwind.config.ts    # Tailwind onyx/gold theme definition
+└── package.json          # Dependencies & scripts
 ```
 
 ---
 
-## 4. Ethical Use License & Policy (سياسة الاستخدام الأخلاقي)
+## 4. Licensing & Sovereign Open-Source Covenant
 
-Burhan is open-source but carries strict ethical constraints. The source code and database schemas are provided as a sovereign technical asset (**وقف تقني**).
+Burhan is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
-By cloning, deploying, or contributing to this project, you agree to the following restrictions:
-*   You **shall not** deploy this software on platforms or for organizations that promote atheism or actively undermine Islamic values.
-*   You **shall not** use this software to serve hostile entities, promote sectarian hatred, or distribute unethical/immoral media.
-*   The creators and contributors of Burhan reserve the right to revoke permission to use this codebase if these terms are violated.
+### Why AGPL-3.0?
+- **Anti-SaaS Loophole:** We reject corporate freeloading. Any entity or organization that hosts, modifies, or runs Burhan as a network service (SaaS) is legally required to make their entire source code and modifications publicly available under the exact same AGPL-3.0 license.
+- **Preservation of the Digital Commons:** This architecture is a sovereign technical public good. It cannot be privatized, closed-sourced, or converted into a proprietary cloud monopoly.
+- **Sovereign Reciprocity:** If you build on Burhan, your improvements belong to the community and your end-users.
+
+For full legal terms, refer to the [LICENSE](./LICENSE) file.
 
 ---
 
 ## 5. Getting Started
 
 ### 5.1 Prerequisites
-*   Node.js 20+
-*   A Supabase Project (URL + Anon Key + Service Role Key)
-*   Cloudflare Turnstile Account (Optional, for Observatory spam protection)
-*   Nosana Inference Cluster Credentials (Optional, for Decentralized AI)
+- Node.js 20+
+- A Supabase Project (URL, Anon Key, and Service Role Key)
+- Nosana Inference Cluster Credentials (for Decentralized AI features)
+- Cloudflare Turnstile Account (Optional, for Observatory form protection)
 
 ### 5.2 Local Installation
 
-1.  **Clone the repository and install dependencies:**
-    ```bash
-    git clone https://github.com/Ibrahem3/burhan-platform.git
-    cd burhan-platform
-    npm install
-    ```
+1. **Clone the repository and install dependencies:**
+   ```bash
+   git clone https://github.com/Ibrahem3/burhan-platform.git
+   cd burhan-platform
+   npm install
+   ```
 
-2.  **Configure environment variables:**
-    ```bash
-    cp .env.example .env
-    ```
-    Open `.env` and fill in your project credentials:
-    ```bash
-    # Supabase Connection Settings
-    SUPABASE_URL=https://your-project.supabase.co
-    SUPABASE_KEY=your-anon-public-key
-    SUPABASE_SECRET_KEY=your-service-role-key
+2. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
 
-    # Platform SEO Settings
-    NUXT_PUBLIC_SITE_URL=http://localhost:3000
-    NUXT_PUBLIC_SITE_NAME=Burhan
+   Populate your `.env` with the necessary keys:
+   ```env
+   # Supabase Connection Settings
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_KEY=your-anon-public-key
+   SUPABASE_SECRET_KEY=your-service-role-key
 
-    # Cloudflare Turnstile Spam Protection (Optional)
-    NUXT_PUBLIC_TURNSTILE_SITE_KEY=your-site-key
-    NUXT_TURNSTILE_SECRET_KEY=your-secret-key
+   # Platform Settings
+   NUXT_PUBLIC_SITE_URL=http://localhost:3000
+   NUXT_PUBLIC_SITE_NAME=Burhan
 
-    # Decentralized AI Inference (Server-only Nosana cluster)
-    NUXT_NOSANA_API_ENDPOINT=https://api.nosana.io/v1
-    NUXT_NOSANA_CLUSTER_KEY=your-nosana-cluster-key
-    NUXT_NOSANA_DEFAULT_MODEL=deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+   # Cloudflare Turnstile (Optional)
+   NUXT_PUBLIC_TURNSTILE_SITE_KEY=your-site-key
+   NUXT_TURNSTILE_SECRET_KEY=your-secret-key
 
-    # BYOK Master Encryption Key (64-character hex string for AES-256-GCM)
-    BYOK_ENCRYPTION_KEY=your-64-char-hex-encryption-key
-    ```
+   # Decentralized AI Inference (Nosana Cluster)
+   NUXT_NOSANA_API_ENDPOINT=https://api.nosana.io/v1
+   NUXT_NOSANA_CLUSTER_KEY=your-nosana-cluster-key
+   NUXT_NOSANA_DEFAULT_MODEL=deepseek-ai/DeepSeek-R1-Distill-Llama-70B
 
-3.  **Setup Database Schemas:**
-    *   Open your project in the **Supabase Dashboard**.
-    *   Go to the **SQL Editor** tab.
-    *   Open [`supabase/schema.sql`](./supabase/schema.sql) in your code editor, copy its entire contents, paste it into the Supabase SQL Editor, and click **Run**. This builds all tables, enums, triggers, security functions, RLS policies, and storage buckets in one click.
+   # BYOK Master Encryption Key (64-character hex string for AES-256-GCM)
+   BYOK_ENCRYPTION_KEY=your-64-char-hex-encryption-key
+   ```
 
-4.  **Run the local server:**
-    ```bash
-    npm run dev
-    ```
-    Your site will be available at `http://localhost:3000`.
+3. **Setup Database Schemas:**
+   - Open your project in the Supabase Dashboard.
+   - Navigate to the **SQL Editor**.
+   - Copy the contents of `supabase/schema.sql` and run the script. This provisions all tables, enums, triggers, security policies (RLS), and functions in a single transaction.
+
+4. **Start Development Server:**
+   ```bash
+   npm run dev
+   ```
+   Access the workspace at `http://localhost:3000`.
 
 ---
 
-## 6. Contribution Guide: Join the Intellectual Defense
+## 6. Contribution & Community
 
-The core backend architecture, multi-tenant security layers (RLS), API routing, database schema, and translation engines are fully optimized, solid, and **production-ready**.
+The core backend architecture, multi-tenant security layers (RLS), API routing, and translation engines are fully optimized and production-ready.
 
-However, the Frontend UI is currently in a functional state. We explicitly invite the open-source community to **fork, contribute, and enhance the UI/UX**.
+We actively welcome contributions to expand the front-end design system, add new decentralized compute adapters, and enhance analytics modules.
 
-### How to Contribute:
-1.  Fork the repository.
-2.  Create a feature branch (`git checkout -b feature/ui-enhancement`).
-3.  Polish the UI components under [`app/components/`](./app/components) or pages under [`app/pages/`](./app/pages).
-4.  Submit a Pull Request with a clear explanation of your visual improvements.
-
-Let's build a sovereign and resilient infrastructure together!
-
-💬 **Join our Discord Community:** [Join Ainux on Discord](https://discord.gg/mD9eQ7TX8S)
+- Found a bug or have a suggestion? Open an issue or submit a Pull Request.
+- Join the community: Connect with the ecosystem on [Ainux Discord](https://discord.gg/ainux).

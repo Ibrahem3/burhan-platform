@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-19] - UI Fix: Desktop FloatingSidebar Smooth Hover & Jitter Elimination
+
+### Changed
+- [`app/components/dashboard/FloatingSidebar.vue`](../app/components/dashboard/FloatingSidebar.vue):
+  - Replaced pure CSS `:hover` hitbox oscillation with state-driven `isHovered` and safe `mouseenter`/`mouseleave` debounce timer (250ms buffer).
+  - Pinned transform origins (`bottom right` for RTL, `bottom left` for LTR) to eliminate hit-testing boundary jumps.
+  - Upgraded transition curves to high-performance fluid `cubic-bezier(0.16, 1, 0.3, 1)` preventing jitter and sluggish open/close.
+
+### Rationale
+- Fixes desktop UI annoyance where cursor crossing the spherical bubble boundary triggered rapid expand/collapse oscillation (hover jitter).
+
+## [2026-09-19] - Project Licensing: GNU Affero General Public License v3.0 (AGPL-3.0)
+
+### Changed
+- [`LICENSE`](../LICENSE):
+  - Provisioned official GNU Affero General Public License v3.0 text with Copyright 2026 Burhan Platform Contributors.
+- [`README.md`](../README.md):
+  - Updated license badge to official AGPL-3.0 shield.
+  - Formally declared AGPL-3.0 terms in Section 4 with rationale: Anti-SaaS loophole closure, preservation of digital commons, and sovereign reciprocity.
+
+### Rationale
+- Enforces copyleft protection against proprietary cloud/SaaS freeloading, guaranteeing that any entity hosting or modifying Burhan as a network service must reciprocate by sharing source code under the same sovereign terms.
+
 ## [2026-09-19] - Editorial AI UI: Remove Legacy Single-Shot Bilingual Toggle & Clean Modals
 
 ### Changed
