@@ -2,6 +2,179 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-19] - Editorial AI UI: Remove Legacy Single-Shot Bilingual Toggle & Clean Modals
+
+### Changed
+- [`app/components/dashboard/EntityAiAssistantModal.vue`](../app/components/dashboard/EntityAiAssistantModal.vue):
+  - Removed obsolete "🌐 توليد ثنائي (عربي + إنجليزي)" toggle and tabs.
+  - Aligned the UI with the decoupled architecture: primary generation targets the active editor language, while independent direct translation handles cross-language transformation.
+  - Cleaned up unused legacy `@apply-both` event and dual-column preview code.
+- [`app/pages/dashboard/entities/[id].vue`](../app/pages/dashboard/entities/[id].vue) & [`app/pages/dashboard/entities/new.vue`](../app/pages/dashboard/entities/new.vue):
+  - Removed unused `applyBilingualContent` handler and `@apply-both` listeners.
+
+### Rationale
+- Prevents user confusion by removing legacy single-shot completion controls that previously led to model token starvation, enforcing the reliable two-stage editorial workflow.
+
+## [2026-09-19] - Editorial AI: Principle 8 (Structural Completeness & Bounded Scope / Golden Closure Rule)
+
+### Changed
+- [`server/utils/editorial.ts`](../server/utils/editorial.ts):
+  - Injected `Principle 8: Structural Completeness & Bounded Scope (The Golden Closure Rule)` into `BURHAN_EDITORIAL_SYSTEM_PROMPT`.
+  - Mandated internal planning of document scope and length within available generation capacity.
+  - Strictly forbade abrupt cut-offs, disproportionate section weighting, and unclosed HTML elements or incomplete thoughts.
+- [`tests/editorial.test.mjs`](../tests/editorial.test.mjs):
+  - Verified full test suite passes (30/30 tests pass).
+
+### Rationale
+- Guides reasoning models (e.g. Qwen 2.5/3) to naturally pace and complete long-form articles within their output budget without cutting off prematurely or exhausting capacity mid-section.
+
+## [2026-09-19] - Editorial AI Fix: Target Language Destination Authority & Source Preservation
+
+### Changed
+- [`app/components/dashboard/EntityAiAssistantModal.vue`](../app/components/dashboard/EntityAiAssistantModal.vue):
+  - Tracked `activeTargetLang` state during translation and generation operations.
+  - Emitted `targetLang` with `@apply` event (`emit('apply', { content, mode, targetLang })`).
+- [`app/pages/dashboard/entities/[id].vue`](../app/pages/dashboard/entities/[id].vue) & [`app/pages/dashboard/entities/new.vue`](../app/pages/dashboard/entities/new.vue):
+  - Made `targetLang` the absolute source of truth for write destination in `applyAiContent`.
+  - Disconnected `currentLang` from determining the storage target.
+  - Translation from AR→EN writes strictly to `form.content_en` and leaves `form.content_ar` 100% untouched.
+  - Translation from EN→AR writes strictly to `form.content_ar` and leaves `form.content_en` 100% untouched.
+  - Switched the active editor tab view (`currentLang.value = destinationLang`) so the user immediately inspects the newly written translation.
+- [`tests/editorial.test.mjs`](../tests/editorial.test.mjs):
+  - Added Group 7 regression tests asserting `targetLang` authority, source document zero-mutation invariant, and `currentLang` isolation (30/30 pass).
+
+### Rationale
+- Fixes critical UX flaw where translating from Arabic to English while on the Arabic editor tab caused the translated English output to overwrite the Arabic source document instead of saving into the English editor field.
+
+
+## [2026-09-19] - Editorial AI Phase 1: Decoupled Multi-Stage Backend & Strict Output Validation
+
+### Changed
+- [`server/utils/editorial.ts`](../server/utils/editorial.ts):
+  - **Decoupled Operations Architecture:** Eliminated single-shot bilingual generation (`generationMode: both` in one completion). Replaced with two discrete operations: `Operation A: Primary Editorial Generation` and `Operation B: High-Fidelity Translation`.
+  - **Strict Translation Contract:** Introduced `BURHAN_TRANSLATION_SYSTEM_PROMPT` ensuring exact source-faithful translation without new ideas, summaries, commentary, deletion, or delimiter leaks.
+  - **Rigid Output Validation:** Added `validateEditorialOutput(raw, options)` enforcing rejection of empty output, short responses (<20 chars), raw delimiter leaks, conversational preambles/refusals, and truncated outputs on `finish_reason: "length"`.
+  - **Provisional Token Budget:** Set `MAX_OUTPUT_TOKENS: 4096` based on empirical Nosana Qwen-3 vLLM profile (internal reasoning consumes ~1,500-2,500 tokens, content consumes ~1,000-1,500 tokens).
+- [`server/utils/nosana.ts`](../server/utils/nosana.ts):
+  - **Reasoning-Resilient Heartbeat:** Updated SSE streaming loop so liveness heartbeats (`heartbeat_ai_job`) fire every 3s continuously during the pure `delta.reasoning` phase, preventing database watchdog reapers from falsely marking jobs stale while the model thinks.
+  - **Full Provider Chunk Parser:** Extended `parseSseEvent` to extract `delta.content`, `delta.reasoning`, `finish_reason`, `usage.total_tokens`, `usage.prompt_tokens`, and `usage.completion_tokens`.
+  - **Server-Side Validation Gate:** Validates raw output with `validateEditorialOutput` before transitioning jobs to terminal state. Fails gracefully with `fail_ai_job` if validation fails, preventing false `completed` jobs with empty or truncated content.
+  - **Observability Logging:** Added sanitized, structured operational logging (model, operation, finishReason, promptTokens, completionTokens, totalTokens, outputLength) without leaking secrets or sensitive text.
+- [`server/api/ai/generate.post.ts`](../server/api/ai/generate.post.ts):
+  - Extracted `operation` parameter (`generation` vs `translation`).
+  - Passed operation to `runInference`. Legacy `generationMode: 'both'` requests gracefully map to single-stage primary document generation.
+- [`tests/editorial.test.mjs`](../tests/editorial.test.mjs):
+  - Updated and expanded to 27 unit tests verifying decoupled prompts, translation persona, output validator rules, parser behavior, and delimiter-free generation (27/27 pass).
+- [`tests/nosana-parser.test.mjs`](../tests/nosana-parser.test.mjs):
+  - Updated to verify reasoning-only chunks are captured without leaking into content (7/7 pass).
+
+### Rationale
+- Forensic analysis proved that single-shot bilingual generation causes fatal token exhaustion due to vLLM Qwen internal reasoning tokens consuming the completion budget. Decoupling primary generation and translation into discrete, validated stages eliminates truncation, guarantees structural fidelity, and ensures quota accounting matches delivered value.
+
+
+
+## [2026-09-19] - Bilingual Editorial AI Generation & Direct Translation Pipeline
+
+### Changed
+- [`server/utils/editorial.ts`](../server/utils/editorial.ts):
+  - Added `GenerationMode = 'current' | 'both'`.
+  - Introduced `BILINGUAL_DELIMITERS` contract (`=== BURHAN_BILINGUAL_ARABIC ===`, `=== BURHAN_BILINGUAL_ENGLISH ===`, `=== BURHAN_BILINGUAL_END ===`) enforcing dual-version output generation in a single inference call.
+  - Implemented `parseBilingualOutput(raw)` extracting clean, independent semantic HTML fragments for both languages with automatic markdown code-fence sanitization.
+  - Defined `MAX_BILINGUAL_OUTPUT_TOKENS: 3500` to prevent truncation during dual output generation.
+- [`server/utils/nosana.ts`](../server/utils/nosana.ts):
+  - Extended `RunInferenceInput` to accept `generationMode`.
+  - Dynamically configured `max_tokens` (3,500 for `both`, 2,048 for `current`) in Nosana `/v1/chat/completions` payload.
+- [`server/api/ai/generate.post.ts`](../server/api/ai/generate.post.ts):
+  - Extracted `generationMode` from request body.
+  - Set `p_language: isBilingual ? 'both' : resolvedTargetLang` and allocated `p_tokens_estimated: isBilingual ? 1000 : 500` to guarantee atomicity and prevent concurrent quota overdraft.
+- [`app/composables/useAiGenerate.ts`](../app/composables/useAiGenerate.ts):
+  - Extended `AiGenerateOptions` and `AiJobState` with `outputBilingual: { ar, en } | null`.
+  - Added automatic delimiter parsing during job completion polling.
+- [`app/components/dashboard/EntityAiAssistantModal.vue`](../app/components/dashboard/EntityAiAssistantModal.vue):
+  - Added UI Scope selector toggle: **اللغة الحالية** (`current`) vs **توليد ثنائي** (`both`).
+  - Added direct quick translation actions (**ترجمة للإنجليزية** / **ترجمة للعربية**) with explicit overwrite confirmation protection when the target editor already contains content.
+  - Added dual-pane output preview when bilingual results are returned.
+  - Added `@apply-both` event emission providing `{ ar, en, mode }`.
+- [`app/pages/dashboard/entities/[id].vue`](../app/pages/dashboard/entities/[id].vue) & [`app/pages/dashboard/entities/new.vue`](../app/pages/dashboard/entities/new.vue):
+  - Added `applyBilingualContent({ ar, en, mode })` updating both `form.content_ar` and `form.content_en` concurrently while preserving Tiptap HTML formatting.
+  - Bound `@apply-both="applyBilingualContent"` on `<EntityAiAssistantModal>`.
+- [`tests/editorial.test.mjs`](../tests/editorial.test.mjs):
+  - Added Group 6 test suite verifying bilingual prompt assembly, delimiter extraction, fence sanitization, and malformed output rejection (22/22 pass).
+
+### Rationale
+- Enables seamless bilingual article authoring in a single AI generation request, eliminating manual context re-entry across tabs, while preserving strict single-language behavior, robust quota accounting, and explicit overwrite safeguards.
+
+
+## [2026-09-19] - Editorial AI Surgical Fix: HTML Semantic Insertion, Target Language Sovereignty & Bilingual Source Reference Flow
+
+### Changed
+- [`app/pages/dashboard/entities/[id].vue`](../app/pages/dashboard/entities/[id].vue) & [`app/pages/dashboard/entities/new.vue`](../app/pages/dashboard/entities/new.vue):
+  - **Semantic HTML Preservation:** Replaced crude string splitting (`.split(/\n\s*\n/).map(p => '<p>...')`) in `applyAiContent` with `formatAiContentForEditor(raw)`. It detects semantic HTML block tags (`<h2>`, `<p>`, `<ul>`, etc.) and preserves them verbatim for direct Tiptap ingestion without creating invalid nested `<p><h2>` wrappers, while retaining fallback wrapping for plain-text models.
+  - **Bilingual Source Wiring:** Passed `:source-content="currentLang === 'ar' ? form.content_en : form.content_ar"` and `:source-language="currentLang === 'ar' ? 'en' : 'ar'"` to `<EntityAiAssistantModal>`.
+- [`app/components/dashboard/EntityAiAssistantModal.vue`](../app/components/dashboard/EntityAiAssistantModal.vue):
+  - Added `sourceContent` and `sourceLanguage` props.
+  - Added explicit regex-based translation detection (`isTranslationRequest`). Forwards `sourceContent` to `/api/ai/generate` ONLY when the user explicitly requests translation, saving tokens and eliminating prompt ambiguity during monolingual edits.
+  - Added UI indicator badges clarifying the active Target Language, document connection state, and translation source availability.
+- [`app/composables/useAiGenerate.ts`](../app/composables/useAiGenerate.ts):
+  - Extended `AiGenerateOptions` to accept `sourceContent`, `sourceLanguage`, and `targetLanguage`, and forwarded them in the `POST /api/ai/generate` payload.
+- [`server/api/ai/generate.post.ts`](../server/api/ai/generate.post.ts):
+  - Extracted `sourceContent`, `sourceLanguage`, and `targetLanguage` from request body.
+  - Validated source content against `EDITORIAL_LIMITS.MAX_EDITOR_CONTENT_CHARS` (50,000 chars) and overall context against `EDITORIAL_LIMITS.MAX_TOTAL_CONTEXT_CHARS` (55,000 chars).
+  - Passed `resolvedTargetLang` to `create_ai_job` and all parameters to `runInference`.
+- [`server/utils/editorial.ts`](../server/utils/editorial.ts) & [`server/utils/nosana.ts`](../server/utils/nosana.ts):
+  - Injected `=== TARGET EDITOR LANGUAGE: [Arabic|English] ===` as a rigid contract header in the user prompt.
+  - Added formatted `=== SOURCE REFERENCE DOCUMENT (language) ===` section when cross-language translation is requested.
+  - Clarified persona instructions in `BURHAN_EDITORIAL_SYSTEM_PROMPT`: editing preserves document language; empty editor generates in target language; explicit translation adapts source into target language.
+- [`tests/editorial.test.mjs`](../tests/editorial.test.mjs):
+  - Added 18 unit tests covering prompt construction, source reference document formatting, HTML preservation in `formatAiContentForEditor`, persona anti-filler directives, and language sovereignty rules.
+
+### Rationale
+- Solves the 3 identified architectural failure points: prevents Tiptap HTML degradation upon AI insertion, guarantees language adherence to the active editor tab, and enables cross-lingual translation between Arabic and English tabs without leaking opposite content into monolingual edits.
+
+
+## [2026-09-19] - Editorial AI Persona, Document Context Integration & Generation Safety Boundaries
+
+### Changed
+- [`server/utils/editorial.ts`](../server/utils/editorial.ts):
+  - Created dedicated server-side editorial module containing `BURHAN_EDITORIAL_SYSTEM_PROMPT` establishing Burhan's professional writing assistant persona (article writing, editing, restructuring, clarity, style, grammar, semantic HTML formatting, zero conversational preambles).
+  - Implemented dynamic language sovereignty logic (Arabic article + Arabic instruction -> Arabic, English article + English instruction -> English, cross-language preserving document language unless translation explicitly demanded, no universal forced fallback).
+  - Built `buildEditorialMessages` ensuring strict semantic separation between SYSTEM persona, USER instruction, and CURRENT EDITOR DOCUMENT delimiters.
+  - Defined explicit architectural safety limits: `MAX_INSTRUCTION_CHARS: 2000`, `MAX_EDITOR_CONTENT_CHARS: 50000`, `MAX_OUTPUT_TOKENS: 2048`, `MAX_TOTAL_CONTEXT_CHARS: 55000`.
+- [`server/utils/nosana.ts`](../server/utils/nosana.ts):
+  - Integrated `buildEditorialMessages` to construct provider chat messages dynamically.
+  - Added `editorContent?: string | null` to `RunInferenceInput`.
+  - Enforced `max_tokens: EDITORIAL_LIMITS.MAX_OUTPUT_TOKENS` (2048) in fetch payload sent to provider `/v1/chat/completions`, eliminating unbounded generation.
+- [`server/api/ai/generate.post.ts`](../server/api/ai/generate.post.ts):
+  - Extracted `editorContent` from request body and passed to `runInference`.
+  - Implemented strict server-side validation rejecting oversized prompts (> 2,000 chars), oversized editor content (> 50,000 chars), and total context overflow (> 55,000 chars) with descriptive HTTP 400 Bad Request errors.
+- [`app/composables/useAiGenerate.ts`](../app/composables/useAiGenerate.ts):
+  - Added `editorContent?: string | null` to `AiGenerateOptions` and forwarded it in the POST `/api/ai/generate` body.
+- [`app/components/dashboard/EntityAiAssistantModal.vue`](../app/components/dashboard/EntityAiAssistantModal.vue):
+  - Added `editorContent` prop with default `null`, passing it directly to `useAiGenerate`.
+  - Added visual document connection status pill indicating whether the active editor document is connected (editing/review mode) or empty (generation from scratch mode).
+- [`app/pages/dashboard/entities/[id].vue`](../app/pages/dashboard/entities/[id].vue) & [`app/pages/dashboard/entities/new.vue`](../app/pages/dashboard/entities/new.vue):
+  - Bound `:editor-content="currentLang === 'ar' ? form.content_ar : form.content_en"` to `<EntityAiAssistantModal>`, closing the missing link from Tiptap editor state to server inference.
+- [`tests/editorial.test.mjs`](../tests/editorial.test.mjs):
+  - Added 17 unit tests verifying editor contract, prompt construction, empty document behavior, persona anti-filler directives, dynamic language rules, semantic HTML formatting, and boundary limits.
+
+### Rationale
+- Fixes the disconnect where active editor content was omitted from AI generation requests, establishes a rigorous server-side editorial persona producing rich semantic HTML directly into Tiptap, dynamically honors language sovereignty, and enforces strict server-side safety boundaries on input length and output tokens.
+
+
+## [2026-09-19] - Nosana vLLM SSE Compatibility & Usage Accounting Alignment
+
+### Changed
+- [`server/utils/nosana.ts`](../server/utils/nosana.ts):
+  - **SSE Content Extraction:** Updated `parseSseEvent` to parse OpenAI/vLLM nested stream chunks matching `choices[0].delta.content`, safely ignoring `delta.reasoning` chunks to prevent reasoning contamination into user output. Maintained fallback for legacy flat stream payloads.
+  - **Token Usage Extraction:** Added extraction of `usage.total_tokens` from final stream chunks and piped `tokensUsed` into `complete_ai_job` terminal RPC, replacing estimated placeholder debits with real provider usage.
+  - **ESM Module Resolution:** Fixed relative imports to explicitly include file extensions for clean Node.js ESM execution.
+- [`tests/nosana-parser.test.mjs`](../tests/nosana-parser.test.mjs):
+  - Added comprehensive test suite covering content extraction, reasoning avoidance, `[DONE]` handling, token extraction, absent usage fallback, and resilience against malformed chunks.
+
+### Rationale
+- Aligns Burhan AI inference engine with Nosana's real OpenAI/vLLM-compatible streaming response schema while strictly honoring the locked M1 contract and maintaining immutable terminal reconciliation.
+
+
 ## [2026-09-18] - Sovereign Research Demo Organizations & Official Seed Baseline
 
 ### Changed
