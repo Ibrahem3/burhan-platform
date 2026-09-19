@@ -11,6 +11,7 @@ type OrgWithCount = {
 definePageMeta({
   title: 'Main Hub',
   layout: false,
+  pageTransition: false,
 })
 
 const { t, locale } = useI18n()

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-19] - UI/UX Optimization: Seamless Language Switching on Home Page
+
+### Changed
+- [`app/pages/index.vue`](../app/pages/index.vue):
+  - Set `pageTransition: false` in `definePageMeta` to eliminate the out-in fade flicker during locale toggling (`/` <-> `/en`).
+  - Allowed translations and direction flips to execute in-place smoothly without re-mounting or un-mounting page DOM.
+
+### Rationale
+- Nuxt 4's global `pageTransition: { name: 'fade', mode: 'out-in' }` was causing the entire homepage to unmount and fade out when switching language (due to the route prefix change between `/` and `/en`), creating an artificial "reload" flicker. Disabling page transition specifically on the home page isolates the transition without touching caching or page keys.
+
 ## [2026-09-19] - UI Fix: Fix RTL Switch Knob Translation Displacement on Toggles
 
 ### Changed
