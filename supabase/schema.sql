@@ -670,13 +670,13 @@ COMMENT ON COLUMN observatory_analysts.role_type IS 'observatory_manager = full 
 CREATE TABLE observatory_threats (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title                TEXT NOT NULL,
-  source_url           TEXT NOT NULL,
+  source_url           TEXT NOT NULL CHECK (source_url ~* '^https?://'),
   platform             TEXT NOT NULL DEFAULT 'unknown',
   danger_level         TEXT NOT NULL DEFAULT 'Medium' CHECK (danger_level IN ('Low', 'Medium', 'High')),
   status               TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'under_review', 'neutralized')),
   assigned_scholar_id  UUID REFERENCES profiles(id) ON DELETE SET NULL,
   reported_by          UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  response_url         TEXT,
+  response_url         TEXT CHECK (response_url IS NULL OR response_url = '' OR response_url ~* '^https?://'),
   created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -2648,3 +2648,28 @@ GRANT EXECUTE ON FUNCTION public.provision_tenant(UUID, TEXT, TEXT) TO service_r
 
 COMMENT ON FUNCTION public.provision_tenant(UUID, TEXT, TEXT) IS
   'Atomic tenant provisioning: organization, community subscription, main branch, and owner profile update in a single transaction.';
+
+-- ============================================================
+-- BURHAN PLATFORM — Migration 00022
+-- Enforce Strict URL Scheme Constraints at Database Layer
+-- ============================================================
+ALTER TABLE public.observatory_threats
+  DROP CONSTRAINT IF EXISTS check_observatory_threats_source_url,
+  ADD CONSTRAINT check_observatory_threats_source_url
+    CHECK (source_url ~* '^https?://');
+
+ALTER TABLE public.observatory_threats
+  DROP CONSTRAINT IF EXISTS check_observatory_threats_response_url,
+  ADD CONSTRAINT check_observatory_threats_response_url
+    CHECK (response_url IS NULL OR response_url = '' OR response_url ~* '^https?://');
+
+ALTER TABLE public.entities
+  DROP CONSTRAINT IF EXISTS check_entities_audio_url,
+  ADD CONSTRAINT check_entities_audio_url
+    CHECK (audio_url IS NULL OR audio_url = '' OR audio_url ~* '^https?://');
+
+ALTER TABLE public.entities
+  DROP CONSTRAINT IF EXISTS check_entities_fallback_url,
+  ADD CONSTRAINT check_entities_fallback_url
+    CHECK (fallback_url IS NULL OR fallback_url = '' OR fallback_url ~* '^https?://');
+

@@ -30,6 +30,9 @@ All notable changes to this project will be documented in this file.
   - Sent user's Supabase session access token in `Authorization: Bearer <token>` header when fetching `/api/admin/stats`.
 - [`tests/security/xss-hardening.test.mjs`](../tests/security/xss-hardening.test.mjs):
   - Added 19 automated security test cases covering HTML sanitization, URL scheme hardening, server-side URL assertion, and admin token resolution.
+- [`supabase/migrations/00022_enforce_observatory_url_schemes.sql`](../supabase/migrations/00022_enforce_observatory_url_schemes.sql) & [`supabase/schema.sql`](../supabase/schema.sql):
+  - Enforced database-level `CHECK` constraints on `observatory_threats` (`source_url ~* '^https?://'` and `response_url ~* '^https?://'`).
+  - Enforced database-level `CHECK` constraints on `entities` (`audio_url ~* '^https?://'` and `fallback_url ~* '^https?://'`).
 - [`SECURITY.md`](../SECURITY.md):
   - Added repository security policy, vulnerability reporting guidelines, and acknowledged security researcher `kta1kri`.
 
