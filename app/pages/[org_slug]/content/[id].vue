@@ -263,12 +263,12 @@ function contentTypeLabel(): string {
               <div class="text-center">
                 <p class="text-sm text-gray-400 mb-1">{{ contentTypeLabel() }}</p>
                 <p v-if="entity.audio_url" class="text-xs text-gray-500">
-                  <a :href="entity.audio_url" target="_blank" rel="noopener" class="text-gold hover:underline">
+                  <a :href="sanitizeExternalUrl(entity.audio_url)" target="_blank" rel="noopener noreferrer" class="text-gold hover:underline">
                     {{ $t('video.listen_external') || 'External Link' }}
                   </a>
                 </p>
                 <p v-else-if="entity.audio_file" class="text-xs text-gray-500">
-                  <a :href="entity.audio_file" target="_blank" rel="noopener" class="text-gold hover:underline">
+                  <a :href="sanitizeExternalUrl(entity.audio_file)" target="_blank" rel="noopener noreferrer" class="text-gold hover:underline">
                     {{ $t('video.download_audio') || 'Download Audio' }}
                   </a>
                 </p>
@@ -327,7 +327,7 @@ function contentTypeLabel(): string {
           v-if="entity.content_type === 'article' && entity.content"
           class="prose-gold max-w-none"
           :class="currentLocale === 'ar' ? 'text-right' : 'text-left'"
-          v-html="localizedContent(entity.content)"
+          v-html="sanitizeArticleHtml(localizedContent(entity.content))"
         />
 
         <!-- Video description -->

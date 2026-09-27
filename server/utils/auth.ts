@@ -1,4 +1,5 @@
-import { getSupabaseAdmin } from './supabase'
+import { createError, getHeader } from 'h3'
+import { getSupabaseAdmin } from './supabase.ts'
 
 export interface Caller {
   userId: string

@@ -1,8 +1,20 @@
 import { getSupabaseAdmin } from '../../utils/supabase'
+import { resolveCaller } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
+    const caller = await resolveCaller(event)
     const admin = getSupabaseAdmin()
+
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('role')
+      .eq('id', caller.userId)
+      .single()
+
+    if (profile?.role !== 'super_admin') {
+      throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+    }
 
     const [orgsResult, branchesResult, usersResult] = await Promise.all([
       admin.from('organizations').select('id, name, org_slug, created_at', { count: 'exact' }).order('created_at', { ascending: false }),

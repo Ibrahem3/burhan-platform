@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
     "lint": "nuxt lint",
-    "test": "node --test tests/ai/",
+    "test": "node --test tests/security/ tests/ai/",
+    "test:security": "node --test tests/security/",
     "test:ai": "node --test tests/ai/",
     "postinstall": "nuxt prepare"
   },
@@ -22,6 +23,7 @@
     "@tiptap/vue-3": "^3.23.6",
     "@vite-pwa/nuxt": "^1.1.1",
     "nuxt": "^4.0.0",
+    "sanitize-html": "^2.17.7",
     "vue": "latest",
     "vue-router": "latest"
   },
@@ -30,6 +32,7 @@
     "@nuxtjs/i18n": "^9.5.0",
     "@nuxtjs/supabase": "^1.5.0",
     "@nuxtjs/tailwindcss": "^6.14.0",
+    "@types/sanitize-html": "^2.16.1",
     "cac": "^6.7.14",
     "commander": "^13.1.0",
     "typescript": "~5.7.0"

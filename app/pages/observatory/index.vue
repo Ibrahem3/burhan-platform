@@ -89,6 +89,10 @@ async function fetchDefenseFeed() {
 
 async function handleSubmit() {
   if (!title.value || !sourceUrl.value) return
+  if (!isSafeExternalUrl(sourceUrl.value)) {
+    submitError.value = t('observatory.invalid_url', 'Please enter a valid HTTP or HTTPS URL')
+    return
+  }
 
   submitting.value = true
   submitError.value = ''
@@ -476,7 +480,7 @@ const platformBadgeClass = (platform: string) => {
 
               <div v-if="threat.response_url" class="mt-3">
                 <a
-                  :href="threat.response_url"
+                  :href="sanitizeExternalUrl(threat.response_url)"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="inline-flex items-center gap-2 text-xs font-mono text-green-400/70 hover:text-green-300 transition-colors"

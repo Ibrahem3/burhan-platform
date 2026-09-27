@@ -1,14 +1,18 @@
 import { getSupabaseAdmin } from '../../utils/supabase'
+import { assertSafeExternalUrl } from '../../utils/security'
 
 export default defineEventHandler(async (event) => {
   try {
     const { title, sourceUrl, turnstileToken, userId } = await readBody(event)
 
-    if (!title || !sourceUrl) {
-      throw createError({ statusCode: 400, statusMessage: 'Title and source URL are required' })
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      throw createError({ statusCode: 400, statusMessage: 'Title is required' })
     }
 
-    const config = useRuntimeConfig()
+    const validatedUrl = assertSafeExternalUrl(sourceUrl, 'Source URL')
+    const sanitizedTitle = title.trim().slice(0, 300)
+
+    const config = useRuntimeConfig(event)
     const turnstileSecret = config.turnstile?.secretKey as string
 
     if (turnstileSecret) {
@@ -32,7 +36,7 @@ export default defineEventHandler(async (event) => {
     const { data: recent } = await admin
       .from('observatory_threats')
       .select('id')
-      .eq('source_url', sourceUrl)
+      .eq('source_url', validatedUrl)
       .gte('created_at', new Date(Date.now() - 3_600_000).toISOString())
       .maybeSingle()
 
@@ -43,9 +47,9 @@ export default defineEventHandler(async (event) => {
     const { data: threat, error } = await admin
       .from('observatory_threats')
       .insert({
-        title,
-        source_url: sourceUrl,
-        reported_by: userId || null,
+        title: sanitizedTitle,
+        source_url: validatedUrl,
+        reported_by: typeof userId === 'string' && userId.trim() ? userId.trim() : null,
       })
       .select('id, title, status, platform, created_at')
       .single()

@@ -5,6 +5,7 @@ definePageMeta({
   title: 'Admin Dashboard',
 })
 
+const supabase = useSupabaseClient()
 const { t, locale } = useI18n()
 
 const stats = ref({ totalOrgs: 0, totalBranches: 0, totalUsers: 0 })
@@ -14,7 +15,15 @@ const loading = ref(true)
 async function loadStats() {
   loading.value = true
   try {
-    const data = await $fetch<{ stats: typeof stats.value; organizations: any[] }>('/api/admin/stats')
+    const { data: { session } } = await supabase.auth.getSession()
+    const headers: Record<string, string> = {}
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`
+    }
+
+    const data = await $fetch<{ stats: typeof stats.value; organizations: any[] }>('/api/admin/stats', {
+      headers,
+    })
     stats.value = data.stats
     organizations.value = data.organizations.map(org => ({
       ...org,

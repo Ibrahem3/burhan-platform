@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-09-27] - Security Hardening: Stored XSS Mitigation, URL Scheme Validation & Admin Endpoint Protection
+
+### Changed
+- [`app/utils/sanitizeHtml.ts`](../app/utils/sanitizeHtml.ts):
+  - Added `sanitizeArticleHtml` using `sanitize-html` configured with a strict HTML allowlist tailored for rich text articles.
+  - Strips dangerous tags (`<script>`, `<iframe>`, `<object>`, `<embed>`, `<form>`), inline event handlers (`onerror`, `onload`, `onmouseover`), and dangerous URL schemes while enforcing `rel="noopener noreferrer"` and `target="_blank"` on links.
+- [`app/utils/security.ts`](../app/utils/security.ts):
+  - Created client-side URL validation helpers `isSafeExternalUrl` and `sanitizeExternalUrl` that enforce `http:` / `https:` schemes and neutralize pseudo-protocols (`javascript:`, `data:`, `vbscript:`).
+- [`server/utils/security.ts`](../server/utils/security.ts):
+  - Created server-side URL validation helper `assertSafeExternalUrl` validating protocol schemes and throwing 400 Bad Request on invalid or non-http(s) inputs.
+- [`server/api/observatory/report.post.ts`](../server/api/observatory/report.post.ts):
+  - Hardened unauthenticated report submission boundary by validating `sourceUrl` scheme strictly with `assertSafeExternalUrl` and bounding `title` string length.
+  - Passed `event` to `useRuntimeConfig(event)` to guarantee reliable Turnstile secret access in Cloudflare Pages Worker request context.
+- [`app/pages/[org_slug]/content/[id].vue`](../app/pages/[org_slug]/content/[id].vue):
+  - Sanitized `v-html` input with `sanitizeArticleHtml(localizedContent(entity.content))` to prevent stored XSS from malicious rich-text article bodies.
+  - Sanitized dynamic `audio_url` and `audio_file` external links via `sanitizeExternalUrl`.
+- [`app/pages/observatory/dashboard.vue`](../app/pages/observatory/dashboard.vue):
+  - Wrapped `threat.source_url` and `threat.response_url` href attributes with `sanitizeExternalUrl` to prevent DOM-based XSS when reviewers inspect reported threats.
+  - Added URL safety validation when injecting countermeasures in `updateThreat`.
+- [`app/pages/observatory/index.vue`](../app/pages/observatory/index.vue):
+  - Added client-side URL validation in `handleSubmit`.
+  - Wrapped public `threat.response_url` with `sanitizeExternalUrl`.
+- [`server/api/admin/stats.get.ts`](../server/api/admin/stats.get.ts):
+  - Added authentication gate using `resolveCaller(event)` and verified caller role against `profiles` table to require `role === 'super_admin'`, throwing 401 for unauthenticated and 403 for unauthorized users.
+- [`app/pages/admin/dashboard.vue`](../app/pages/admin/dashboard.vue):
+  - Sent user's Supabase session access token in `Authorization: Bearer <token>` header when fetching `/api/admin/stats`.
+- [`tests/security/xss-hardening.test.mjs`](../tests/security/xss-hardening.test.mjs):
+  - Added 19 automated security test cases covering HTML sanitization, URL scheme hardening, server-side URL assertion, and admin token resolution.
+- [`SECURITY.md`](../SECURITY.md):
+  - Added repository security policy, vulnerability reporting guidelines, and acknowledged security researcher `kta1kri`.
+
+### Rationale
+- Remediates two stored XSS vulnerabilities responsibly reported by `kta1kri`:
+  1. Stored XSS via `v-html` on public article content rendered verbatim from the entity editor.
+  2. Unauthenticated stored XSS via `javascript:` URIs in Observatory report `source_url` rendered on reviewer and public dashboards.
+- Hardens the administrative metrics endpoint (`/api/admin/stats`) against unauthenticated enumeration of platform organizations and aggregate statistics.
+
 ## [2026-09-19] - AI Inference: Request-Boundary Platform Config Injection for Cloudflare Pages
 
 ### Changed

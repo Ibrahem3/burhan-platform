@@ -72,6 +72,9 @@ const canManage = computed(() => userRole.value === 'observatory_manager' || isS
 const canDelete = computed(() => userRole.value === 'observatory_manager' || isSuperAdmin.value)
 
 async function updateThreat(id: string, updates: Record<string, any>) {
+  if (updates.response_url && !isSafeExternalUrl(updates.response_url)) {
+    return
+  }
   updating.value = id
   try {
     const { error } = await supabase
@@ -373,7 +376,7 @@ onMounted(loadData)
 
                 <!-- Source URL -->
                 <a
-                  :href="threat.source_url"
+                  :href="sanitizeExternalUrl(threat.source_url)"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-[11px] text-gold/60 hover:text-gold transition-colors truncate inline-block max-w-full mb-3"
@@ -441,7 +444,7 @@ onMounted(loadData)
                   <!-- Neutralized: Show response link -->
                   <div v-else-if="threat.response_url" class="pt-1">
                     <a
-                      :href="threat.response_url"
+                      :href="sanitizeExternalUrl(threat.response_url)"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="inline-flex items-center gap-1.5 text-[11px] font-mono text-green-400/70 hover:text-green-300 transition-colors"
@@ -464,7 +467,7 @@ onMounted(loadData)
                 <!-- Non-manager view: just show response link if exists -->
                 <div v-else-if="threat.response_url" class="border-t border-slate-800 pt-3 mt-2">
                   <a
-                    :href="threat.response_url"
+                    :href="sanitizeExternalUrl(threat.response_url)"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="inline-flex items-center gap-1.5 text-[11px] font-mono text-green-400/70 hover:text-green-300 transition-colors"
