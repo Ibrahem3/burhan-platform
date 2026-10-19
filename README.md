@@ -6,6 +6,21 @@
 [![Database Isolation](https://img.shields.io/badge/Security-100%25%20PostgreSQL%20RLS-success.svg)](https://www.postgresql.org/)
 [![Compute](https://img.shields.io/badge/DeAI-Nosana%20Inference%20Cluster-emerald.svg)](https://nosana.io/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Live Showcase](https://img.shields.io/badge/Live%20Showcase-burhan.ainux.online-gold.svg)](https://burhan.ainux.online/)
+
+> [!IMPORTANT]
+> ### 💎 Burhan Pro (Commercial LMS Edition) Live Showcase
+> The production platform deployed at **[https://burhan.ainux.online/](https://burhan.ainux.online/)** is powered by **Burhan Pro** — our turn-key, enterprise-grade Commercial LMS Edition.
+> 
+> **Key Pro Capabilities showcased on the live site:**
+> - 💳 **Course & Series Monetization:** Complete curriculum paywalls, local pricing (EGP, USD, SAR), and instant student enrollment pipelines.
+> - ⚡ **Direct Local Payments:** Sovereign **Instapay (IPA)** and **Vodafone Cash / Smart Wallets** workflows directly tailored for Egyptian & Arab instructors, creators, and academies with zero third-party commission.
+> - 🎓 **Student Learning Vault:** Dedicated student library (`/my-learning`) for permanently accessing purchased tracks and lectures.
+> - 🎥 **Hardened Media Protection:** Encrypted media permissions policy with cross-browser DRM rendering and autoplay desync mitigation.
+> - 🏢 **Multi-Tenant Instructor Payouts:** Every creator customizes their personal payout wallets, currencies, and instructions directly from their dashboard.
+>
+> 🚀 *Looking for licensing, white-label academy deployment, or commercial setup?*  
+> **Contact:** [Ibrahem](https://github.com/Ibrahem3) for inquiries and licensing options.
 
 > **Strategic Architecture: A Sovereign Technical Waqf (وقف تقني)**  
 > Burhan is architected and dedicated as an **Ethical Technical Asset (Technical Waqf)**—a production-grade, source-available chassis engineered to guarantee data sovereignty, resist digital deplatforming, and provide an immutable foundation for independent knowledge systems.  
